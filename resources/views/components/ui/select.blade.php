@@ -7,6 +7,9 @@
 
     options:  [value => label] or grouped [groupLabel => [value => label]]
     selected: value or array (defaults to old($name) then `value`)
+    search:   lists with more than 6 choices become type-to-filter dropdowns in the browser
+              (resources/js/ui/select-search.js, any select.form-select). Add data-search to
+              force it on a short list, data-no-search to keep the native control.
 --}}
 @props([
     'name',

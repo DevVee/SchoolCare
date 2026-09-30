@@ -141,6 +141,20 @@ class AppointmentBooking
             throw ValidationException::withMessages(['appointment_time' => 'This time slot is fully booked. Please choose another time.']);
         }
 
+        // Online requests may take only part of a slot (Settings > Appointments > Online requests per time slot).
+        $onlineLimit = (int) settings('public_booking_slot_limit', 0);
+        if ($onlineLimit > 0 && ($data['source'] ?? null) === Appointment::SOURCE_ONLINE) {
+            $online = Appointment::whereDate('appointment_date', $date)
+                ->where('appointment_time', $time)
+                ->where('source', Appointment::SOURCE_ONLINE)
+                ->whereIn('status', self::HOLDING)
+                ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+                ->count();
+            if ($online >= $onlineLimit) {
+                throw ValidationException::withMessages(['appointment_time' => 'This time has no more places for online requests. Please choose another time.']);
+            }
+        }
+
         $max = (int) settings('max_daily_appointments', 50);
         if ($max > 0) {
             $day = Appointment::whereDate('appointment_date', $date)

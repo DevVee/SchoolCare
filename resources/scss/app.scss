@@ -52,6 +52,7 @@ $bootstrap-icons-font-dir: "/fonts";
 @import "components/stat-strip";
 @import "components/section-nav";
 @import "components/combobox";
+@import "components/select-search"; // searchable .form-select dropdowns (ui/select-search.js)
 @import "components/coco";   // AI assistant: orb, chat page, history modal
 @import "components/spotlight"; // Ctrl K palette: patients, pages, ask the assistant
 @import "components/life";   // reveal, spotlight, live dot, word rise, grid (last: wins over components)
@@ -69,3 +70,4 @@ $bootstrap-icons-font-dir: "/fonts";
 @import "pages/public";
 @import "pages/patients";
 @import "pages/print-settings";
+@import "pages/website-admin";

@@ -6,6 +6,8 @@
     $actionNames = [
         'created' => 'Added', 'updated' => 'Changed', 'deleted' => 'Deleted', 'logged_in' => 'Signed in',
         'logged_out' => 'Signed out', 'exported' => 'Exported', 'approved' => 'Approved', 'cancelled' => 'Cancelled',
+        'code_sent' => 'Sign-in code sent', 'code_not_sent' => 'Sign-in code not sent', 'code_verified' => 'Sign-in code accepted',
+        'code_failed' => 'Wrong sign-in code', 'code_locked' => 'Sign-in code locked',
     ];
     $actionLabel = fn ($a) => $actionNames[$a] ?? \Illuminate\Support\Str::headline((string) $a);
     $moduleLabel = fn ($m) => \Illuminate\Support\Str::headline(str_replace(['-', '_'], ' ', (string) $m));

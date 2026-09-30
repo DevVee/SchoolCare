@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Services\ImageResizer;
 use App\Services\SettingsService;
+use App\Services\SignInCodes;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -127,6 +128,16 @@ class UpdateSettingsRequest extends FormRequest
                     if ($required && count($items) === 0) {
                         $validator->errors()->add($key, "{$def['label']} needs at least one entry.");
                     }
+                }
+
+                // Sign-in codes go out by email: never turn them on while email cannot be delivered.
+                if (array_key_exists('otp_enabled', $this->fields())
+                    && $this->boolean('otp_enabled')
+                    && (! $this->filled('only') || in_array('otp_enabled', (array) $this->input('only'), true))
+                    && ! SignInCodes::emailReady()) {
+                    $validator->errors()->add('otp_enabled',
+                        'Email sending is not set up on the server, so nobody could receive a code and people would be locked out. '
+                        .'Set up email first, then use "Send test email" in Settings > Email to check that it arrives.');
                 }
             },
         ];

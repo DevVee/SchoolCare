@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\SignInCodeController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,16 @@ if (config('auth.allow_registration', false)) {
 Route::middleware('guest')->group(function () {
     Route::get('login',  [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    // Email sign-in code (Settings > Security). Only works while this session has
+    // a pending sign-in; wrong codes and resends are also limited per user in SignInCodes.
+    Route::get('login/code',         [SignInCodeController::class, 'show'])->name('login.code');
+    Route::post('login/code',        [SignInCodeController::class, 'verify'])
+        ->middleware('throttle:30,1')
+        ->name('login.code.verify');
+    Route::post('login/code/resend', [SignInCodeController::class, 'resend'])
+        ->middleware('throttle:10,1')
+        ->name('login.code.resend');
 
     Route::get('forgot-password',  [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');

@@ -284,6 +284,11 @@ class PatientController extends Controller
             'contact_number' => $appointment->requester_contact,
             'email'          => $appointment->requester_email,
             'student_id'     => $appointment->requester_student_id,
+            // Chosen on the online form (Settings > Appointments > Online request form).
+            'category'       => $appointment->requester_category,
+            'year_level'     => $appointment->requester_year_level,
+            'program_strand' => $appointment->requester_program,
+            'section'        => $appointment->requester_section,
         ]);
     }
 }

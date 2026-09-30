@@ -1,0 +1,198 @@
+// ═════════════════════════════════════════════════════════════════════════════
+// Administration > Website (resources/views/admin/website/*): page text, the
+// services / questions / team lists, advisories. Page-specific pieces only;
+// everything else comes from the x-ui components.
+// ═════════════════════════════════════════════════════════════════════════════
+
+.website-admin {
+    .website-tabs { max-width: 100%; }
+
+    .wa-note {
+        margin: 0;
+        font-size: .8125rem;
+        color: var(--c-muted);
+    }
+
+    .save-bar.save-bar-standalone { border-radius: var(--c-radius-lg); }
+
+    // ─── Page text: sections on / off and order ───────────────────────────────
+    .wa-sections {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        border: 1px solid var(--c-border);
+        border-radius: var(--c-radius-md);
+        overflow: hidden;
+    }
+    .wa-section-row {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .625rem .75rem .625rem 1rem;
+        background: var(--c-surface);
+        & + & { border-top: 1px solid var(--c-border); }
+    }
+    .wa-section-num {
+        width: 1.25rem;
+        flex: 0 0 1.25rem;
+        text-align: right;
+        font-size: .8125rem;
+        font-weight: 600;
+        color: var(--c-muted);
+    }
+    .wa-section-main {
+        flex: 1 1 auto;
+        min-width: 0;
+        .form-check { margin-bottom: 0; }
+        .form-check-label { font-weight: 600; color: var(--c-ink); }
+        .form-check-description { font-weight: 400; }
+    }
+    .wa-section-link {
+        display: inline-block;
+        margin: .125rem 0 0 3.25rem;
+        font-size: .8125rem;
+        font-weight: 600;
+        text-decoration: none;
+        &:hover { text-decoration: underline; }
+    }
+    .wa-section-move {
+        display: inline-flex;
+        gap: 2px;
+        flex-shrink: 0;
+        &[hidden] { display: none; }
+        .btn { color: var(--c-ink-2); }
+        .btn:disabled { opacity: .3; }
+    }
+
+    // ─── Page text: the three steps ───────────────────────────────────────────
+    .wa-step {
+        height: 100%;
+        padding: 1rem;
+        border: 1px solid var(--c-border);
+        border-radius: var(--c-radius-md);
+    }
+    .wa-step-num {
+        margin: 0 0 .75rem;
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--brand-700);
+    }
+
+    // ─── Image upload with preview ────────────────────────────────────────────
+    .wa-photo {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .wa-photo-preview {
+        flex: 0 0 auto;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid var(--c-border);
+        border-radius: var(--c-radius-md);
+        background: var(--c-surface-2);
+        img { width: 100%; height: 100%; object-fit: cover; }
+        img[hidden] { display: none; }
+        &.is-wide { width: 176px; height: 110px; }
+        &.is-round { border-radius: 50%; }
+    }
+    .wa-photo-empty {
+        font-size: 1.5rem;
+        color: var(--c-faint);
+        &[hidden] { display: none; }
+    }
+    .wa-photo-body { flex: 1 1 240px; min-width: 0; }
+    .wa-photo-note { margin: .375rem 0 0; font-size: .8125rem; color: var(--c-muted); }
+
+    // ─── Service icon picker (radio buttons, works without JavaScript) ────────
+    .wa-icon-picker {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        min-width: 0;
+        .icon-picker-grid { max-height: none; }
+        .icon-option:has(> input:checked) {
+            border-color: var(--brand-600);
+            background: var(--brand-50);
+            color: var(--brand-700);
+            span { color: var(--brand-700); }
+        }
+        .icon-option:has(> input:focus-visible) {
+            outline: 3px solid rgba(var(--brand-rgb), .35);
+            outline-offset: 1px;
+        }
+    }
+
+    // ─── Lists (services, questions, team, advisories) ────────────────────────
+    td.cell-identity { min-width: 16rem; }
+    .identity-title { white-space: normal; }
+    .wa-sub {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        max-width: 38rem;
+        white-space: normal;
+    }
+    .wa-glyph {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: var(--brand-600);
+        &.is-urgent { color: var(--c-danger-600); }
+    }
+    .wa-thumb {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        border-radius: var(--c-radius-sm);
+        object-fit: cover;
+        background: var(--c-surface-2);
+    }
+    tr.wa-row-off {
+        .identity-title, .wa-glyph, .wa-thumb, .avatar { opacity: .55; }
+    }
+
+    .wa-order {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        form { margin: 0; }
+        .btn { color: var(--c-ink-2); }
+        .btn:disabled { opacity: .3; }
+    }
+    .wa-order-num {
+        min-width: 1.5rem;
+        margin-right: .25rem;
+        font-size: .8125rem;
+        font-weight: 600;
+        color: var(--c-muted);
+    }
+
+    .wa-visibility {
+        display: inline-flex;
+        align-items: center;
+        gap: .625rem;
+        margin: 0;
+        .form-check { min-height: 0; }
+    }
+    .wa-state {
+        margin: 0;
+        min-width: 3.5rem;
+        font-size: .875rem;
+        color: var(--c-muted);
+        cursor: pointer;
+        &.is-on { color: var(--c-ink); font-weight: 600; }
+    }
+}

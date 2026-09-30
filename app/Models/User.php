@@ -44,7 +44,24 @@ class User extends Authenticatable
         ];
     }
 
+    protected static function booted(): void
+    {
+        // A new password (profile, reset link, invitation, admin) forgets every
+        // browser remembered for the email sign-in code.
+        static::updated(function (User $user) {
+            if ($user->wasChanged('password')) {
+                $user->trustedDevices()->delete();
+            }
+        });
+    }
+
     // ─── Relationships ────────────────────────────────────────────────────────
+
+    /** Browsers that skip the email sign-in code (App\Services\SignInCodes). */
+    public function trustedDevices(): HasMany
+    {
+        return $this->hasMany(TrustedDevice::class);
+    }
 
     public function patients(): HasMany
     {

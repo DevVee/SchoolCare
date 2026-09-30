@@ -7,12 +7,18 @@
     <x-ui.card class="pub-done" padding="lg">
         <span class="pub-done-icon"><x-ui.icon name="check-lg" /></span>
         <h1 class="pub-title">Request sent</h1>
-        <p class="pub-intro">Thank you. Your appointment request is now with the clinic staff. You do not need to send it again.</p>
+        <p class="pub-intro">{{ $message !== '' ? $message : 'Thank you. Your appointment request is now with the clinic staff. You do not need to send it again.' }}</p>
 
         @if ($summary)
             <dl class="pub-done-summary">
                 <div><dt>Date</dt><dd>{{ $summary['date'] }}</dd></div>
                 <div><dt>Time</dt><dd>{{ $summary['time'] }}</dd></div>
+                @if (! empty($summary['purpose']))
+                    <div><dt>Reason</dt><dd>{{ $summary['purpose'] }}</dd></div>
+                @endif
+                @if (! empty($summary['provider']))
+                    <div><dt>With</dt><dd>{{ $summary['provider'] }}</dd></div>
+                @endif
             </dl>
         @endif
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSettingsRequest;
 use App\Services\AiAssistantService;
 use App\Services\SettingsService;
+use App\Services\SignInCodes;
 use App\Services\SmsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -137,7 +138,7 @@ class SettingsController extends Controller
         return array_key_exists($group, $this->settings->visibleGroups());
     }
 
-    /** Read-only provider status for the SMS / Email / AI pages. Never exposes secrets. */
+    /** Read-only provider status for the SMS / Email / Security / AI pages. Never exposes secrets. */
     private function providerStatus(string $group): array
     {
         return match ($group) {
@@ -148,6 +149,12 @@ class SettingsController extends Controller
                 'queue'              => (string) config('queue.default'),
             ],
             'email' => $this->mailStatus(),
+            'security' => [
+                'otp_on'      => (bool) settings('otp_enabled'),
+                'applies_to'  => (string) settings('otp_applies_to'),
+                'email_ready' => SignInCodes::emailReady(),
+                'mailer'      => (string) config('mail.default'),
+            ],
             'ai' => [
                 'api_key_configured' => AiAssistantService::apiKey() !== '',
                 'api_key_source'     => AiAssistantService::apiKeySource(), // 'settings', 'server' or null

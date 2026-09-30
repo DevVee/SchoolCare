@@ -119,6 +119,8 @@ return [
         'audit' => [
             'created' => 'success', 'updated' => 'warning', 'deleted' => 'danger', 'logged_in' => 'brand',
             'logged_out' => 'neutral', 'exported' => 'info', 'approved' => 'success', 'cancelled' => 'danger',
+            'code_sent' => 'info', 'code_not_sent' => 'warning', 'code_verified' => 'brand', 'code_failed' => 'warning',
+            'code_locked' => 'warning',
         ],
 
         'inventory' => [

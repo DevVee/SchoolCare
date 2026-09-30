@@ -20,7 +20,8 @@
         :description="'Summary of the clinic records of '.$patient->full_name.', ready to print or share with the family.'"
         :breadcrumbs="['Dashboard' => route('dashboard'), 'Patients' => route('patients.index'), $patient->full_name => route('patients.show', $patient->id), 'Health report' => null]">
         <x-slot:actions>
-            <x-ui.button variant="secondary" icon="printer" onclick="window.print()">Print</x-ui.button>
+            {{-- Print opens the health record PDF (the official document) in a new tab to print from. --}}
+            <x-ui.button variant="secondary" icon="printer" :href="route('patients.health-report.pdf', ['patient' => $patient->id, 'inline' => 1])" target="_blank" rel="noopener">Print</x-ui.button>
             <x-ui.button icon="file-earmark-pdf" :href="route('patients.health-report.pdf', $patient->id)">Download PDF</x-ui.button>
         </x-slot:actions>
     </x-ui.page-header>

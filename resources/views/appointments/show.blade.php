@@ -133,6 +133,12 @@
                         @if ($appointment->requester_student_id)
                             <x-ui.description-item label="Student or employee ID"><span class="tabular">{{ $appointment->requester_student_id }}</span></x-ui.description-item>
                         @endif
+                        @if ($appointment->requester_category_label)
+                            <x-ui.description-item label="Category">{{ $appointment->requester_category_label }}</x-ui.description-item>
+                        @endif
+                        @if ($appointment->requester_school_line)
+                            <x-ui.description-item label="Grade, program and section">{{ $appointment->requester_school_line }}</x-ui.description-item>
+                        @endif
                     </x-ui.description-list>
                 </x-ui.card>
             @endif

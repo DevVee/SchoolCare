@@ -18,6 +18,7 @@ class Appointment extends Model
         'cancelled_reason', 'notes', 'created_by',
         // Online requests + provider (SSCMS parity)
         'source', 'requester_name', 'requester_contact', 'requester_email', 'requester_student_id',
+        'requester_category', 'requester_year_level', 'requester_program', 'requester_section',
         'provider', 'specialist_visit_id',
     ];
 
@@ -91,6 +92,24 @@ class Appointment extends Model
     public function scopeOnline($query)
     {
         return $query->where('source', self::SOURCE_ONLINE);
+    }
+
+    /** Label of the category chosen on the online form (Settings > Clinic), or the stored value. */
+    public function getRequesterCategoryLabelAttribute(): ?string
+    {
+        if (blank($this->requester_category)) {
+            return null;
+        }
+
+        return Patient::categoryLabels()[$this->requester_category] ?? $this->requester_category;
+    }
+
+    /** "2nd Year, BSIT, Block 1" from the online form, or null. */
+    public function getRequesterSchoolLineAttribute(): ?string
+    {
+        $parts = array_filter([$this->requester_year_level, $this->requester_program, $this->requester_section], 'filled');
+
+        return $parts ? implode(', ', $parts) : null;
     }
 
     // ─── Scopes ───────────────────────────────────────────────────────────────

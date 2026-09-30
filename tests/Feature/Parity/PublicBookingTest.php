@@ -15,15 +15,22 @@ class PublicBookingTest extends ParityTestCase
             'appointment_date'  => $this->nextWeekday()->toDateString(),
             'appointment_time'  => '09:00:00',
             'purpose'           => 'General Checkup',
+            'category'          => 'college',
+            'consent'           => '1',
         ];
     }
 
-    public function test_everything_is_404_when_disabled(): void
+    public function test_disabled_shows_the_closed_notice_and_stores_nothing(): void
     {
         settings()->set('public_booking_enabled', false);
+        settings()->set('public_booking_closed_message', 'Online booking is paused for the semester break.');
 
-        $this->get(route('public.appointments.create'))->assertNotFound();
-        $this->post(route('public.appointments.store'), $this->payload())->assertNotFound();
+        $this->get(route('public.appointments.create'))->assertOk()
+            ->assertSee('Online requests are closed')
+            ->assertSee('Online booking is paused for the semester break.')
+            ->assertDontSee('name="requester_name"', false);
+        $this->post(route('public.appointments.store'), $this->payload())->assertRedirect(route('public.appointments.create'));
+        $this->get(route('public.appointments.thanks'))->assertRedirect(route('public.appointments.create'));
         $this->get(route('public.schedule'))->assertNotFound();
         $this->getJson(route('public.appointments.slots', ['date' => today()->toDateString()]))->assertNotFound();
         $this->assertSame(0, Appointment::count());

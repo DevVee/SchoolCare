@@ -3,8 +3,8 @@
 // request, clinic schedule. Same language as the public website (landing/*):
 // a translucent sticky top bar whose divider appears once content scrolls
 // under it, display-size titles with tight tracking, white cards on the calm
-// #F5F5F7 canvas, solid numbered circles, a quiet footer. The content rises
-// in on load (a fade under reduced motion).
+// #F5F5F7 canvas, solid numbered circles, a footer with today's hours, links
+// and contact details. The content rises in on load (a fade under reduced motion).
 // =============================================================================
 
 .pub-body {
@@ -148,38 +148,111 @@
 @media (prefers-reduced-motion: reduce) {
     .pub-main > .pub-container { animation-name: pub-fade; animation-duration: 300ms; }
 }
+// Footer (layouts/partials/public-footer): the clinic and a line about it, a
+// white 16px card with today's hours (green live dot only while open), quick
+// links, contact details, then the copyright line under a hairline.
 .pub-footer {
     border-top: 1px solid var(--c-hairline);
     background: var(--c-canvas);
-    font-size: .8125rem;
+    font-size: .875rem;
     color: var(--c-muted);
-}
-.pub-footer-inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: .75rem 2rem;
-    padding-block: 1.25rem;
     p { margin: 0; }
 }
-.pub-footer-name { font-family: $font-ui; font-weight: 600; color: var(--c-ink); margin-bottom: .25rem !important; }
-.pub-footer-line {
+.pub-footer-grid {
+    display: grid;
+    gap: 2rem;
+    padding-block: 2.5rem 2rem;
+    @include media-breakpoint-up(md) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @include media-breakpoint-up(lg) {
+        grid-template-columns: minmax(0, 3.5fr) minmax(0, 3fr) minmax(0, 2fr);
+        gap: 2.5rem;
+        &.has-contact { grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 2fr) minmax(0, 2.5fr); }
+    }
+}
+.pub-footer-brand .pub-brand { min-height: 0; }
+.pub-footer-about { margin-top: .875rem !important; max-width: 40ch; line-height: 1.5; text-wrap: pretty; }
+.pub-footer-title {
+    margin: 0 0 .625rem;
+    font-family: $font-ui;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+}
+.pub-footer-hours {
+    align-self: start;
+    padding: 1rem 1.125rem;
+    border-radius: $radius-lg;
+    background: var(--c-surface);
+    box-shadow: 0 0 0 1px var(--c-hairline), 0 12px 32px -24px rgba(0, 0, 0, .22);
+}
+.pub-footer-status {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-family: $font-ui;
+    font-weight: 600;
+    color: var(--c-ink);
+    &.is-open { color: var(--c-success-700, #15803D); }
+}
+.pub-footer-dot {
+    flex: none;
+    width: .4375rem;
+    height: .4375rem;
+    border-radius: 50%;
+    background: var(--c-faint);
+}
+.pub-footer-today { margin-top: .25rem !important; color: var(--c-ink-2); font-variant-numeric: tabular-nums; }
+.pub-footer-week {
+    margin: .75rem 0 0;
+    padding-top: .75rem;
+    border-top: 1px solid var(--c-hairline);
+    font-size: .8125rem;
+    > div { display: flex; justify-content: space-between; gap: 1rem; padding-block: .125rem; }
+    dt { font-weight: 400; color: var(--c-muted); }
+    dd { margin: 0; color: var(--c-ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+}
+.pub-footer-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    a, .pub-footer-address {
+        display: inline-flex;
+        align-items: flex-start;
+        gap: .5rem;
+        padding-block: .375rem;
+        color: var(--c-ink-2);
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+    a {
+        min-height: 2.25rem;
+        align-items: center;
+        text-decoration: none;
+        text-underline-offset: 3px;
+        transition: color $dur-fast ease-out;
+        &:hover { color: var(--c-ink); text-decoration: underline; }
+    }
+    .c-icon { flex: none; color: var(--c-faint); margin-top: .125rem; }
+    a .c-icon { margin-top: 0; }
+}
+.pub-footer-bottom {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: .25rem 1rem;
-    .c-icon { color: var(--c-muted); margin-right: .375rem; }
+    justify-content: space-between;
+    gap: .5rem 1.5rem;
+    padding-block: 1.25rem 1.5rem;
+    border-top: 1px solid var(--c-hairline);
+    font-size: .8125rem;
+    a {
+        color: var(--c-ink-2);
+        text-decoration: none;
+        text-underline-offset: 3px;
+        &:hover { color: var(--c-ink); text-decoration: underline; }
+    }
 }
-.pub-footer-links a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2rem;
-    color: var(--c-ink-2);
-    text-decoration: none;
-    &:hover { color: var(--brand-700); text-decoration: underline; }
-}
-.pub-footer-copy { color: var(--c-muted); }
 
 // -- Page content --------------------------------------------------------------
 .pub-narrow { max-width: 760px; margin-inline: auto; }
@@ -255,6 +328,15 @@
     span { display: block; font-family: $font-body; font-weight: 400; font-size: .8125rem; color: var(--c-muted); margin-top: .125rem; }
 }
 
+// Appointment request: grade, program and section under the category. A field
+// that does not apply to the category is hidden and the others fill the row.
+.pub-school .pub-subhead { margin: .25rem 0 .875rem; }
+.pub-school-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+}
+
 // The address picker lays its four selects 2 x 2 inside the narrow form column.
 .pub-form .address-picker-wrap {
     .col-lg-3 { @include media-breakpoint-up(lg) { width: 50%; } }
@@ -297,6 +379,33 @@
     &:hover { border-color: var(--c-border-strong); }
     &:has(.form-check-input:checked) { border-color: var(--brand-200); background: var(--brand-50); }
     &.is-invalid { border-color: tone("danger", 600); background: tone("danger", 50); }
+}
+.pub-consent-more {
+    margin: .625rem 0 0;
+    font-size: .875rem;
+    a { font-weight: 500; text-underline-offset: 3px; }
+}
+
+// "Online requests are closed": the clinic's phone and email as large tap targets.
+.pub-closed-contact {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem 1.5rem;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    a {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        min-height: 2.75rem;
+        font-family: $font-ui;
+        font-weight: 500;
+        text-decoration: none;
+        overflow-wrap: anywhere;
+        &:hover { text-decoration: underline; text-underline-offset: 3px; }
+    }
+    .c-icon { flex: none; color: var(--brand-600); }
 }
 
 // Submit row at the end of a form
