@@ -303,8 +303,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ── Chat ──────────────────────────────────────────────────────────────
-    function scrollBottom() { chat.scrollTop = chat.scrollHeight; }
-    scrollBottom();
+    // The page scrolls (not a box inside it), so new messages bring the window down.
+    function scrollBottom(smooth) {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: smooth && !reduceMotion ? 'smooth' : 'auto' });
+    }
+    if (chat.querySelector('.coco-row')) scrollBottom(false);
 
     function timeNow() {
         return new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -325,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!you) row.prepend(face.content.cloneNode(true));
         chat.appendChild(row);
         syncEmpty();
-        scrollBottom();
+        scrollBottom(true);
         return row;
     }
 
@@ -338,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
         row.innerHTML = '<div class="coco-msg"><div class="coco-bubble coco-typing"><span></span><span></span><span></span></div></div>';
         row.prepend(face.content.cloneNode(true));
         chat.appendChild(row);
-        scrollBottom();
+        scrollBottom(true);
         // Answers that need more thought can take a while: say so, calmly.
         typingTimer = setTimeout(function () {
             var bubble = row.querySelector('.coco-typing');
