@@ -1,28 +1,19 @@
 {{--
-    Common questions: an accordion of buttons (aria-expanded / aria-controls via
-    Bootstrap collapse). Several answers can be open at once. Expects: $page, $tinted.
+    Common questions: one white card of accordion buttons (aria-expanded /
+    aria-controls via Bootstrap collapse). Several answers can be open at once.
+    Expects: $page, $tinted.
 --}}
 @php $c = $page['contact']; @endphp
 <section id="faq" @class(['lp-section', 'is-tinted' => $tinted]) aria-labelledby="lp-faq-title">
-    <div class="lp-container lp-split">
-        <div class="lp-split-aside">
+    <div class="lp-container">
+        <header class="lp-section-head lp-reveal">
             <h2 class="lp-h2" id="lp-faq-title">Common questions</h2>
             @if ($page['intros']['faq'] !== '')
                 <p class="lp-lead">{{ $page['intros']['faq'] }}</p>
             @endif
-            @if ($c['phone'] !== '' || $c['email'] !== '')
-                <p class="lp-faq-help">
-                    Still have a question?
-                    @if ($c['phone'] !== '')
-                        Call <a href="tel:{{ preg_replace('/[^0-9+]/', '', $c['phone']) }}">{{ $c['phone'] }}</a>@if ($c['email'] !== '') or email <a href="mailto:{{ $c['email'] }}">{{ $c['email'] }}</a>@endif.
-                    @else
-                        Email <a href="mailto:{{ $c['email'] }}">{{ $c['email'] }}</a>.
-                    @endif
-                </p>
-            @endif
-        </div>
+        </header>
 
-        <div class="lp-faq lp-reveal">
+        <div class="lp-faq lp-card lp-reveal">
             @foreach ($page['faqs'] as $faq)
                 <div class="lp-faq-item">
                     <h3 class="lp-faq-q">
@@ -39,5 +30,16 @@
                 </div>
             @endforeach
         </div>
+
+        @if ($c['phone'] !== '' || $c['email'] !== '')
+            <p class="lp-faq-help lp-reveal">
+                Still have a question?
+                @if ($c['phone'] !== '')
+                    Call <a href="tel:{{ preg_replace('/[^0-9+]/', '', $c['phone']) }}">{{ $c['phone'] }}</a>@if ($c['email'] !== '') or email <a href="mailto:{{ $c['email'] }}">{{ $c['email'] }}</a>@endif.
+                @else
+                    Email <a href="mailto:{{ $c['email'] }}">{{ $c['email'] }}</a>.
+                @endif
+            </p>
+        @endif
     </div>
 </section>

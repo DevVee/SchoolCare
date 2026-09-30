@@ -88,7 +88,7 @@ class SettingsTest extends TestCase
 
         // Save the AI group with its checkbox unchecked.
         $this->actingAs($this->admin)
-            ->put(route('admin.settings.update', 'ai'), ['ai_model' => 'llama-3.3-70b-versatile'])
+            ->put(route('admin.settings.update', 'ai'), ['ai_model' => 'openai/gpt-oss-20b'])
             ->assertSessionHasNoErrors();
 
         $this->assertFalse(settings('ai_enabled'));
@@ -116,7 +116,7 @@ class SettingsTest extends TestCase
         $this->assertSame('School Health Hub', settings('app_name'));
         $this->assertSame(25, settings('records_per_page'));
         $this->assertDatabaseMissing('settings', ['key' => 'evil_key']);
-        $this->assertSame('llama-3.3-70b-versatile', settings('ai_model'));
+        $this->assertSame('openai/gpt-oss-120b', settings('ai_model'));
         $this->assertFalse(settings('sms_enabled'));
     }
 
@@ -199,7 +199,8 @@ class SettingsTest extends TestCase
 
         $this->assertSame('', settings('brand_logo'));
         Storage::disk('public')->assertMissing($second);
-        $this->assertSame('/schoolcare-icon.svg', settings()->imageUrl('brand_logo'));
+        $this->assertSame('/brand/logo.png', settings()->imageUrl('brand_logo'));
+        $this->assertFileExists(public_path('brand/logo.png'));
     }
 
     public function test_svg_logo_and_oversized_favicon_are_rejected(): void

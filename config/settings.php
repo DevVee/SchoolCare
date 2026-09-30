@@ -256,7 +256,7 @@ return [
             'description' => 'Logo, favicon and login page text.',
             'fields'      => [
                 'brand_logo' => [
-                    'type' => 'image', 'label' => 'School Logo', 'default' => '', 'fallback' => '/schoolcare-icon.svg',
+                    'type' => 'image', 'label' => 'School Logo', 'default' => '', 'fallback' => '/brand/logo.png',
                     'help' => 'PNG, JPG or WebP, up to 2 MB. Square images look best. Used everywhere: sidebar, top bar, login page, PDF reports and health cards. Leave empty to use the default SchoolCare mark.',
                     'rules' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
                 ],
@@ -271,7 +271,7 @@ return [
                     'rules' => ['boolean'],
                 ],
                 'brand_favicon' => [
-                    'type' => 'image', 'label' => 'Favicon', 'default' => '', 'fallback' => '/schoolcare-icon.svg', 'fallback_key' => 'brand_logo',
+                    'type' => 'image', 'label' => 'Favicon', 'default' => '', 'fallback' => '/brand/favicon-32.png', 'fallback_key' => 'brand_logo',
                     'help' => 'PNG or ICO, up to 256 KB. Shown in the browser tab.',
                     'rules' => ['nullable', 'file', 'mimes:png,ico', 'max:256'],
                 ],
@@ -580,24 +580,35 @@ return [
                     'rules' => ['boolean'],
                 ],
                 'ai_assistant_name' => [
-                    'type' => 'string', 'label' => 'Assistant Name', 'default' => 'Cobi',
+                    'type' => 'string', 'label' => 'Assistant Name', 'default' => 'Coco',
                     'help' => 'Name shown for the AI assistant in the menu and chat.',
                     'rules' => ['nullable', 'string', 'max:30'],
                 ],
+                // Groq chat models. A saved model that is no longer listed here
+                // falls back to the default at runtime (AiAssistantService::model).
                 'ai_model' => [
-                    'type' => 'select', 'label' => 'AI Model', 'default' => 'llama-3.3-70b-versatile',
+                    'type' => 'select', 'label' => 'AI Model', 'default' => 'openai/gpt-oss-120b',
                     'help' => 'Bigger models give better answers; smaller ones answer faster.',
                     'options' => [
-                        'llama-3.3-70b-versatile' => 'Llama 3.3 70B (best, recommended)',
-                        'openai/gpt-oss-120b'     => 'GPT-OSS 120B (strong reasoning)',
-                        'llama-3.1-8b-instant'    => 'Llama 3.1 8B (fastest)',
-                        'llama-3.1-70b-versatile' => 'Llama 3.1 70B',
-                        'llama3-70b-8192'         => 'Llama 3 70B',
-                        'llama3-8b-8192'          => 'Llama 3 8B',
-                        'gemma2-9b-it'            => 'Gemma 2 9B',
-                        'mixtral-8x7b-32768'      => 'Mixtral 8x7B',
+                        'openai/gpt-oss-120b' => 'GPT-OSS 120B (best answers, recommended)',
+                        'openai/gpt-oss-20b'  => 'GPT-OSS 20B (faster)',
+                        'qwen/qwen3.8-27b'    => 'Qwen 3.8 27B (fastest, cannot search the web)',
                     ],
                     'rules' => ['required', 'string', 'max:80'],
+                ],
+                // Stored encrypted (type 'secret'); never shown back on the page.
+                // Empty means the server's GROQ_API_KEY is used, if there is one.
+                'ai_groq_api_key' => [
+                    'type' => 'secret', 'label' => 'Groq API key', 'default' => '',
+                    'help' => 'From console.groq.com, under API Keys. It is saved encrypted and never shown again.',
+                    'rules' => ['nullable', 'string', 'max:200'],
+                ],
+                // Off by default: one search can read many pages and use a large part of
+                // Groq's free daily allowance (seen: about 190,000 tokens for one question).
+                'ai_web_search' => [
+                    'type' => 'boolean', 'label' => 'Let the assistant search the web', 'default' => false,
+                    'help' => 'Lets it look up news, advisories and other recent information. Searching uses far more of your Groq allowance, and on the free plan one or two searches can use up the day, so turn this on with a paid Groq plan. Works with the GPT-OSS models.',
+                    'rules' => ['boolean'],
                 ],
             ],
         ],

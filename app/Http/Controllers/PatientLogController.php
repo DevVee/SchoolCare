@@ -118,8 +118,8 @@ class PatientLogController extends Controller
     {
         $this->authorize('create-patient-logs');
 
+        // The patient is picked by search (x-ui.patient-picker, patients.lookup).
         return view('patient-logs.create', [
-            'patients'        => $this->patientOptions(),
             'medicines'       => $this->medicineOptions(),
             'selectedPatient' => $request->input('patient_id'),
         ]);
@@ -180,18 +180,11 @@ class PatientLogController extends Controller
     {
         $this->authorize('update-patient-logs');
 
+        // The picker keeps the current patient selected even if inactive / archived.
         $patientLog->load(['patient', 'dispensingRecords.medicine']);
-
-        $patients = $this->patientOptions();
-
-        // Keep the current patient selectable even if inactive / archived.
-        if (! $patients->contains('id', $patientLog->patient_id) && $patientLog->patient) {
-            $patients->prepend($patientLog->patient);
-        }
 
         return view('patient-logs.edit', [
             'patientLog' => $patientLog,
-            'patients'   => $patients,
             'medicines'  => $this->medicineOptions(),
         ]);
     }
@@ -267,15 +260,6 @@ class PatientLogController extends Controller
         } catch (\Throwable) {
             return null;
         }
-    }
-
-    private function patientOptions()
-    {
-        return Patient::active()
-            ->orderBy('last_name')
-            ->get(['id', 'first_name', 'last_name', 'middle_name', 'patient_number',
-                   'guardian_name', 'guardian_contact', 'category',
-                   'section', 'year_level', 'program_strand', 'deleted_at']);
     }
 
     /** Medicines that can be given now, with usable stock and next expiry (FEFO). */

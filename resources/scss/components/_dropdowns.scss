@@ -5,8 +5,12 @@
 // positioning transform is never overwritten.
 // =============================================================================
 
+// Menus are a light material floating over content (Apple): translucent + blur
 .dropdown-menu {
     box-shadow: var(--bs-dropdown-box-shadow);
+    background: var(--c-material-thick);
+    -webkit-backdrop-filter: var(--c-blur);
+    backdrop-filter: var(--c-blur);
     transform-origin: top left;
     &.show { animation: c-pop-in $dur-fast $ease-out; }
     &.dropdown-menu-end, &[data-popper-placement$="-end"] { transform-origin: top right; }
@@ -109,9 +113,10 @@ button.dropdown-item { cursor: pointer; }
     line-height: 1;
     -webkit-tap-highlight-color: transparent;
     transition: background-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
-    &:hover, &[aria-expanded="true"] { background: $gray-100; color: var(--c-ink); }
+    &:hover, &[aria-expanded="true"] { background: rgba(0, 0, 0, .05); color: var(--c-ink); }
     &:active { transform: scale($press-scale); }
 }
 @media (pointer: coarse), (max-width: 767.98px) {
     .btn-more { width: 2.75rem; height: 2.75rem; }
 }
+.btn-more { border-radius: 50%; }

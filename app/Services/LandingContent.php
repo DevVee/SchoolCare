@@ -151,7 +151,7 @@ class LandingContent
 
         return [
             'names'    => $names,
-            'logo'     => $this->settings->imageUrl('brand_logo', '/schoolcare-icon.svg'),
+            'logo'     => $this->settings->imageUrl('brand_logo'),
             'sections' => $sections,
             'nav'      => $nav,
             'links'    => $links,

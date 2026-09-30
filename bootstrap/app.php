@@ -34,6 +34,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // Secret settings are never flashed back into the session on a validation error.
+        $exceptions->dontFlash(['ai_groq_api_key']);
+
         // ── 419 CSRF TokenMismatch: log + graceful recovery ───────────────────
         //
         // Root causes:

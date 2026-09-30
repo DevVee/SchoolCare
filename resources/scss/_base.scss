@@ -9,14 +9,18 @@ body {
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     font-feature-settings: "kern";
+    font-optical-sizing: auto;
+    letter-spacing: -.011em;   // Inter at text sizes wants a touch of negative tracking
 }
 
-// Headings, numbers and UI labels use Figtree (tracking -0.01 to -0.02em)
-h1, h2, h3, h4, h5, h6,
-.h1, .h2, .h3, .h4, .h5, .h6 { letter-spacing: -.02em; }
-h5, h6, .h5, .h6 { letter-spacing: -.01em; }
-.form-label, .nav-link, .dropdown-item, .badge, .breadcrumb, th { font-family: $font-ui; }
-.small, small { line-height: 1.45; }
+// Tracking is size-specific (Apple typography): tighter as type grows, near 0 when small.
+h1, .h1 { letter-spacing: -.028em; line-height: 1.1; }
+h2, .h2 { letter-spacing: -.024em; }
+h3, .h3, h4, .h4 { letter-spacing: -.018em; }
+h5, h6, .h5, .h6 { letter-spacing: -.012em; }
+h1, h2, h3, .h1, .h2, .h3 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
+.small, small { line-height: 1.45; letter-spacing: -.004em; }
 
 // Visible, consistent keyboard focus (3px ring; mouse clicks do not show it)
 :focus-visible {
@@ -60,7 +64,7 @@ a:focus-visible { border-radius: 4px; }
     font-size: .75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .04em;
+    letter-spacing: .1em;   // small caps want positive tracking
     color: var(--c-muted);
 }
 
@@ -120,8 +124,16 @@ a:focus-visible { border-radius: 4px; }
     :root {
         --c-border: #{$gray-400};
         --c-border-strong: #{$gray-500};
+        --c-hairline: #{$gray-500};
         --c-muted: #{$gray-600};
         --c-input-border: #{$gray-500};
+        --c-material: #fff;
+        --c-material-thick: #fff;
     }
-    .card, .dropdown-menu, .modal-content, .toast { border-color: $gray-500 !important; }
+    .card, .stat-tile, .dropdown-menu, .modal-content, .toast { border-color: $gray-500 !important; }
+}
+
+// Reduced transparency: translucent chrome turns solid (no blur)
+@media (prefers-reduced-transparency: reduce) {
+    :root { --c-material: #fff; --c-material-thick: #fff; --c-blur: none; }
 }

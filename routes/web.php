@@ -119,6 +119,9 @@ Route::middleware(['auth', 'check.active', 'password.changed'])->group(function 
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/brief', \App\Http\Controllers\DashboardBriefController::class)
+         ->name('dashboard.brief')
+         ->middleware('throttle:20,1');
 
     // ─── Profile ──────────────────────────────────────────────────────────────
     Route::get('/profile',              [ProfileController::class, 'edit'])->name('profile.edit');
@@ -155,6 +158,10 @@ Route::middleware(['auth', 'check.active', 'password.changed'])->group(function 
     // Static patient routes are declared BEFORE the resource so they are not
     // captured by patients/{patient}. Permissions are checked in the controllers.
     Route::prefix('patients')->name('patients.')->group(function () {
+        // Type-to-search for patient pickers (JSON; x-ui.patient-picker)
+        Route::get('lookup', \App\Http\Controllers\PatientLookupController::class)->name('lookup')
+             ->middleware('throttle:240,1');
+
         // Import (.xlsx / .csv): upload -> preview -> confirm
         Route::get('import',           [\App\Http\Controllers\PatientImportController::class, 'create'])->name('import.create');
         Route::get('import/template',  [\App\Http\Controllers\PatientImportController::class, 'template'])->name('import.template');
@@ -312,6 +319,10 @@ Route::middleware(['auth', 'check.active', 'password.changed'])->group(function 
     Route::prefix('ai-assistant')->name('ai-assistant.')->group(function () {
         Route::get('/',      [AiAssistantController::class, 'index'])->name('index');
         Route::delete('/clear', [AiAssistantController::class, 'clear'])->name('clear');
+        // One question and its answer (own conversations only, checked in the controller).
+        Route::delete('/{conversation}', [AiAssistantController::class, 'destroy'])
+             ->whereNumber('conversation')
+             ->name('destroy');
 
         // HIGH-3 FIX: Limit AI chat to 30 messages/minute to protect Groq API quota.
         Route::post('/chat', [AiAssistantController::class, 'chat'])

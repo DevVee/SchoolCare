@@ -33,7 +33,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@hasSection('document_title')@yield('document_title')@else{{ $pageTitle !== '' ? $pageTitle.' | ' : '' }}{{ $clinicName }}@endif</title>
-    <link rel="icon" href="{{ settings()->imageUrl('brand_favicon') }}">
+    @include('layouts.partials.favicons')
 
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
     <x-ui.brand-style />
@@ -48,7 +48,7 @@
     <header class="pub-top">
         <div class="pub-container pub-top-inner">
             <a href="{{ url('/') }}" class="pub-brand">
-                <img src="{{ settings()->imageUrl('brand_logo', '/schoolcare-icon.svg') }}" alt="" width="40" height="40" class="pub-brand-logo">
+                <img src="{{ settings()->imageUrl('brand_logo') }}" alt="" width="40" height="40" class="pub-brand-logo">
                 <span class="pub-brand-text">
                     <span class="pub-brand-name">{{ $clinicName }}</span>
                     @if ($orgName !== '')<span class="pub-brand-sub">{{ $orgName }}</span>@endif

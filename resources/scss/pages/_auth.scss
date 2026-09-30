@@ -1,69 +1,165 @@
 // =============================================================================
 // Auth pages (layouts/guest.blade.php + resources/views/auth/*).
-// Desktop (>= 992px): form column 45% + photo panel 55% (Settings > Branding >
-// login_image) under a solid dark overlay, text bottom-left in white. Without a
-// photo: solid brand-700 with a faint logo watermark. Phones: form only.
-// 48px inputs and buttons. No decorative gradients (only a subtle dark scrim
-// behind the panel text for legibility).
+// Apple-style sign-in: a calm #F5F5F7 canvas with a faint engineering grid,
+// one centered white card (20px, hairline ring, layered shadow) that
+// materializes on load (fade, 8px rise, .98 -> 1 scale; a plain fade under
+// reduced motion). 48px inputs with a brand focus ring, a full-width capsule
+// primary button with the brand shadow, quiet secondary links.
+// With a sign-in photo (login_image) the card grows a photo pane on desktop.
 // =============================================================================
 
-.auth-body { background: #fff; }
+$auth-card-w: 27.5rem;   // 440px
+
+.auth-body { background: var(--c-canvas); }
 
 .auth-shell {
+    position: relative;
+    isolation: isolate;
     min-height: 100vh;
     min-height: 100dvh;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    @include media-breakpoint-up(lg) { grid-template-columns: minmax(0, 45fr) minmax(0, 55fr); }
-}
-
-// ─── Form column ────────────────────────────────────────────────────────────
-.auth-main {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh;
-    padding: 2rem 1.25rem 1.25rem;
-    @include media-breakpoint-up(sm) { padding: 2.5rem 2.5rem 1.5rem; }
+    overflow-x: clip;
 }
-.auth-center {
+
+// Faint grid, strongest behind the card's top edge and faded out by a mask
+.auth-grid {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+        linear-gradient(to right, rgba(0, 0, 0, .045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 0, 0, .045) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: center -1px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 15%, transparent 72%);
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 15%, transparent 72%);
+}
+
+.auth-main {
     flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 1.75rem;
+    padding: 2.5rem 1rem 1.5rem;
+    outline: none;
+    @include media-breakpoint-up(sm) { padding: 4rem 1.5rem 2rem; }
 }
-.auth-block { width: 100%; max-width: 25rem; }
+
+// ─── The card ───────────────────────────────────────────────────────────────
+.auth-card {
+    position: relative;
+    width: 100%;
+    max-width: $auth-card-w;
+    background: var(--c-surface);
+    border-radius: $radius-xl;
+    box-shadow:
+        0 0 0 1px var(--c-hairline),
+        0 2px 4px rgba(0, 0, 0, .02),
+        0 28px 70px -24px rgba(0, 0, 0, .22);
+    animation: auth-materialize 640ms $ease-out both;
+
+    &.has-photo {
+        @include media-breakpoint-up(lg) {
+            max-width: 64rem;
+            display: grid;
+            grid-template-columns: minmax(0, $auth-card-w) minmax(0, 1fr);
+        }
+    }
+}
+@keyframes auth-materialize {
+    from { opacity: 0; transform: translateY(8px) scale(.98); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes auth-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.auth-block {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 2rem 1.25rem 1.5rem;
+    @include media-breakpoint-up(sm) { padding: 2.75rem 2.5rem 2.25rem; }
+    > .alert, > .alert-c { margin-bottom: 1.25rem !important; }
+}
+
+// Logo lockup (x-ui.logo), centered on top of the card
 .auth-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: center;
+    gap: .75rem;
     max-width: 100%;
-    margin-bottom: 2rem;
-    .c-logo-mark { width: 44px; height: 44px; border-radius: $radius-md; }
-    .c-logo-name { font-size: 1.0625rem; color: var(--brand-900, #1E3A8A); }
-    .c-logo-sub { font-size: .8125rem; }
+    margin: 0 0 1.75rem;
+    text-align: center;
+    .c-logo-mark { width: 52px; height: 52px; }
+    // The built-in mark has its own rounded corners; only uploaded logos get a frame
+    .c-logo-mark:not(.c-logo-mark-default) { border-radius: 24%; }
+    .c-logo-text { align-items: center; }
+    .c-logo-name { font-size: 1rem; font-weight: 650; letter-spacing: -.015em; color: var(--c-ink); }
+    .c-logo-sub { font-size: .8125rem; color: var(--c-muted); }
 }
+
 .auth-title {
     font-family: $font-display;
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -.02em;
-    line-height: 1.2;
+    font-size: clamp(1.875rem, 1.55rem + 1.1vw, 2.25rem);
+    font-weight: 680;
+    letter-spacing: -.038em;
+    line-height: 1.06;
     color: var(--c-ink);
-    margin: 0 0 .375rem;
+    text-align: center;
+    text-wrap: balance;
+    margin: 0 0 .625rem;
 }
 .auth-lead {
-    font-size: .9375rem;
-    color: var(--c-ink-2);
-    margin: 0 0 1.75rem;
+    align-self: center;
+    max-width: 34ch;
+    margin: 0 0 2rem;
+    font-size: 1rem;
+    line-height: 1.45;
+    letter-spacing: -.012em;
+    color: var(--c-muted);
+    text-align: center;
+    text-wrap: balance;
 }
+
+// ─── Form ───────────────────────────────────────────────────────────────────
 .auth-form {
     display: flex;
     flex-direction: column;
     gap: 1.125rem;
     .c-field { margin: 0; }
+    .form-label {
+        font-size: .8125rem;
+        font-weight: 600;
+        color: var(--c-ink);
+    }
+    .form-control {
+        border-radius: $radius-sm;
+        border-color: var(--c-input-border);
+        font-size: 1rem;
+        letter-spacing: -.011em;
+        &:focus {
+            border-color: var(--brand-600);
+            box-shadow: 0 0 0 4px rgba(var(--brand-rgb), .16);
+        }
+        &.is-invalid { border-color: tone("danger", 600); }
+        &.is-invalid:focus { box-shadow: 0 0 0 4px rgba(var(--c-danger-rgb), .14); }
+    }
     .form-control:not(textarea) { min-height: 3rem; }
-    .input-icon > .form-control { padding-left: 2.625rem; }
-    .input-icon > .c-icon { left: .875rem; font-size: 1.0625rem; }
-    .btn { min-height: 3rem; font-size: 1rem; }
-    .c-check { margin: 0; }
+    .input-icon > .form-control { padding-left: 2.75rem; }
+    .input-icon > .c-icon { left: 1rem; font-size: 1.0625rem; }
+    .invalid-feedback { margin-top: .375rem; }
+    .c-check { margin: .125rem 0 0; }
+    .btn {
+        min-height: 3rem;
+        font-size: 1.0625rem;
+        font-weight: 600;
+    }
+    .btn-primary { margin-top: .375rem; }
 }
 .auth-label-row {
     display: flex;
@@ -75,9 +171,10 @@
 .auth-link {
     font-size: .875rem;
     font-weight: 500;
-    color: var(--brand-700);
+    color: var(--brand-600);
     text-decoration: none;
-    &:hover { text-decoration: underline; color: var(--brand-700); }
+    text-underline-offset: 3px;
+    &:hover { color: var(--brand-700); text-decoration: underline; }
 }
 .auth-back {
     display: inline-flex;
@@ -85,21 +182,24 @@
     gap: .375rem;
     align-self: center;
     min-height: 2.75rem;
+    color: var(--c-ink-2);
+    .c-icon { transition: transform $dur-base $ease-out; }
+    &:hover { color: var(--brand-700); }
+    &:hover .c-icon { transform: translateX(-2px); }
 }
 .auth-note {
     display: flex;
     align-items: flex-start;
+    justify-content: center;
     gap: .5rem;
-    margin: 1.5rem 0 0;
-    font-size: .875rem;
-    color: var(--c-muted);
-    .c-icon { margin-top: .1875rem; flex-shrink: 0; }
-}
-.auth-footer {
-    margin: 1.5rem 0 0;
-    text-align: center;
+    margin: 1.75rem 0 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--c-hairline);
     font-size: .8125rem;
+    line-height: 1.45;
     color: var(--c-muted);
+    text-align: left;
+    .c-icon { margin-top: .125rem; flex-shrink: 0; color: var(--c-faint); }
 }
 
 // Password with show / hide (auth/partials/password.blade.php)
@@ -107,127 +207,174 @@
     > .form-control { padding-right: 3.25rem; }
     .password-toggle {
         position: absolute;
-        right: .25rem;
+        right: .3125rem;
         top: 50%;
         transform: translateY(-50%);
-        width: 2.75rem;
-        height: 2.75rem;
+        width: 2.5rem;
+        height: 2.5rem;
         border: 0;
-        border-radius: $radius-sm;
+        border-radius: 50%;
         background: transparent;
         color: var(--c-muted);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         z-index: 5;
-        transition: background-color $dur-fast ease-out, color $dur-fast ease-out;
+        -webkit-tap-highlight-color: transparent;
+        transition: background-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
         &:hover { background: var(--c-surface-2); color: var(--c-ink); }
+        &:active { transform: translateY(-50%) scale($press-scale); }
         &:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .35); }
+        &[aria-pressed="true"] { color: var(--brand-600); }
     }
     > .form-control.is-invalid { background-image: none; }
 }
 
-// ─── Photo panel (lg and up) ────────────────────────────────────────────────
+// ─── Under the card: hours (live dot), phone, email, quote, copyright ──────
+.auth-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .875rem;
+    width: 100%;
+    max-width: 40rem;
+    text-align: center;
+    font-size: .8125rem;
+    color: var(--c-muted);
+    animation: auth-fade 700ms 180ms ease-out both;
+}
+.auth-info {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .25rem 1.25rem;
+    li { display: inline-flex; align-items: center; gap: .5rem; min-height: 1.75rem; }
+    .c-icon { color: var(--c-faint); }
+    a {
+        color: var(--c-ink-2);
+        text-decoration: none;
+        text-underline-offset: 3px;
+        overflow-wrap: anywhere;
+        &:hover { color: var(--brand-700); text-decoration: underline; }
+    }
+}
+.auth-dot {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    width: .4375rem;
+    height: .4375rem;
+    border-radius: 50%;
+    background: var(--c-faint);
+    &.is-open {
+        background: var(--brand-600);
+        &::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: inherit;
+            animation: auth-live 2.2s cubic-bezier(0, 0, .2, 1) infinite;
+        }
+    }
+}
+@keyframes auth-live {
+    0%        { transform: scale(1);   opacity: .55; }
+    80%, 100% { transform: scale(2.6); opacity: 0; }
+}
+.auth-quote {
+    margin: 0;
+    max-width: 30rem;
+    blockquote { margin: 0; font-size: .875rem; line-height: 1.5; color: var(--c-ink-2); text-wrap: balance; }
+    figcaption { margin-top: .25rem; font-size: .8125rem; color: var(--c-muted); }
+}
+.auth-footer { margin: 0; font-size: .75rem; color: var(--c-muted); }
+
+// ─── Photo pane (login_image, desktop only) ─────────────────────────────────
 .auth-aside {
     display: none;
     @include media-breakpoint-up(lg) {
         display: flex;
         align-items: flex-end;
-        position: sticky;
-        top: 0;
-        height: 100vh;
-        height: 100dvh;
+        position: relative;
+        isolation: isolate;
+        min-height: 36rem;
+        margin: .5rem;
         overflow: hidden;
+        border-radius: calc(#{$radius-xl} - .375rem);
         color: #fff;
-        background: var(--brand-700);
+        background: var(--c-surface-2);
     }
 }
 .auth-photo {
     position: absolute;
     inset: 0;
+    z-index: -2;
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-.auth-watermark {
-    position: absolute;
-    right: -6rem;
-    top: 50%;
-    width: 35rem;
-    height: 35rem;
-    transform: translateY(-50%);
-    object-fit: contain;
-    opacity: .08;
-    filter: grayscale(1) brightness(3);
-    pointer-events: none;
-}
 .auth-overlay {
     position: absolute;
     inset: 0;
+    z-index: -1;
     pointer-events: none;
-    .has-photo & {
-        // Solid dark layer + light brand tint, and a subtle dark scrim behind the text
-        background:
-            linear-gradient(to top, rgba(15, 23, 42, .55), rgba(15, 23, 42, 0) 55%),
-            rgba(var(--brand-rgb), .16);
-        box-shadow: inset 0 0 0 100vmax rgba(15, 23, 42, .45);
-    }
+    // One colour: a dark scrim under the text, clear at the top of the photo
+    background: linear-gradient(to top, rgba(0, 0, 0, .62), rgba(0, 0, 0, 0) 58%);
 }
 .auth-aside-content {
-    position: relative;
     width: 100%;
-    max-width: 40rem;
-    padding: 3rem;
-    @include media-breakpoint-up(xl) { padding: 3.5rem 4rem; }
+    padding: 2rem 2.25rem;
 }
-.auth-aside-id { display: flex; align-items: center; gap: 1rem; }
+.auth-aside-id { display: flex; align-items: center; gap: .875rem; }
 .auth-aside-logo {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     flex-shrink: 0;
     object-fit: contain;
-    border-radius: $radius-md;
-    background: #fff;
-    padding: 3px;
+    // An uploaded logo sits on a white tile over the photo; the built-in mark
+    // (public/brand/logo.png) is already a rounded tile, so it gets no frame.
+    &:not([src*="/brand/logo.png"]) {
+        border-radius: 24%;
+        background: #fff;
+        padding: 3px;
+    }
 }
 .auth-aside-title {
     font-family: $font-display;
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -.015em;
-    line-height: 1.2;
+    font-size: 1.5rem;
+    font-weight: 660;
+    letter-spacing: -.028em;
+    line-height: 1.15;
     margin: 0;
     color: #fff;
 }
-.auth-aside-org { font-size: 1rem; margin: .25rem 0 0; color: rgba(255, 255, 255, .9); }
-.auth-aside-text {
-    font-size: 1.0625rem;
-    line-height: 1.55;
-    margin: 1.25rem 0 0;
-    max-width: 34rem;
-    color: rgba(255, 255, 255, .92);
-}
-.auth-aside-info {
-    list-style: none;
-    padding: 0;
-    margin: 1.25rem 0 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem 1.5rem;
-    font-size: .9375rem;
-    color: rgba(255, 255, 255, .92);
-    li { display: inline-flex; align-items: center; gap: .5rem; }
-    .c-icon { opacity: .85; }
-}
+.auth-aside-org { font-size: .9375rem; margin: .125rem 0 0; color: rgba(255, 255, 255, .88); }
 .auth-aside-quote {
-    margin: 1.75rem 0 0;
-    padding-top: 1.25rem;
-    border-top: 1px solid rgba(255, 255, 255, .25);
-    max-width: 34rem;
-    blockquote { margin: 0 0 .375rem; font-size: .9375rem; line-height: 1.55; color: #fff; }
+    margin: 1.5rem 0 0;
+    padding-top: 1.125rem;
+    border-top: 1px solid rgba(255, 255, 255, .28);
+    max-width: 32rem;
+    blockquote { margin: 0 0 .375rem; font-size: 1rem; line-height: 1.5; color: #fff; letter-spacing: -.014em; }
     figcaption { font-size: .8125rem; color: rgba(255, 255, 255, .85); }
 }
 
+// ─── Accessibility ──────────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+    .auth-card { animation-name: auth-fade; animation-duration: 300ms; }
+    .auth-dot.is-open::after { animation: none; }
+    .password-field .password-toggle:active { transform: translateY(-50%); }
+    .auth-back:hover .c-icon { transform: none; }
+}
 @media (prefers-contrast: more) {
-    .has-photo .auth-overlay { box-shadow: inset 0 0 0 100vmax rgba(15, 23, 42, .7); }
+    .auth-grid { display: none; }
+    .auth-card { box-shadow: 0 0 0 1px var(--c-border-strong); }
+    .auth-overlay { background: rgba(0, 0, 0, .7); }
+}
+@media print {
+    .auth-grid, .auth-aside { display: none !important; }
+    .auth-card, .auth-meta { animation: none; box-shadow: none; }
 }

@@ -67,6 +67,49 @@ class Patient extends Model
         return self::categoryLabels()[$this->category] ?? ucfirst($this->category);
     }
 
+    /**
+     * Where the patient belongs in school: course or strand, year or grade, section
+     * ("BSN, 2nd Year, A", "Grade 7, Rizal"). Staff and visitors, or students with
+     * no school details on record, get their category ("Teacher", "Visitor").
+     */
+    public function getPlacementAttribute(): string
+    {
+        $school = collect([$this->program_strand, $this->year_level, $this->section])
+            ->map(fn ($v) => trim((string) $v))
+            ->filter()
+            ->implode(', ');
+
+        return $school !== '' ? $school : $this->category_label;
+    }
+
+    /** Columns toPickerItem() reads (keeps search queries lean). */
+    public const PICKER_COLUMNS = [
+        'id', 'patient_number', 'student_id', 'category',
+        'first_name', 'middle_name', 'last_name', 'suffix',
+        'year_level', 'program_strand', 'section',
+        'guardian_name', 'guardian_contact', 'is_active', 'deleted_at',
+    ];
+
+    /**
+     * One entry for the patient picker (x-ui.patient-picker, route patients.lookup):
+     * label / detail / meta are what the picker shows; the rest is for page scripts
+     * (guardian line and SMS preview on the visit form).
+     */
+    public function toPickerItem(): array
+    {
+        $status = $this->trashed() ? 'archived' : (! $this->is_active ? 'inactive' : null);
+
+        return [
+            'id'               => $this->id,
+            'label'            => $this->full_name,
+            'detail'           => $this->placement,
+            'meta'             => $this->patient_number.($status ? ", {$status}" : ''),
+            'first_name'       => $this->first_name,
+            'guardian_name'    => $this->guardian_name,
+            'guardian_contact' => $this->guardian_contact,
+        ];
+    }
+
     // ─── Relationships ────────────────────────────────────────────────────────
 
     public function createdBy(): BelongsTo

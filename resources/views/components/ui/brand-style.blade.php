@@ -1,6 +1,6 @@
 {{--
     x-ui.brand-style: put in <head> AFTER @vite(...) in every layout.
-      1. Loads the UI fonts (Figtree + Noto Sans, display=swap).
+      1. Loads the UI font (Inter variable with optical sizing, display=swap).
       2. When settings('brand_primary_color') is a valid #RRGGBB that differs
          from the compiled default (#2563EB), emits :root overrides for the
          --brand-50 ... --brand-950 scale, --brand-rgb and --brand-contrast.
@@ -30,7 +30,7 @@
 @if ($fonts)
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Noto+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..700;1,14..32,400&display=swap">
 @endif
 @if ($brandVars)
 <style id="brand-style">:root{@foreach ($brandVars as $var => $value){{ $var }}:{{ $value }};@endforeach}</style>

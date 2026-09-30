@@ -1,35 +1,57 @@
 // =============================================================================
 // Page header: breadcrumbs / back link, title, description, actions.
-// `.page-header` is also used by ~30 legacy views (with d-flex utilities or a
-// bare <h1 class="page-title">); the rules below work for both.
+// Owner: every page opens with a card on top (title + one line). So the header
+// is a white card with a faint engineering grid fading in from the top right,
+// the same top card as the dashboard hero. `.page-header` is also used by a few
+// legacy views (d-flex utilities or a bare <h1 class="page-title">); the rules
+// below work for both.
 // =============================================================================
 
 .page-header {
+    position: relative;
+    isolation: isolate;   // no overflow clipping: action dropdowns must escape the card
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: flex-end;
     justify-content: space-between;
-    gap: .75rem 1rem;
+    gap: 1rem 1.5rem;
     margin-bottom: 1.5rem;
+    padding: 1.5rem 1.75rem;
+    background: var(--c-surface);
+    border: 1px solid var(--c-hairline);
+    border-radius: $radius-xl;
+    box-shadow: var(--c-shadow-card);
 
     > :first-child { min-width: 0; }
     .page-header-main { flex: 1 1 18rem; min-width: 0; }
+    // Actions sit on the title's baseline row, not floating at the top
+    .page-actions { margin-bottom: .125rem; }
+
+    @include media-breakpoint-down(sm) {
+        padding: 1.125rem 1.125rem 1.25rem;
+        border-radius: $radius-lg;
+        margin-bottom: 1rem;
+    }
 }
 .page-title {
     font-family: $font-display;
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -.02em;
-    line-height: 1.2;
+    font-size: 1.625rem;
+    font-weight: 680;
+    letter-spacing: -.03em;
+    line-height: 1.1;
     color: var(--c-ink);
     margin: 0;
-    @include media-breakpoint-up(lg) { font-size: 1.75rem; }
+    text-wrap: balance;
+    @include media-breakpoint-up(lg) { font-size: 2rem; }
 }
 .page-subtitle {
-    font-size: .9375rem;
-    color: var(--c-ink-2);
-    margin: .375rem 0 0;
+    font-size: 1rem;
+    line-height: 1.45;
+    letter-spacing: -.012em;
+    color: var(--c-muted);
+    margin: .5rem 0 0;
     max-width: 60rem;
+    text-wrap: pretty;
 }
 .page-header-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .625rem; }
 .page-actions {

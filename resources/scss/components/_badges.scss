@@ -7,24 +7,22 @@
 // =============================================================================
 
 .badge {
-    letter-spacing: .01em;
+    letter-spacing: 0;
     line-height: 1.2;
     vertical-align: middle;
-    // Legacy `badge rounded-pill` / `btn rounded-pill`: owner wants 4px tags and
-    // 6px buttons, never pills (fully round is for avatars and dots only).
-    &.rounded-pill { border-radius: $radius-xs !important; }
 }
-.btn.rounded-pill { border-radius: $radius-sm !important; }
 
+// Status pills are capsules (ServiceCo chips)
 .pill {
     display: inline-flex;
     align-items: center;
     gap: .375rem;
-    padding: .125rem .5rem;
-    border-radius: $radius-xs;
+    padding: .125rem .625rem;
+    border-radius: $border-radius-pill;
     font-family: $font-ui;
     font-size: .8125rem;
-    font-weight: 600;
+    font-weight: 560;
+    letter-spacing: -.004em;
     line-height: 1.25rem;
     white-space: nowrap;
     vertical-align: middle;
@@ -80,8 +78,8 @@ $pill-bs-aliases: ("primary": "brand", "secondary": "neutral", "light": "neutral
     justify-content: center;
     min-width: 1.25rem;
     height: 1.25rem;
-    padding: 0 .3125rem;
-    border-radius: $radius-xs;
+    padding: 0 .375rem;
+    border-radius: $border-radius-pill;
     background: $gray-100;
     color: $gray-600;
     font-family: $font-ui;

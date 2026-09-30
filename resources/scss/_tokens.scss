@@ -26,17 +26,17 @@ $brand-800: #1E40AF;
 $brand-900: #1E3A8A;
 $brand-950: #172554;
 
-// -- Neutrals: slate -----------------------------------------------------------
-$gray-50:  #F8FAFC;
-$gray-100: #F1F5F9;
-$gray-200: #E2E8F0;
-$gray-300: #CBD5E1;
-$gray-400: #94A3B8;
-$gray-500: #64748B;   // muted text, 4.76:1 on white (never lighter for text)
-$gray-600: #475569;   // secondary text
-$gray-700: #334155;
-$gray-800: #1E293B;
-$gray-900: #0F172A;
+// -- Neutrals: Apple system grays (neutral, no blue cast) -----------------------
+$gray-50:  #F5F5F7;   // canvas / quiet tiles
+$gray-100: #EDEDF0;   // hover fills
+$gray-200: #E5E5EA;   // hairlines
+$gray-300: #D1D1D6;   // input borders
+$gray-400: #AEAEB2;   // icons / decoration only, never text
+$gray-500: #6E6E73;   // muted text, 5.07:1 on white, 4.6:1 on the canvas
+$gray-600: #515154;   // secondary text
+$gray-700: #3A3A3C;
+$gray-800: #2C2C2E;
+$gray-900: #1D1D1F;   // ink
 
 // -- Tones ---------------------------------------------------------------------
 // 50 tint bg · 100 icon square / hover · 200 border · 600 solid / icon ·
@@ -88,15 +88,15 @@ $dur-press:  100ms;
 $dur-fast:   150ms;
 $dur-base:   200ms;
 $dur-slow:   250ms;
+$dur-lift:   300ms;   // hover lift on cards (slower than a press, so it reads as weight)
 $press-scale: .97;
 
 // -- Fonts ---------------------------------------------------------------------
-// Figtree (headings, numbers, UI labels) + Noto Sans (body). Inter / Poppins stay
-// as fallbacks so pages keep their current look until layouts load the new
-// families (<x-ui.brand-style /> outputs the Google Fonts link).
-$font-ui:      "Figtree", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-$font-body:    "Noto Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-$font-display: "Figtree", "Poppins", "Inter", system-ui, sans-serif;
+// One family: Inter (variable, optical sizing), the closest web face to Apple's
+// SF. <x-ui.brand-style /> loads it; system fonts cover the gap while it loads.
+$font-ui:      "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+$font-body:    $font-ui;
+$font-display: $font-ui;
 
 // =============================================================================
 // Bootstrap variable overrides
@@ -144,7 +144,7 @@ $body-secondary-bg:     $gray-100;
 $body-tertiary-bg:      $gray-50;
 $text-muted:            $gray-500;
 $border-color:          $gray-200;
-$border-color-translucent: rgba(15, 23, 42, .1);
+$border-color-translucent: rgba(0, 0, 0, .08);
 $link-color:            $brand-600;
 $link-hover-color:      $brand-700;
 $link-decoration:       none;
@@ -159,8 +159,8 @@ $font-size-sm:     .875rem;    // 14px
 $font-size-lg:     1.125rem;
 $line-height-base: 1.5;
 $line-height-sm:   1.45;
-$headings-font-weight: 700;
-$headings-line-height: 1.2;
+$headings-font-weight: 650;
+$headings-line-height: 1.15;
 $h1-font-size: 1.875rem;
 $h2-font-size: 1.5rem;
 $h3-font-size: 1.25rem;
@@ -173,25 +173,27 @@ $font-sizes: (
 );
 $small-font-size: .875rem;
 
-// -- Radii (owner: "reduce border radius, we need it professional") -----------
-// 4 badges/tags/checkboxes · 6 buttons/inputs/selects/nav items/dropdown items/
-// action buttons · 8 cards/dropdown menus/toasts/alerts · 10 modals/offcanvas.
-// Fully round ONLY for avatars and status dots. No pill buttons / nav items.
-$radius-xs: .25rem;    // 4
-$radius-sm: .375rem;   // 6
-$radius-md: .5rem;     // 8
-$radius-lg: .625rem;   // 10
+// -- Radii (owner, round 2: "a little roundness like ServiceCo") ---------------
+// 6 checkboxes/tooltips · 10 inputs/selects/nav items/menu items · 12 tiles
+// inside cards, menus, toasts, alerts · 16 cards · 20 modals, sheets, hero.
+// Capsules (fully round): buttons, badges, status pills, avatars, dots.
+$radius-xs: .375rem;   // 6
+$radius-sm: .625rem;   // 10
+$radius-md: .75rem;    // 12
+$radius-lg: 1rem;      // 16
+$radius-xl: 1.25rem;   // 20
 $border-radius-sm:   $radius-xs;
 $border-radius:      $radius-sm;
-$border-radius-lg:   $radius-md;
-$border-radius-xl:   $radius-lg;
-$border-radius-xxl:  $radius-lg;
-$border-radius-pill: 50rem;       // avatars / dots only
+$border-radius-lg:   $radius-lg;
+$border-radius-xl:   $radius-xl;
+$border-radius-xxl:  $radius-xl;
+$border-radius-pill: 50rem;
 
-// -- Shadows: minimal ----------------------------------------------------------
-$box-shadow-sm: 0 1px 2px rgba(15, 23, 42, .05);
-$box-shadow:    0 1px 3px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
-$box-shadow-lg: 0 10px 30px rgba(15, 23, 42, .10);
+// -- Shadows: ServiceCo layering (a tight contact shadow + a long soft fall) ----
+$hairline:      rgba(0, 0, 0, .06);
+$box-shadow-sm: 0 1px 2px rgba(0, 0, 0, .04);
+$box-shadow:    0 2px 4px rgba(0, 0, 0, .02), 0 12px 32px -20px rgba(0, 0, 0, .22);
+$box-shadow-lg: 0 2px 4px rgba(0, 0, 0, .02), 0 28px 70px -18px rgba(0, 0, 0, .2);
 
 // -- Focus: visible 3px ring ---------------------------------------------------
 $focus-ring-width:   3px;
@@ -249,15 +251,15 @@ $form-switch-focus-color:               $brand-300;
 
 // -- Buttons: radius 6, 40px desktop (44px on touch) ---------------------------
 $btn-font-family:      $font-ui;
-$btn-font-weight:      600;
+$btn-font-weight:      560;
 $btn-font-size:        .9375rem;
-$btn-padding-x:        1rem;
+$btn-padding-x:        1.125rem;
 $btn-padding-y:        .5rem;
 $btn-border-width:     1px;
-$btn-border-radius:    $radius-sm;
-$btn-border-radius-sm: $radius-sm;
-$btn-border-radius-lg: $radius-sm;
-$btn-padding-x-sm:     .75rem;
+$btn-border-radius:    $border-radius-pill;   // capsules, as on ServiceCo
+$btn-border-radius-sm: $border-radius-pill;
+$btn-border-radius-lg: $border-radius-pill;
+$btn-padding-x-sm:     .875rem;
 $btn-padding-y-sm:     .3125rem;
 $btn-font-size-sm:     .875rem;
 $btn-padding-x-lg:     1.375rem;
@@ -267,16 +269,16 @@ $btn-disabled-opacity: .5;
 $btn-box-shadow:       none;
 $btn-transition:       color $dur-fast ease-out, background-color $dur-fast ease-out, border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
 
-// -- Cards: 1px border, radius 8, very soft shadow ----------------------------
-$card-border-radius:  $radius-md;
+// -- Cards: radius 16, hairline ring, layered soft shadow ---------------------
+$card-border-radius:  $radius-lg;
 $card-border-width:   1px;
-$card-border-color:   $gray-200;
+$card-border-color:   $hairline;
 $card-spacer-x:       1.25rem;
 $card-spacer-y:       1.25rem;
 $card-cap-bg:         #fff;
 $card-cap-padding-x:  1.25rem;
-$card-cap-padding-y:  .875rem;
-$card-box-shadow:     $box-shadow-sm;
+$card-cap-padding-y:  1rem;
+$card-box-shadow:     $box-shadow;
 
 // -- Tables --------------------------------------------------------------------
 $table-cell-padding-x:    1rem;
@@ -295,19 +297,19 @@ $badge-font-size:     .75rem;
 $badge-font-weight:   600;
 $badge-padding-y:     .3em;
 $badge-padding-x:     .6em;
-$badge-border-radius: $radius-xs;
+$badge-border-radius: $border-radius-pill;
 
-// -- Modals: radius 10, scrim ----------------------------------------------------
+// -- Modals: radius 20, dimming scrim ----------------------------------------------
 $modal-inner-padding:            1.25rem 1.5rem;
-$modal-header-padding:           1rem 1.5rem;
-$modal-content-border-radius:    $radius-lg;
-$modal-content-border-color:     $gray-200;
-$modal-content-box-shadow-xs:    0 20px 50px rgba(15, 23, 42, .18);
+$modal-header-padding:           1.125rem 1.5rem;
+$modal-content-border-radius:    $radius-xl;
+$modal-content-border-color:     $hairline;
+$modal-content-box-shadow-xs:    0 2px 4px rgba(0, 0, 0, .02), 0 40px 90px -24px rgba(0, 0, 0, .4);
 $modal-content-box-shadow-sm-up: $modal-content-box-shadow-xs;
-$modal-header-border-color:      $gray-200;
-$modal-footer-border-color:      $gray-200;
-$modal-backdrop-bg:              $gray-900;
-$modal-backdrop-opacity:         .45;
+$modal-header-border-color:      $hairline;
+$modal-footer-border-color:      $hairline;
+$modal-backdrop-bg:              #000;
+$modal-backdrop-opacity:         .32;
 $modal-sm: 440px;
 $modal-md: 520px;
 $modal-lg: 640px;
@@ -317,7 +319,7 @@ $modal-transition:     transform $dur-slow $ease-out;
 
 // -- Dropdowns -----------------------------------------------------------------
 $dropdown-border-width:   1px;
-$dropdown-border-color:   $gray-200;
+$dropdown-border-color:   $hairline;
 $dropdown-border-radius:  $radius-md;
 $dropdown-font-size:      .9375rem;
 $dropdown-padding-y:      .375rem;
@@ -325,7 +327,7 @@ $dropdown-padding-x:      .375rem;
 $dropdown-item-padding-y: .5rem;
 $dropdown-item-padding-x: .75rem;
 $dropdown-min-width:      11rem;
-$dropdown-box-shadow:     0 10px 30px rgba(15, 23, 42, .12);
+$dropdown-box-shadow:     0 2px 4px rgba(0, 0, 0, .03), 0 22px 48px -14px rgba(0, 0, 0, .25);
 $dropdown-link-color:        $gray-800;
 $dropdown-link-hover-color:  $gray-900;
 $dropdown-link-hover-bg:     $gray-100;
@@ -351,7 +353,7 @@ $pagination-font-size:      .875rem;
 $pagination-color:          $gray-700;
 $pagination-bg:             transparent;
 $pagination-border-width:   0;
-$pagination-border-radius:  $radius-sm;
+$pagination-border-radius:  $border-radius-pill;
 $pagination-hover-bg:       $gray-100;
 $pagination-hover-color:    $gray-900;
 $pagination-active-bg:      $brand-600;
@@ -365,14 +367,14 @@ $toast-max-width:     380px;
 $toast-padding-x:     .875rem;
 $toast-padding-y:     .75rem;
 $toast-font-size:     .9375rem;
-$toast-border-radius: $radius-md;
-$toast-box-shadow:    0 10px 30px rgba(15, 23, 42, .12);
+$toast-border-radius: $radius-lg;
+$toast-box-shadow:    0 2px 4px rgba(0, 0, 0, .03), 0 22px 48px -14px rgba(0, 0, 0, .25);
 $toast-spacing:       .5rem;
 
 // -- Offcanvas (mobile sidebar drawer) -------------------------------------------
 $offcanvas-horizontal-width:    280px;
-$offcanvas-backdrop-bg:         $gray-900;
-$offcanvas-backdrop-opacity:    .45;
+$offcanvas-backdrop-bg:         #000;
+$offcanvas-backdrop-opacity:    .32;
 $offcanvas-transition-duration: $dur-slow;
 $offcanvas-border-width:        0;
 

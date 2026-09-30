@@ -3,9 +3,12 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -325,8 +328,26 @@ class SettingsService
             'integer'   => (string) (int) $value,
             'json_list' => json_encode($this->toList($value), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             'options'   => json_encode((object) $this->toOptions($value), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            // API keys and the like: stored encrypted with the app key, '' when not set.
+            'secret'    => trim((string) $value) === '' ? '' : Crypt::encryptString(trim((string) $value)),
             default     => $value === null ? '' : (string) $value,
         };
+    }
+
+    /** A secret setting in plain text, or '' when unset or unreadable (e.g. the app key changed). */
+    private function decrypt(?string $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (DecryptException) {
+            Log::warning('A secret setting could not be decrypted (was APP_KEY changed?).');
+
+            return '';
+        }
     }
 
     /** Parse a list value: array, JSON array string, or newline-separated text. */
@@ -434,6 +455,7 @@ class SettingsService
             'integer'   => is_numeric($value) ? (int) $value : (int) ($def['default'] ?? 0),
             'json_list' => $this->toList($value ?? '[]'),
             'options'   => $this->toOptions($value ?? '{}', is_array($def['default'] ?? null) ? $def['default'] : []),
+            'secret'    => $this->decrypt($value),
             default     => $value ?? '',
         };
     }
@@ -470,6 +492,7 @@ class SettingsService
             'integer'             => 'integer',
             'json_list', 'options' => 'json',
             'text'                => 'text',
+            'secret'              => 'encrypted',
             default               => 'string',
         };
     }

@@ -1,7 +1,7 @@
 {{--
-    x-ui.hero: dashboard banner. Royal-blue band with a subtle same-hue diagonal gradient derived
-    from the runtime brand colour and one soft circle at the right (the ONLY gradient in the app).
-    Live date and time line (updates every second, pauses while the tab is hidden).
+    x-ui.hero: the dashboard's top card. White, a faint grid from the top right, a big headline
+    whose words rise into place (ui/life.js), and a live date and time line with a breathing dot
+    (updates every second, pauses while the tab is hidden).
 
     <x-ui.hero subtitle="Clinic visits, patients and stock at a glance.">
         <x-slot:actions>
@@ -14,7 +14,10 @@
     subtitle: one line
     clock:    show the live date/time line (default true)
     timezone: default settings('timezone') then config('app.timezone')
-    Buttons:  variant="hero" (white, brand text) and variant="hero-outline" (white 40% border).
+    Buttons:  variant="hero" (primary) and variant="hero-outline" (secondary).
+    Default slot: content under the headline (the dashboard puts the Ask Coco box here).
+    aside slot:   a right-hand column (xl and up; stacks below): the dashboard's brief. With an
+                  aside, the actions move to the top row beside the clock.
 --}}
 @props([
     'title' => null,
@@ -35,17 +38,33 @@
     $first = $name ?? (auth()->check() ? \Illuminate\Support\Str::of(auth()->user()->name)->explode(' ')->first() : null);
     $heading = $title ?? ('Good '.$part.($first ? ', '.$first : ''));
 @endphp
-<section {{ $attributes->class('c-hero') }}>
+@php $split = isset($aside); @endphp
+<section {{ $attributes->class(['c-hero', 'c-hero-split' => $split]) }}>
+    <span class="c-grid-backdrop" aria-hidden="true"></span>
     <div class="c-hero-text">
-        @if ($clock)
-            <p class="c-hero-clock" data-live-clock data-timezone="{{ $tz }}">
-                <time datetime="{{ $now->toIso8601String() }}">{{ $now->format('l, F j, Y') }} &middot; {{ $now->format('g:i:s A') }}</time>
-            </p>
+        @if ($clock || ($split && isset($actions)))
+            <div class="c-hero-top">
+                @if ($clock)
+                    <p class="c-hero-clock" data-live-clock data-timezone="{{ $tz }}">
+                        <span class="c-live" aria-hidden="true"></span>
+                        <time datetime="{{ $now->toIso8601String() }}">{{ $now->format('l, F j, Y') }} &middot; {{ $now->format('g:i:s A') }}</time>
+                    </p>
+                @endif
+                @if ($split && isset($actions))
+                    <div class="c-hero-actions">{{ $actions }}</div>
+                @endif
+            </div>
         @endif
-        <h1 class="c-hero-title">{{ $heading }}</h1>
+        <h1 class="c-hero-title" data-words>{{ $heading }}</h1>
         @if ($subtitle)<p class="c-hero-subtitle">{{ $subtitle }}</p>@endif
+        @if (trim($slot) !== '')
+            <div class="c-hero-body">{{ $slot }}</div>
+        @endif
     </div>
-    @isset($actions)
+    @if (! $split && isset($actions))
         <div class="c-hero-actions">{{ $actions }}</div>
-    @endisset
+    @endif
+    @if ($split)
+        <div class="c-hero-aside">{{ $aside }}</div>
+    @endif
 </section>

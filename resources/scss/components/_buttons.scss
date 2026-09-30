@@ -1,6 +1,7 @@
 // =============================================================================
-// Buttons: radius 6, 40px (44px on touch), semibold Figtree, solid colours.
-// Press feedback: :active scale(.97) over 100ms ease-out. No gradients, no glow.
+// Buttons (ServiceCo): capsules, 40px (44px on touch), Inter 560, solid colours.
+// Primary carries a soft brand-coloured shadow that deepens on hover.
+// Press feedback on pointer-down: :active scale(.97) over 100ms ease-out.
 // Primary / outline / link colours are wired to --brand-* in _brand-runtime.
 // =============================================================================
 
@@ -11,7 +12,7 @@
     gap: .5rem;
     white-space: nowrap;
     min-height: 2.5rem;
-    letter-spacing: -.005em;
+    letter-spacing: -.01em;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
 
@@ -21,7 +22,20 @@
     // Legacy views put `me-1 / me-2` on the icon; the flex gap already spaces it
     > .bi.me-1, > .bi.me-2 { margin-right: 0 !important; }
 }
+
+// Primary (and the brand-family solids): a soft shadow in the button's own colour
+.btn-primary, .btn-success, .btn-info, .btn-warning {
+    box-shadow: var(--c-shadow-brand);
+    &:hover { box-shadow: var(--c-shadow-brand-hover); }
+    &:disabled, &.disabled { box-shadow: none; }
+}
+.btn-danger {
+    box-shadow: 0 8px 20px -10px rgba(var(--c-danger-rgb), .7);
+    &:disabled, &.disabled { box-shadow: none; }
+}
 .btn.d-block, .btn.w-100 { justify-content: center; }
+// Joined to an input: take the input's corners, not a capsule end
+.input-group > .btn { --bs-btn-border-radius: #{$radius-sm}; }
 
 .btn-sm {
     min-height: 2rem;
@@ -35,7 +49,7 @@
     --bs-btn-padding-y: .1875rem;
     --bs-btn-padding-x: .5rem;
     --bs-btn-font-size: .8125rem;
-    --bs-btn-border-radius: #{$border-radius};
+    --bs-btn-border-radius: #{$border-radius-pill};
     min-height: 1.75rem;
     gap: .25rem;
     .c-icon, > .bi { font-size: .8125rem; }
@@ -103,11 +117,11 @@
     &:hover { text-decoration: underline; }
 }
 
-// -- Row action icon buttons: tinted square, solid on hover ------------------------
+// -- Row action icon buttons: plain glyph, a round quiet fill on hover -------------
 .btn-action {
     width: 2.125rem;
     height: 2.125rem;
-    border-radius: $border-radius;
+    border-radius: 50%;
     border: 0;
     padding: 0;
     display: inline-flex;
@@ -123,7 +137,7 @@
     &:hover:not(:disabled) { text-decoration: none; }
     &:active:not(:disabled) { transform: scale($press-scale); }
     &:disabled, &.disabled { opacity: .45; pointer-events: none; }
-    &.btn-action-sm { width: 1.875rem; height: 1.875rem; font-size: .875rem; border-radius: $border-radius; }
+    &.btn-action-sm { width: 1.875rem; height: 1.875rem; font-size: .875rem; }
 }
 $action-tones: (
     "view": "brand", "edit": "info", "delete": "danger", "approve": "success",

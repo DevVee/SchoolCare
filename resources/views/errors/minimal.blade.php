@@ -17,10 +17,9 @@
     $appName = (string) $get('app_name', config('app.name'));
     $orgName = trim((string) $get('org_name', ''));
     try {
-        $favicon = settings()->imageUrl('brand_favicon') ?: '/schoolcare-icon.svg';
-        $mark = settings()->imageUrl('brand_logo') ?: '/schoolcare-icon.svg';
+        $mark = settings()->imageUrl('brand_logo') ?: '/brand/logo.png';
     } catch (\Throwable $e) {
-        $favicon = $mark = '/schoolcare-icon.svg';
+        $mark = '/brand/logo.png';
     }
     try {
         $styles = app(\Illuminate\Foundation\Vite::class)(['resources/scss/app.scss'])->toHtml();
@@ -38,7 +37,7 @@
     <meta name="robots" content="noindex">
     @yield('head')
     <title>@yield('title') | {{ $appName }}</title>
-    <link rel="icon" href="{{ $favicon }}">
+    @include('layouts.partials.favicons')
     {!! $styles !!}
     @php
         try { echo \Illuminate\Support\Facades\Blade::render('<x-ui.brand-style />'); } catch (\Throwable $e) {}

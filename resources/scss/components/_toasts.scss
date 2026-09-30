@@ -26,9 +26,10 @@
     position: relative;
     overflow: hidden;
     padding: .75rem .625rem .75rem .875rem;
-    background: #fff;
-    border: 1px solid var(--c-border);
-    border-left-width: 4px;
+    background: var(--c-material-thick);
+    -webkit-backdrop-filter: var(--c-blur);
+    backdrop-filter: var(--c-blur);
+    border: 1px solid var(--c-hairline);
     border-radius: $border-radius-lg;
     box-shadow: var(--c-shadow-dropdown);
     color: var(--c-ink);
@@ -58,7 +59,6 @@
 $toast-map: ("success": "success", "error": "danger", "danger": "danger", "warning": "warning", "info": "info");
 @each $k, $tn in $toast-map {
     .c-toasts .toast-#{$k} {
-        border-left-color: tone($tn, 600);
         .toast-icon, .toast-progress { color: tone($tn, 600); }
     }
 }

@@ -11,10 +11,12 @@
 
     <title>@yield('title', 'Dashboard') | {{ settings('app_name') }}</title>
 
-    <link rel="icon" href="{{ settings()->imageUrl('brand_favicon') }}">
+    @include('layouts.partials.favicons')
 
     {{-- Apply the remembered collapsed sidebar before first paint (no flash) --}}
     <script>try{if(localStorage.getItem('schoolcare.sidebar')==='collapsed'){document.documentElement.classList.add('sidebar-collapsed')}}catch(e){}</script>
+    {{-- Cards wait for resources/js/ui/life.js to reveal them (a CSS safety net shows them anyway) --}}
+    <script>if('IntersectionObserver' in window&&'animate' in document.documentElement){document.documentElement.classList.add('js-reveal')}</script>
 
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
     <x-ui.brand-style />

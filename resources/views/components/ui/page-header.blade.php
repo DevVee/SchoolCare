@@ -34,6 +34,7 @@
     }
 @endphp
 <header {{ $attributes->class('page-header') }}>
+    <span class="c-grid-backdrop" aria-hidden="true"></span>
     <div class="page-header-main">
         @if (count($crumbs))
             <nav aria-label="Breadcrumb">

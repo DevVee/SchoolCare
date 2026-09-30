@@ -12,6 +12,9 @@
     &:hover { color: var(--c-ink); text-decoration: none; }
 
     .c-logo-mark { flex-shrink: 0; border-radius: $radius-sm; object-fit: contain; }
+    // The built-in mark (public/brand/logo.png) already has rounded corners and a transparent
+    // surround: no extra clipping from the sidebar or auth radius. Uploaded logos keep theirs.
+    img.c-logo-mark.c-logo-mark-default { border-radius: 0; }
     .c-logo-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
     .c-logo-name {
         font-family: $font-display;
