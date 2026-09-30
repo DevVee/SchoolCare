@@ -39,7 +39,7 @@ Every layout that renders app pages needs these (the shell phase adds them to `l
   module, so it runs after the HTML is parsed: inline page scripts must wrap Bootstrap calls in
   `DOMContentLoaded` (module scripts run before that event).
 * Product naming: never hardcode a product or school name. Use `settings('app_name')`, `app_short_name`,
-  `app_tagline`, `org_name` (hide when empty), `org_short_name`, `settings()->imageUrl('brand_logo', '/schoolcare-icon.svg')`,
+  `app_tagline`, `org_name` (hide when empty), `org_short_name`, `settings()->imageUrl('brand_logo')` (built-in default: `public/brand/logo.png`),
   `settings()->imageUrl('school_logo', '')`, `header_title`, `topbar_show_school`, `ai_assistant_name`, or simply `<x-ui.logo>`.
 
 ## 2. Tokens
@@ -428,7 +428,7 @@ auth split-screen classes are kept and flattened (no gradients, glows or dot gri
 
 * No em or en dashes in UI copy (use a comma, colon, parentheses or "to"). No gradients (the dashboard `x-ui.hero` is the one
   exception), glows, dot grids, pulsing dots or emoji.
-* One accent: brand blue. Violet only as the small Cobi AI icon tone. Red means danger or error, never a plain count or a role.
+* One accent: brand blue. Violet only as the small Coco AI icon tone (tone key `cobi`). Red means danger or error, never a plain count or a role.
 * Row actions: `x-ui.action-menu` only. Never a row of coloured icon buttons.
 * Summary numbers: `x-ui.stat-cards` / `x-ui.stat-card` (or the `x-ui.stat-strip` shortcut).
 * Colour with purpose: module tones on icons and chips only (sidebar icons, stat strip, widget headers, empty states).

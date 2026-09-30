@@ -1,10 +1,12 @@
 // =============================================================================
-// Cards: 1px slate border, radius 12, very soft shadow. Radius / border /
-// padding come from Bootstrap variables ($card-*), so legacy `.card` markup
-// adopts them. `c-card-*` classes belong to x-ui.card.
+// Cards (ServiceCo): white, radius 16, a hairline ring and a layered soft
+// shadow. Headers flow into the body with no rule under them; a hairline only
+// separates a header from a flush table or list. Radius / border / padding come
+// from Bootstrap variables ($card-*), so legacy `.card` markup adopts them.
+// `c-card-*` classes belong to x-ui.card.
 // =============================================================================
 
-.card { box-shadow: $card-box-shadow; }
+.card { box-shadow: var(--c-shadow-card); }
 
 // Legacy card chrome (kept for un-migrated views)
 .card-header {
@@ -22,13 +24,16 @@
     justify-content: space-between;
     gap: .75rem;
     flex-wrap: wrap;
-    border-bottom: 1px solid var(--c-border);
+    padding-top: 1.125rem;
+    border-bottom: 1px solid var(--c-hairline);
 }
+// Padded body: the header needs no rule, spacing does the separating
+.card:not(.card-flush) > .c-card-header { border-bottom-color: transparent; padding-bottom: 0; }
 .card-heading {
     font-family: $font-ui;
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: -.01em;
+    font-size: 1.0625rem;
+    font-weight: 650;
+    letter-spacing: -.018em;
     line-height: 1.3;
     color: var(--c-ink);
     margin: 0;
@@ -36,7 +41,7 @@
 .card-description {
     font-size: .875rem;
     color: var(--c-muted);
-    margin: .125rem 0 0;
+    margin: .1875rem 0 0;
 }
 .card-actions {
     display: flex;
@@ -63,33 +68,34 @@
     .card-body-md, .card-body-lg { padding: 1rem; }
 }
 .c-card-footer {
-    background: $gray-50;
-    padding: .75rem 1.25rem;
+    background: var(--c-surface);
+    padding: .875rem 1.25rem;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: .5rem;
-    border-top: 1px solid var(--c-border);
+    border-top: 1px solid var(--c-hairline);
 }
 .card-flat  { box-shadow: none; }
-// Quiet card: an empty panel that should not compete for attention
+// Quiet card: an empty panel that should not compete for attention (a gray tile)
 .card-quiet {
     box-shadow: none;
     background: var(--c-surface-2);
-    border-color: var(--c-border);
+    border-color: transparent;
     color: var(--c-ink-2);
     .c-card-header { background: transparent; border-bottom-color: transparent; padding-bottom: 0; }
     .card-heading { font-size: .9375rem; color: var(--c-ink-2); }
 }
 .card-flush { overflow: hidden; }
+// Link cards lift toward the pointer and press back down (the spotlight is in _life.scss)
 .card-interactive {
     text-decoration: none;
     color: inherit;
     -webkit-tap-highlight-color: transparent;
-    transition: border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
-    &:hover { color: inherit; text-decoration: none; border-color: var(--c-border-strong); box-shadow: var(--c-shadow-elevated); }
-    &:active { transform: scale($press-scale); }
+    transition: box-shadow $dur-lift $ease-out, transform $dur-lift $ease-out;
+    &:hover { color: inherit; text-decoration: none; box-shadow: var(--c-shadow-elevated); transform: translateY(-2px); }
+    &:active { transform: translateY(0) scale(.985); transition-duration: $dur-press; }
 }
 
 // Section heading used inside cards / pages
@@ -99,7 +105,7 @@
     justify-content: space-between;
     gap: .75rem;
     margin-bottom: 1rem;
-    .section-heading-title { font-family: $font-ui; font-size: 1rem; font-weight: 700; letter-spacing: -.01em; color: var(--c-ink); margin: 0; }
+    .section-heading-title { font-family: $font-ui; font-size: 1.0625rem; font-weight: 650; letter-spacing: -.018em; color: var(--c-ink); margin: 0; }
     .section-heading-desc  { font-size: .875rem; color: var(--c-muted); margin: .125rem 0 0; }
 }
 

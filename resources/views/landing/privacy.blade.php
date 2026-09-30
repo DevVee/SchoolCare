@@ -18,7 +18,7 @@
     <section class="lp-section" aria-labelledby="lp-privacy-title">
         <div class="lp-container">
             <article class="lp-doc">
-                <a href="{{ url('/') }}" class="lp-link mb-3"><x-ui.icon name="arrow-left" /> Back to the home page</a>
+                <a href="{{ url('/') }}" class="lp-link"><x-ui.icon name="chevron-left" />Back to the home page</a>
                 <h1 id="lp-privacy-title">Privacy notice</h1>
                 <p class="lp-lead">How the {{ $page['names']['clinic'] }}{{ $page['names']['school'] !== '' ? ' of '.$page['names']['school'] : '' }} handles your health information.</p>
                 <div class="lp-doc-body">

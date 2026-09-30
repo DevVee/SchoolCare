@@ -16,6 +16,9 @@ import './ui/shell';     // sidebar collapse rail, topbar search, greeting
 import './ui/session';   // CSRF refresh + session keep-alive (signed-in layout only)
 import './ui/password-toggle'; // [data-password-toggle] show / hide password
 import './ui/list-editor'; // [data-list-editor] friendly editor for one-per-line settings
+import './ui/combobox';  // [data-combobox] type-to-search pickers (x-ui.patient-picker)
+import './ui/life';      // reveal on scroll, count up, pointer spotlight, word rise
+import './ui/brief';     // dashboard: Coco's brief of what is happening today
 
 window.axios = axios;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';

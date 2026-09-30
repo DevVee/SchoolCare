@@ -9,6 +9,8 @@
         <meta property="og:image" content="{{ $page['hero']['image']['url'] }}">
     @endif
     <meta name="theme-color" content="#FFFFFF">
+    {{-- Lets the hero headline wait for its word rise (landing.js); without JS nothing is hidden. --}}
+    <script>document.documentElement.classList.add('lp-js');</script>
     @vite('resources/scss/landing.scss')
 @endpush
 

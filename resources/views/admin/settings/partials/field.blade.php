@@ -21,6 +21,7 @@
         'boolean' => (bool) $settings->get($key),
         'json_list', 'options' => $settings->toText($key),
         'image' => (string) $settings->get($key, ''),
+        'secret' => '', // never put a stored secret on the page
         default => (string) $settings->get($key, ''),
     };
 
@@ -93,6 +94,30 @@
                           @class(['form-control', 'is-invalid' => $hasErr]) spellcheck="false"
                           @if ($hasErr) aria-invalid="true" aria-describedby="{{ $id }}-error" @endif>{{ $listText }}</textarea>
             </div>
+        </x-ui.field>
+    </div>
+
+@elseif ($type === 'secret')
+    {{-- Write-only: shows whether a value is saved and its last 4 characters, never the value. --}}
+    @php
+        $saved = (string) $settings->get($key, '');
+        $tail = $saved !== '' ? mb_substr($saved, -4) : '';
+        unset($saved);
+    @endphp
+    <div class="{{ $col }}">
+        <x-ui.field :label="$label" :name="$key" :for="$id" :help="$help">
+            <p class="fs-sm mb-2 {{ $tail !== '' ? 'text-ink-2' : 'text-muted' }}" id="{{ $id }}-state">
+                {{ $tail !== '' ? 'Set, ends in ...'.$tail.'. Type a new key to replace it.' : 'Not set.' }}
+            </p>
+            <input type="password" name="{{ $key }}" id="{{ $id }}" value="" autocomplete="new-password" spellcheck="false"
+                   @class(['form-control', 'is-invalid' => $hasErr]) placeholder="{{ $tail !== '' ? 'Leave empty to keep the saved key' : 'Paste the key' }}"
+                   @if ($max) maxlength="{{ $max }}" @endif
+                   aria-describedby="{{ $id }}-state{{ $hasErr ? ' '.$id.'-error' : '' }}" @if ($hasErr) aria-invalid="true" @endif>
+            @if ($tail !== '')
+                <div class="mt-2">
+                    <x-ui.checkbox :name="'remove_'.$key" :id="$id.'_remove'" label="Remove the saved key" />
+                </div>
+            @endif
         </x-ui.field>
     </div>
 

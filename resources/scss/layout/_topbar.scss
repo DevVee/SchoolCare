@@ -15,14 +15,16 @@
     align-items: center;
     gap: .75rem;
     padding: 0 1rem;
-    // Owner round 3: white bar with a bottom hairline, matching the sidebar header
-    background: #fff;
-    border-bottom: 1px solid var(--c-border);
+    // Apple material: translucent white over the page, content scrolls under it.
+    // The hairline only appears once content actually passes beneath (ui/scroll-edge.js).
+    background: var(--c-material);
+    -webkit-backdrop-filter: var(--c-blur);
+    backdrop-filter: var(--c-blur);
+    border-bottom: 1px solid transparent;
     @include media-breakpoint-up(sm) { padding: 0 1.5rem; }
 
-    // Soft shadow once content scrolls under it (ui/scroll-edge.js)
-    transition: box-shadow $dur-base ease-out;
-    &.is-scrolled { box-shadow: 0 1px 3px rgba(15, 23, 42, .06); }
+    transition: border-color $dur-base ease-out, box-shadow $dur-base ease-out;
+    &.is-scrolled { border-bottom-color: var(--c-hairline); box-shadow: 0 8px 24px -20px rgba(0, 0, 0, .3); }
 
     @media (prefers-contrast: more) { border-bottom-color: $gray-500; }
 
@@ -87,7 +89,7 @@
     .btn-topbar {
         width: 2.25rem;
         height: 2.25rem;
-        border-radius: $border-radius;
+        border-radius: 50%;
         border: 0;
         background: transparent;
         color: var(--c-ink-2);
@@ -100,7 +102,7 @@
         text-decoration: none;
         -webkit-tap-highlight-color: transparent;
         transition: background-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
-        &:hover, &[aria-expanded="true"] { background: var(--c-surface-2); color: var(--c-ink); }
+        &:hover, &[aria-expanded="true"] { background: rgba(0, 0, 0, .05); color: var(--c-ink); }
         &:active { transform: scale($press-scale); }
         .count {
             position: absolute;
@@ -109,7 +111,7 @@
             min-width: 1.125rem;
             height: 1.125rem;
             padding: 0 .3125rem;
-            border-radius: $radius-xs;
+            border-radius: $border-radius-pill;
             background: tone("danger", 600);
             color: #fff;
             font-family: $font-ui;
@@ -136,10 +138,11 @@
         @include media-breakpoint-up(xl) { width: 300px; }
         .form-control { width: 100%; }
         .topbar-search-close { display: none; }
-        .form-control { min-height: 2.25rem; height: 2.25rem; border-radius: $border-radius; padding-left: 2.25rem; font-size: .9375rem; background: var(--c-surface-2); border-color: transparent; }
+        .form-control { min-height: 2.25rem; height: 2.25rem; border-radius: $border-radius-pill; padding-left: 2.25rem; font-size: .9375rem; background: rgba(0, 0, 0, .045); border-color: transparent; transition: background-color $dur-fast ease-out, box-shadow $dur-fast ease-out; }
+        .form-control:hover { background: rgba(0, 0, 0, .06); }
         .form-control:focus { background: #fff; border-color: var(--brand-600); }
         > .c-icon, > .bi { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); font-size: .9375rem; color: var(--c-muted); pointer-events: none; }
-        kbd { position: absolute; right: .5rem; top: 50%; transform: translateY(-50%); font-size: .75rem; background: #fff; color: var(--c-ink-2); border: 1px solid var(--c-border); box-shadow: none; padding: 1px 6px; border-radius: $border-radius-sm; }
+        kbd { position: absolute; right: .625rem; top: 50%; transform: translateY(-50%); font-size: .75rem; background: #fff; color: var(--c-ink-2); border: 1px solid var(--c-hairline); box-shadow: none; padding: 1px 6px; border-radius: $border-radius-sm; }
     }
 
     // Clinic status: static dot (no pulsing "live" indicator)
@@ -160,24 +163,25 @@
         time { font-weight: 700; color: var(--c-ink); font-variant-numeric: tabular-nums; }
     }
 
-    // Ask Cobi: quiet secondary button with a small brand icon (no gradient)
+    // Ask Cobi: a quiet capsule with a small brand glyph (no gradient)
     .btn-cobi-pill {
         display: inline-flex;
         align-items: center;
         gap: .4rem;
         height: 2.25rem;
-        padding: 0 .875rem;
-        border-radius: $border-radius;
-        border: 1px solid var(--c-border-strong);
+        padding: 0 1rem;
+        border-radius: $border-radius-pill;
+        border: 1px solid var(--c-hairline);
         background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
         color: var(--c-ink);
         font-family: $font-ui;
         font-size: .875rem;
-        font-weight: 600;
+        font-weight: 560;
         text-decoration: none;
-        transition: background-color $dur-fast ease-out, border-color $dur-fast ease-out, transform $dur-press ease-out;
+        transition: background-color $dur-fast ease-out, border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
         .c-icon, .bi { color: tone("cobi", 600); }
-        &:hover { background: var(--c-surface-2); color: var(--c-ink); }
+        &:hover { border-color: rgba(var(--brand-rgb), .3); box-shadow: 0 6px 16px -10px rgba(var(--brand-rgb), .6); color: var(--c-ink); }
         &:active { transform: scale($press-scale); }
     }
 
@@ -190,7 +194,7 @@
         width: auto;
         gap: .5rem;
         padding: 0 .5rem 0 1rem;
-        background: #fff;
+        background: var(--c-material-thick);
         > .c-icon { left: 1.75rem; }
         .topbar-search-close { display: inline-flex; }
     }
@@ -209,7 +213,7 @@
         align-items: center;
         gap: .625rem;
         padding: 4px 8px 4px 4px;
-        border-radius: $radius-sm;
+        border-radius: $border-radius-pill;
         border: 0;
         background: transparent;
         text-align: left;

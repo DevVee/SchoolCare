@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Concerns\SavesSettingsGroup;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSettingsRequest;
+use App\Services\AiAssistantService;
 use App\Services\SettingsService;
 use App\Services\SmsService;
 use Illuminate\Http\RedirectResponse;
@@ -148,7 +149,11 @@ class SettingsController extends Controller
             ],
             'email' => $this->mailStatus(),
             'ai' => [
-                'api_key_configured' => filled(config('services.groq.api_key')),
+                'api_key_configured' => AiAssistantService::apiKey() !== '',
+                'api_key_source'     => AiAssistantService::apiKeySource(), // 'settings', 'server' or null
+                // The model actually used (a retired saved model falls back to the default).
+                'model'              => app(AiAssistantService::class)->model(),
+                'web_search'         => app(AiAssistantService::class)->webSearchEnabled(),
             ],
             default => [],
         };

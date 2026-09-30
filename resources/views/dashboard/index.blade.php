@@ -24,6 +24,18 @@
         return config('ui.module_meta.'.$key) ? $key : 'admin';
     };
 
+    // AI welcome (ServiceCo): the Ask box and Coco's brief replace the plain welcome when the assistant is on.
+    $aiName  = trim((string) settings('ai_assistant_name')) ?: 'Coco';
+    $showAi  = filter_var(settings('ai_enabled', true), FILTER_VALIDATE_BOOLEAN)
+        && $user->can('use-ai-assistant') && Route::has('ai-assistant.index');
+    $showBrief = $showAi && Route::has('dashboard.brief');
+    $starters = array_values(array_filter([
+        'What needs attention today?',
+        $canMeds ? 'Which medicines should we reorder?' : null,
+        $canLogs ? 'Summarise this week\'s visits' : null,
+        'Write a notice to parents',
+    ]));
+
     $showAppts = $canAppts;
     $showTrend = $trend !== null;
     $bottom    = array_filter(['reasons' => $canLogs, 'stock' => $canMeds, 'activity' => $canAudit]);
@@ -32,17 +44,27 @@
 
 @section('content')
 
-<x-ui.hero subtitle="Clinic visits, appointments and inventory at a glance." class="mb-4">
+<x-ui.hero :subtitle="$showAi ? 'Ask '.$aiName.' anything, or start from what is happening today.' : 'Clinic visits, appointments and inventory at a glance.'" class="mb-4">
     @canany(['create-patient-logs', 'view-appointments'])
     <x-slot:actions>
         @can('create-patient-logs')
-            <x-ui.button variant="hero" icon="journal-plus" :href="route('patient-logs.create')">Log a visit</x-ui.button>
+            <x-ui.button variant="hero" :size="$showBrief ? 'sm' : null" icon="journal-plus" :href="route('patient-logs.create')">Log a visit</x-ui.button>
         @endcan
         @can('view-appointments')
-            <x-ui.button variant="hero-outline" icon="calendar-check" :href="route('appointments.index')">Appointments</x-ui.button>
+            <x-ui.button variant="hero-outline" :size="$showBrief ? 'sm' : null" icon="calendar-check" :href="route('appointments.index')">Appointments</x-ui.button>
         @endcan
     </x-slot:actions>
     @endcanany
+
+    @if($showAi)
+        @include('dashboard.partials.ask', ['aiName' => $aiName, 'starters' => $starters])
+    @endif
+
+    @if($showBrief)
+        <x-slot:aside>
+            @include('dashboard.partials.brief', ['aiName' => $aiName])
+        </x-slot:aside>
+    @endif
 </x-ui.hero>
 
 @php

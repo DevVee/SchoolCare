@@ -56,6 +56,16 @@ trait SavesSettingsGroup
                     }
                     break;
 
+                case 'secret':
+                    // The form never shows the stored value: an empty box keeps it,
+                    // a typed value replaces it, and "remove" clears it.
+                    if ($request->boolean("remove_{$key}")) {
+                        $values[$key] = '';
+                    } elseif (trim((string) $request->input($key)) !== '') {
+                        $values[$key] = trim((string) $request->input($key));
+                    }
+                    break;
+
                 default:
                     // Whitelisted keys only; fields not present in the form are left untouched.
                     if ($request->has($key)) {
@@ -96,7 +106,7 @@ trait SavesSettingsGroup
     {
         $out = [];
         foreach ($changed as $key => $pair) {
-            if (! empty($fields[$key]['secret'])) {
+            if (! empty($fields[$key]['secret']) || ($fields[$key]['type'] ?? null) === 'secret') {
                 $out[$key] = '[hidden]';
                 continue;
             }

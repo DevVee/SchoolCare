@@ -1,8 +1,9 @@
 {{--
     Clinic visit form, shared by create and edit.
-    Expects: $patients, $medicines (dispensable, with usable_quantity / next_expiry),
-             $log (PatientLog|null), $selectedPatient (create only),
+    Expects: $medicines (dispensable, with usable_quantity / next_expiry),
+             $log (PatientLog|null), $selectedPatient (create only: patient id from ?patient_id=),
              $submitLabel, $cancelUrl.
+    The patient is picked by search (x-ui.patient-picker), which submits patient_id.
 --}}
 @php
     $log        = $log ?? null;
@@ -39,33 +40,12 @@
 
     {{-- Patient --}}
     <x-ui.section title="Patient" description="Who came to the clinic.">
-        <x-ui.field label="Patient" name="patient_id" for="patientSelect" required>
-            <select name="patient_id" id="patientSelect" required
-                    @class(['form-select', 'is-invalid' => $errors->has('patient_id')])
-                    @error('patient_id') aria-invalid="true" aria-describedby="patientSelect-error" @enderror>
-                <option value="">Select a patient</option>
-                @foreach($patients as $p)
-                <option value="{{ $p->id }}"
-                        data-guardian="{{ $p->guardian_name }}"
-                        data-guardian-contact="{{ $p->guardian_contact }}"
-                        data-first-name="{{ $p->first_name }}"
-                        data-category="{{ ucwords(str_replace('_', ' ', $p->category)) }}"
-                        data-year="{{ $p->year_level }}"
-                        data-section="{{ $p->section }}"
-                        @selected(old('patient_id', $log?->patient_id ?? ($selectedPatient ?? null)) == $p->id)>
-                    {{ $p->last_name }}, {{ $p->first_name }}{{ $p->middle_name ? ' '.mb_substr($p->middle_name, 0, 1).'.' : '' }}
-                    ({{ $p->patient_number }}){{ method_exists($p, 'trashed') && $p->trashed() ? ' (archived)' : '' }}
-                </option>
-                @endforeach
-            </select>
-        </x-ui.field>
+        <x-ui.patient-picker name="patient_id" id="patientSelect" required
+            :value="$log?->patient_id ?? ($selectedPatient ?? null)" :patient="$log?->patient" />
 
-        <div id="patientInfo" class="small text-ink-2 mt-2 d-none" aria-live="polite">
-            <div><span id="patientInfoText"></span></div>
-            <div id="guardianInfo" class="d-none">
-                Guardian: <span id="guardianName">-</span>
-                <span id="guardianContact" class="text-muted"></span>
-            </div>
+        <div id="guardianInfo" class="small text-ink-2 mt-2 d-none" aria-live="polite">
+            Guardian: <span id="guardianName">-</span>
+            <span id="guardianContact" class="text-muted"></span>
         </div>
     </x-ui.section>
 
@@ -233,9 +213,8 @@
 @push('scripts')
 <script>
 (function () {
-    const patientSelect = document.getElementById('patientSelect');
-    const patientInfo   = document.getElementById('patientInfo');
-    const patientInfoTx = document.getElementById('patientInfoText');
+    // Patient picker (x-ui.patient-picker): the chosen patient is mirrored as JSON on the wrapper.
+    const patientPicker = document.getElementById('patientSelect').closest('[data-combobox]');
     const guardianInfo  = document.getElementById('guardianInfo');
     const guardianName  = document.getElementById('guardianName');
     const guardianCont  = document.getElementById('guardianContact');
@@ -243,14 +222,15 @@
     const smsPanel      = document.getElementById('smsPanel');
     const smsPreview    = document.getElementById('smsPreviewText');
 
-    // Patient summary
+    function currentPatient() {
+        try { return JSON.parse(patientPicker.dataset.comboboxItem || 'null'); } catch (e) { return null; }
+    }
+
+    // Guardian line under the picker (the picker itself shows name and school placement)
     function updatePatientInfo() {
-        const opt = patientSelect.selectedOptions[0];
-        if (!opt || !opt.value) { patientInfo.classList.add('d-none'); return; }
-        const parts = [opt.dataset.category, opt.dataset.year, opt.dataset.section].filter(Boolean);
-        patientInfoTx.textContent = parts.join(', ') || 'No category on record';
-        const gName = opt.dataset.guardian || '';
-        const gCont = opt.dataset.guardianContact || '';
+        const p = currentPatient();
+        const gName = p ? (p.guardian_name || '') : '';
+        const gCont = p ? (p.guardian_contact || '') : '';
         if (gName || gCont) {
             guardianName.textContent = gName || 'Not recorded';
             guardianCont.textContent = gCont ? '(' + gCont + ')' : '(no number on record)';
@@ -258,10 +238,9 @@
         } else {
             guardianInfo.classList.add('d-none');
         }
-        patientInfo.classList.remove('d-none');
         updateSmsPreview();
     }
-    patientSelect.addEventListener('change', updatePatientInfo);
+    patientPicker.addEventListener('combobox:change', updatePatientInfo);
 
     // "Other" reason
     const otherToggle = document.getElementById('reasonOther');
@@ -293,14 +272,14 @@
     }
     function updateSmsPreview() {
         if (!smsPreview) return;
-        const opt = patientSelect.selectedOptions[0];
-        if (!opt || !opt.value) return;
+        const p = currentPatient();
+        if (!p) { smsPreview.textContent = 'Select a patient to see the message.'; return; }
         const timeIn = document.getElementById('timeIn').value;
         const dispEl = document.querySelector('input[name="disposition"]:checked');
         const vars = {
-            guardian: opt.dataset.guardian || 'Parent/Guardian',
-            name: opt.dataset.firstName || '',
-            full_name: opt.dataset.firstName || '',
+            guardian: p.guardian_name || 'Parent/Guardian',
+            name: p.first_name || '',
+            full_name: p.first_name || '',
             time: timeIn ? formatTime(timeIn) : '-',
             date: new Date().toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' }),
             complaint: reasonSummary(),
@@ -360,7 +339,7 @@
         });
     }
 
-    if (patientSelect.value) updatePatientInfo();
+    if (currentPatient()) updatePatientInfo();
 })();
 </script>
 @endpush

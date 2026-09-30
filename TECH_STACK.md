@@ -107,7 +107,7 @@ All data access goes through Eloquent models. Key models:
 | `DispensingRecord`     | `dispensing_records`       | Links dispensed medicines to consultations |
 | `SmsLog`               | `sms_logs`                 | Log of every SMS sent |
 | `AuditLog`             | `audit_logs`               | Before/after change log for all major models |
-| `AiConversation`       | `ai_conversations`         | Chat history with Cobi AI |
+| `AiConversation`       | `ai_conversations`         | Chat history with Coco AI |
 | `Setting`              | `settings`                 | Key-value app configuration (clinic name, SMS templates, AI model, etc.) |
 | `PatientLog`           | `patient_logs`             | Additional activity notes per patient |
 
@@ -142,23 +142,26 @@ Excel::create('filename', function ($excel) use ($data) {
 ```
 
 ### guzzlehttp/guzzle `^7.9`
-HTTP client used internally by:
-- `AiAssistantService` — calls the Groq API
-- `SmsService` — calls the Semaphore API
+HTTP client under Laravel's `Http` facade, used by:
+- `AiAssistantService`: calls the Groq API
+- `SmsService`: calls the Semaphore API
 
 ---
 
 ## 7. External API Integrations
 
-### Groq API (AI Assistant — "Cobi")
-- **Service file:** `app/Services/AiAssistantService.php`
-- **Endpoint:** `https://api.groq.com/openai/v1/chat/completions`
-- **Default model:** `llama-3.3-70b-versatile` (configurable via Settings)
-- **Env variable:** `GROQ_API_KEY` in `.env`
-- Sends last 5 conversations as context for continuity
-- System prompt configures Cobi's personality and knowledge of the SchoolCare system
+### Groq API (AI assistant "Coco")
+- **Service files:** `app/Services/AiAssistantService.php` (chat), `app/Services/ClinicSnapshot.php` (today's numbers, no patient details), `app/Services/DashboardBrief.php` (dashboard brief)
+- **Endpoint:** `https://api.groq.com/openai/v1/chat/completions` (OpenAI-compatible)
+- **Models (Admin → Settings → AI Assistant):** `openai/gpt-oss-120b` (default, recommended), `openai/gpt-oss-20b` (faster), `qwen/qwen3.8-27b` (fastest, no web search). A saved model that is no longer offered falls back to the default at runtime.
+- **Request settings:** gpt-oss models get `reasoning_effort: medium` and `include_reasoning: false` (reasoning never appears in answers); Qwen gets `reasoning_format: hidden`. `max_tokens` is 8192 because reasoning tokens count against it. Timeout 60s; 5xx errors and dropped connections are retried up to 3 times, timeouts are not.
+- **Web search:** Groq's built-in `browser_search` tool, sent only to the gpt-oss models and only when "Let Coco search the web" is on. It is **off by default**: one search question can read many pages (one test used about 190,000 tokens, almost the whole free daily allowance of 200,000 for the model), so turn it on with a paid Groq plan. A search that fails or takes over 30 seconds is dropped and the question is answered without it.
+- **Rate limits:** Groq limits tokens per minute and per day for each model. When the chosen GPT-OSS model is rate limited, the question is answered by the other GPT-OSS model.
+- **API key:** saved encrypted in Admin → Settings → AI Assistant (setting `ai_groq_api_key`, never shown again). When empty, `GROQ_API_KEY` in `.env` is used.
+- **Context sent with each question:** up to 20 past turns (capped at about 24,000 characters) and a "Right now" block with the date and time, the user's first name and role, and today's clinic numbers the user may see (appointment and visit counts, low stock and expiring medicines). No patient names, IDs, contact details or diagnoses.
+- **Dashboard brief:** `GET /dashboard/brief` (`dashboard.brief`) returns 3 to 5 short lines about today. One quick Groq call (`reasoning_effort: low`, 8s timeout, JSON output); when the AI is off, not set up or returns anything unexpected, the same facts are written by fixed rules. Cached 10 minutes per date and permission set.
 
-To change the AI model: go to **Admin → Settings → AI Model** in the app, or set `ai_model` in the `settings` table.
+To change the AI model or the key: go to **Admin → Settings → AI Assistant** in the app.
 
 ### Semaphore API (SMS Notifications)
 - **Service file:** `app/Services/SmsService.php`
@@ -188,6 +191,8 @@ Business logic lives in `app/Services/`, not in controllers. Controllers are kep
 | `ReportService`          | Data aggregation for reports |
 | `SmsService`             | SMS sending + logging |
 | `AiAssistantService`     | Groq API chat + conversation history |
+| `ClinicSnapshot`         | Today's clinic numbers for the assistant and dashboard brief (no patient details) |
+| `DashboardBrief`         | Dashboard "today" brief: AI lines with a rules fallback |
 | `AuditLogService`        | Write audit log entries |
 
 ### Repository Pattern (Patient only)
@@ -308,7 +313,7 @@ composer dev
 **Required `.env` keys to fill in:**
 ```env
 DB_CONNECTION=sqlite          # or mysql / pgsql
-GROQ_API_KEY=                 # Get from console.groq.com
+GROQ_API_KEY=                 # Optional: from console.groq.com (or save it in Admin > Settings > AI Assistant)
 SEMAPHORE_API_KEY=            # Get from semaphore.co
 SEMAPHORE_SENDER_NAME=ICCBI
 ```

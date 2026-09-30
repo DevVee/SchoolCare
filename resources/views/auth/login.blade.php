@@ -1,8 +1,16 @@
+{{--
+    Sign in. The big title and the line under it come from Settings > Branding
+    (login_headline, login_subtext); empty settings fall back to plain copy.
+--}}
+@php
+    $headline = trim((string) settings('login_headline'));
+    $subtext = trim((string) settings('login_subtext'));
+@endphp
 <x-guest-layout>
     <x-slot:title>Sign in</x-slot:title>
 
-    <h1 class="auth-title">Sign in</h1>
-    <p class="auth-lead">Use your clinic staff account.</p>
+    <h1 class="auth-title">{!! nl2br(e($headline !== '' ? $headline : 'Sign in'), false) !!}</h1>
+    <p class="auth-lead">{{ $subtext !== '' ? $subtext : 'Use your clinic staff account.' }}</p>
 
     @if (session('status'))
         <x-ui.alert variant="success" class="mb-4">{{ session('status') }}</x-ui.alert>

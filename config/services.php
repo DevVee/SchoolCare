@@ -40,7 +40,8 @@ return [
         ],
     ],
 
-    // ── Groq AI (Cobi assistant) ──────────────────────────────────────────────
+    // ── Groq AI (Coco assistant) ──────────────────────────────────────────────
+    // Fallback only: the key saved in Admin → Settings → AI Assistant wins.
     // SECURITY FIX: Moved from env() calls in the service class to config()
     // so it works correctly after `php artisan config:cache` in production.
     'groq' => [

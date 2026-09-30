@@ -22,15 +22,23 @@
 }
 .modal-footer {
     gap: .5rem;
-    background: $gray-50;
+    background: var(--c-surface);
     > * { margin: 0; }
+}
+// Dim to focus: the page behind softens as well as darkens
+.modal-backdrop.show, .offcanvas-backdrop.show {
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+}
+@media (prefers-reduced-transparency: reduce) {
+    .modal-backdrop.show, .offcanvas-backdrop.show { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 // Close button (28px visual, 44px hit area on touch). Used by modals, toasts, alerts.
 .btn-close-c {
     width: 2rem;
     height: 2rem;
-    border-radius: $border-radius;
+    border-radius: 50%;
     border: 0;
     padding: 0;
     background: transparent;

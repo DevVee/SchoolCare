@@ -33,14 +33,15 @@ class MailBrand
     }
 
     /**
-     * Absolute URL of the uploaded logo, or null when there is none or it is a
-     * format many email clients block (SVG, WebP).
+     * Absolute URL of the uploaded logo, else of the built-in PNG mark
+     * (public/brand/logo.png). Null when the upload is a format many email
+     * clients block (SVG, WebP).
      */
     public static function logoUrl(): ?string
     {
         $path = (string) settings('brand_logo', '');
 
-        if ($path === '' || ! preg_match('/\.(png|jpe?g|gif)$/i', $path)) {
+        if ($path !== '' && ! preg_match('/\.(png|jpe?g|gif)$/i', $path)) {
             return null;
         }
 

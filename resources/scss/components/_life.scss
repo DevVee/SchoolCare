@@ -1,0 +1,107 @@
+// =============================================================================
+// Life: the motion layer that makes surfaces feel physical (Apple fluid
+// interfaces, ServiceCo patterns). Behaviour lives in resources/js/ui/life.js.
+//
+//   Reveal      cards and stat tiles fade and rise into place as they scroll in,
+//               staggered, once. <html class="js-reveal"> is set in the layout
+//               <head>; if the script never runs, a delayed keyframe shows them.
+//   Spotlight   a soft brand light follows the pointer across link cards
+//               (.stat-tile links, .card-interactive, .c-spot).
+//   Live dot    .c-live: a status dot with a ring that breathes outward.
+//   Words       [data-words]: a headline whose words rise out of a mask.
+//   Grid        .c-grid-backdrop: a faint engineering grid, faded by a mask.
+// Only transform and opacity animate (compositor work). Reduced motion: fades.
+// =============================================================================
+
+// -- Reveal ------------------------------------------------------------------------
+// The top card (hero / page header) is wayfinding, so it is there at once; the
+// cards below it arrive. Keep this selector in sync with REVEAL in ui/life.js.
+.js-reveal .app-content :is(.stat-tile, .card:not(.card .card, .modal .card)):not(.is-in) {
+    opacity: 0;
+    // Safety net: shows the content even if the script fails to load.
+    animation: c-reveal-safety 1ms 2.5s forwards;
+}
+@keyframes c-reveal-safety { to { opacity: 1; } }
+
+// -- Spotlight ------------------------------------------------------------------------
+.stat-tile:is(a), .card-interactive, .c-spot {
+    isolation: isolate;   // the light sits between the card's fill and its content
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        pointer-events: none;
+        opacity: 0;
+        background: radial-gradient(360px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(var(--brand-rgb), .07), transparent 65%);
+        transition: opacity $dur-lift ease-out;
+    }
+    &:hover::before { opacity: 1; }
+}
+
+// -- Live dot -------------------------------------------------------------------------
+.c-live {
+    position: relative;
+    display: inline-flex;
+    width: .4375rem;
+    height: .4375rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--c-online);
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: inherit;
+        animation: c-live 2.2s cubic-bezier(0, 0, .2, 1) infinite;
+    }
+}
+@keyframes c-live {
+    0%       { transform: scale(1);   opacity: .55; }
+    80%, 100% { transform: scale(2.6); opacity: 0; }
+}
+
+// -- Words rising out of a mask (life.js wraps each word) ------------------------------
+.c-word {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    // Room for glyph overhang (tight tracking, descenders) without moving the words.
+    margin: 0 -.08em -.16em;
+    padding: 0 .08em .16em;
+    > span {
+        display: inline-block;
+        transform: translateY(110%);
+        animation: c-word-rise .9s $ease-out forwards;
+        animation-delay: calc(var(--i, 0) * 60ms + 80ms);
+    }
+}
+@keyframes c-word-rise { to { transform: none; } }
+
+// -- Engineering grid backdrop (ServiceCo) -----------------------------------------------
+.c-grid-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;   // follows the card's corners, so the card needs no clipping
+    pointer-events: none;
+    background-image:
+        linear-gradient(to right, rgba(0, 0, 0, .045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 0, 0, .045) 1px, transparent 1px);
+    background-size: 44px 44px;
+    background-position: -1px -1px;
+    mask-image: radial-gradient(ellipse 70% 100% at 85% 0%, #000 10%, transparent 75%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .c-live::after { animation: none; }
+    .c-word > span { transform: none; animation: none; }
+}
+@media (prefers-contrast: more) {
+    .c-grid-backdrop { display: none; }
+}
+@media print {
+    .js-reveal .app-content :is(.stat-tile, .card) { opacity: 1 !important; animation: none !important; }
+}

@@ -41,10 +41,10 @@ class AiAssistantController extends Controller
             'message' => ['required', 'string', 'max:4000'],
         ]);
 
-        // Pass last 12 turns for context (AiAssistantService::HISTORY_LIMIT)
+        // Past turns for context; the service also caps their total length.
         $history = AiConversation::where('user_id', auth()->id())
             ->latest()
-            ->limit(12)
+            ->limit(AiAssistantService::HISTORY_LIMIT)
             ->get();
 
         /** @var string $message */
@@ -63,9 +63,25 @@ class AiAssistantController extends Controller
         $convoId = $convo->id;
 
         return response()->json([
-            'response' => $result['response'],
-            'id'       => $convoId,
+            'response'   => $result['response'],
+            'id'         => $convoId,
+            'delete_url' => route('ai-assistant.destroy', $convoId),
         ]);
+    }
+
+    /** Delete one question and its answer. Users can only delete their own. */
+    public function destroy(Request $request, AiConversation $conversation)
+    {
+        $this->authorize('use-ai-assistant');
+
+        // 404 rather than 403 so other users' conversation IDs are not revealed.
+        abort_unless((int) $conversation->user_id === (int) auth()->id(), 404);
+
+        $conversation->delete();
+
+        return $request->expectsJson()
+            ? response()->json(['success' => true])
+            : redirect()->route('ai-assistant.index')->with('success', 'Question deleted.');
     }
 
     public function clear()

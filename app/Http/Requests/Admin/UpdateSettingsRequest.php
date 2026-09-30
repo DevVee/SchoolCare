@@ -58,6 +58,10 @@ class UpdateSettingsRequest extends FormRequest
                     };
                     break;
 
+                case 'secret':
+                    $rules["remove_{$key}"] = ['nullable', 'boolean'];
+                    break;
+
                 case 'select':
                     $fieldRules[] = function (string $attribute, mixed $value, Closure $fail) use ($def) {
                         $options = $def['options'] ?? [];

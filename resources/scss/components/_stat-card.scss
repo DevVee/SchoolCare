@@ -1,9 +1,11 @@
 // =============================================================================
 // Stat cards
-//   .stat-tile (x-ui.stat-card): label + tinted icon square, big black Figtree
-//   value, delta line. White surface, 1px border; links press to .97.
-//   .stat-card (legacy dashboard markup): kept, flattened (solid icon squares,
-//   no glow, no lift). Removed when the dashboard is migrated.
+//   .stat-tile (x-ui.stat-card), ServiceCo KPI tile: sentence-case label, a
+//   plain brand glyph top right, a big tight number that counts up as it
+//   arrives (ui/life.js), a meta line. White, radius 16, hairline ring, layered
+//   shadow. Links lift 2px with a pointer spotlight and press back down.
+//   .stat-card (legacy dashboard markup): kept, flattened. Removed when the
+//   dashboard is migrated.
 // =============================================================================
 
 .stat-tile {
@@ -14,19 +16,21 @@
     flex-direction: column;
     height: 100%;
     min-width: 0;
-    padding: 1.25rem;
+    padding: 1.125rem 1.25rem 1.125rem;
     border-radius: $radius-lg;
-    border: 1px solid #E5E9F0;
+    border: 1px solid var(--c-hairline);
     background: var(--c-surface);
-    box-shadow: var(--c-shadow-xs);
+    box-shadow: var(--c-shadow-card);
     text-decoration: none;
     color: inherit;
     -webkit-tap-highlight-color: transparent;
-    transition: border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
+    transition: box-shadow $dur-lift $ease-out, transform $dur-lift $ease-out;
 
     &:is(a) {
-        &:hover { border-color: var(--c-border-strong); box-shadow: var(--c-shadow-elevated); color: inherit; text-decoration: none; }
-        &:active { transform: scale($press-scale); }
+        &:hover { box-shadow: var(--c-shadow-elevated); transform: translateY(-2px); color: inherit; text-decoration: none; }
+        &:active { transform: translateY(0) scale(.98); transition-duration: $dur-press; }
+        // The glyph leans toward where the tile goes
+        &:hover .stat-icon .c-icon { transform: translate(1px, -1px); }
     }
 
     .stat-head {
@@ -37,44 +41,43 @@
     }
     .stat-label {
         font-family: $font-ui;
-        font-size: .75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-        color: $gray-500;
+        font-size: .875rem;
+        font-weight: 500;
+        letter-spacing: -.006em;
+        color: var(--c-muted);
         line-height: 1.35;
         padding-top: .125rem;
         min-width: 0;
         overflow-wrap: anywhere;
     }
     .stat-icon {
-        width: 2.75rem;
-        height: 2.75rem;
+        height: 1.5rem;
         display: flex;
         align-items: center;
         justify-content: flex-end;
         flex-shrink: 0;
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         color: var(--tile);
+        .c-icon { transition: transform $dur-lift $ease-out; }
     }
     .stat-value {
         font-family: $font-display;
-        font-size: 1.875rem;
-        font-weight: 700;
-        letter-spacing: -.02em;
-        line-height: 1.1;
+        font-size: 2.125rem;
+        font-weight: 680;
+        letter-spacing: -.035em;
+        line-height: 1.05;
         color: var(--c-ink);
         font-variant-numeric: tabular-nums;
-        margin-top: -.25rem;
+        margin-top: .625rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
     .stat-meta {
         margin-top: auto;
-        padding-top: .625rem;
+        padding-top: .75rem;
         font-size: .8125rem;
-        color: $gray-600;
+        color: var(--c-muted);
         display: flex;
         align-items: center;
         flex-wrap: wrap;
@@ -87,7 +90,7 @@
     .mark-down { color: tone("danger", text); }
     .mark-warn { color: var(--brand-700); }
     .stat-dot  { display: inline-block; width: .5rem; height: .5rem; border-radius: 50%; background: currentColor; margin-right: .3125rem; vertical-align: .0625rem; }
-    .stat-meta-item { display: inline-flex; align-items: center; gap: .25rem; font-weight: 600; color: $gray-700; }
+    .stat-meta-item { display: inline-flex; align-items: center; gap: .25rem; font-weight: 550; color: var(--c-ink-2); }
     // Back-compat (delta/sub props)
     .stat-delta { display: inline-flex; align-items: center; gap: .125rem; font-weight: 700; font-variant-numeric: tabular-nums;
         &.trend-up { color: var(--brand-700); } &.trend-down { color: tone("danger", text); } &.trend-warn { color: var(--brand-700); } &.trend-flat { color: var(--c-muted); } }
@@ -103,6 +106,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
+    @include media-breakpoint-up(xl) { gap: 1.25rem; }
     margin-bottom: 1.5rem;
     @media (min-width: 480px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     @include media-breakpoint-up(lg) { grid-template-columns: repeat(var(--stat-cols-lg, 4), minmax(0, 1fr)); }
@@ -114,14 +118,15 @@
 .stat-card {
     background: var(--c-surface);
     border-radius: $border-radius-lg;
-    border: 1px solid var(--c-border);
+    border: 1px solid var(--c-hairline);
+    box-shadow: var(--c-shadow-card);
     min-height: 118px;
-    transition: border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
+    transition: box-shadow $dur-lift $ease-out, transform $dur-lift $ease-out;
     text-decoration: none;
     color: inherit;
 
-    &:hover { border-color: var(--c-border-strong); box-shadow: var(--c-shadow-elevated); color: inherit; }
-    &:is(a):active { transform: scale($press-scale); }
+    &:is(a):hover { box-shadow: var(--c-shadow-elevated); transform: translateY(-2px); color: inherit; }
+    &:is(a):active { transform: scale(.98); transition-duration: $dur-press; }
 
     .card-body {
         display: flex;

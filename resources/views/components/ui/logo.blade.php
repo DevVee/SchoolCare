@@ -14,7 +14,9 @@
 
     Sources: settings('app_name') (default from config app.name), app_short_name, app_tagline,
     org_name (hidden when empty), org_short_name, header_title, topbar_show_school,
-    settings()->imageUrl('brand_logo', '/schoolcare-icon.svg'), settings()->imageUrl('school_logo', '').
+    settings()->imageUrl('brand_logo', asset('brand/logo.png')), settings()->imageUrl('school_logo', '').
+    The built-in mark (public/brand/logo.png) carries its own rounded corners, so it gets
+    .c-logo-mark-default and is never clipped; uploaded logos keep the rounded frame.
 --}}
 @props([
     'variant' => 'plain',     // plain|sidebar|topbar|auth
@@ -40,7 +42,8 @@
     $tagline   = (string) $get('app_tagline', '');
     $orgName   = trim((string) $get('org_name', ''));
     $orgShort  = trim((string) $get('org_short_name', ''));
-    $markUrl   = $img('brand_logo', asset('schoolcare-icon.svg'));
+    $defaultMark = asset('brand/logo.png');
+    $markUrl   = $img('brand_logo', $defaultMark);
     $schoolUrl = $img('school_logo', '') ?: $markUrl;
 
     $title = $appName;
@@ -79,7 +82,7 @@
     $tag = $href ? 'a' : 'div';
 @endphp
 <{{ $tag }} @if ($href) href="{{ $href }}" @endif {{ $attributes->class(['c-logo', 'c-logo-'.$variant, 'c-logo-inverse' => $inverse]) }}>
-    <img src="{{ $src }}" alt="{{ $wordmark ? '' : $title }}" width="{{ $size }}" height="{{ $size }}" class="c-logo-mark" decoding="async">
+    <img src="{{ $src }}" alt="{{ $wordmark ? '' : $title }}" width="{{ $size }}" height="{{ $size }}" @class(['c-logo-mark', 'c-logo-mark-default' => $src === $defaultMark]) decoding="async">
     @if ($wordmark)
         <span class="c-logo-text">
             <span class="c-logo-name">{{ $title }}</span>
