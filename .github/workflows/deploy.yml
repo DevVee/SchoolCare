@@ -1,0 +1,78 @@
+# Deploy main to iccbiclinic.site (Hostinger) over SSH.
+#
+# Repository secrets: SSH_HOST, SSH_PORT, SSH_USER, SSH_PRIVATE_KEY, SSH_KNOWN_HOSTS.
+# The server keeps its own .env, SQLite database, storage/ (uploads, logs,
+# sessions), public/storage link and root .htaccess; rsync never touches them.
+# The database is copied to ~/backups before migrations run.
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  APP_DIR: domains/iccbiclinic.site/public_html
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, gd, zip, intl, bcmath, fileinfo
+          tools: composer:v2
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          echo "SSH=ssh -i $HOME/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" >> "$GITHUB_ENV"
+          echo "TARGET=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" >> "$GITHUB_ENV"
+
+      - name: Back up the database (keeps the latest 20)
+        run: |
+          $SSH "$TARGET" "mkdir -p ~/backups && cp ~/$APP_DIR/database/database.sqlite ~/backups/schoolcare-\$(date +%Y%m%d-%H%M%S).sqlite && ls -1t ~/backups/schoolcare-*.sqlite | tail -n +21 | xargs -r rm --"
+
+      - name: Upload files
+        run: |
+          rsync -az --delete \
+            --exclude '/.git/' \
+            --exclude '/.github/' \
+            --exclude '/node_modules/' \
+            --exclude '/tests/' \
+            --exclude '/.env' \
+            --exclude '/.htaccess' \
+            --exclude '/database/*.sqlite*' \
+            --exclude '/storage/' \
+            --exclude '/public/storage' \
+            --exclude '/public/hot' \
+            -e "$SSH" \
+            ./ "$TARGET:$APP_DIR/"
+
+      - name: Migrate and refresh caches
+        run: |
+          $SSH "$TARGET" "cd $APP_DIR && php artisan migrate --force && php artisan optimize:clear"
