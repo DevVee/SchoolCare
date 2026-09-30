@@ -16,7 +16,8 @@
     $aiName = trim((string) settings('ai_assistant_name')) ?: 'AI assistant';
     $showAi = filter_var(settings('ai_enabled', true), FILTER_VALIDATE_BOOLEAN)
         && $user?->can('use-ai-assistant') && Route::has('ai-assistant.index');
-    $showSearch = $user?->can('view-patients') ?? false;
+    // Spotlight (Ctrl K or /): pages for everyone, patients for those who may look them up.
+    $canLookup = ($user?->can('view-patients') || $user?->can('create-patient-logs')) && Route::has('patients.lookup');
     // Section content is already escaped by Blade.
     $pageTitle = trim($__env->yieldContent('page_title')) ?: trim($__env->yieldContent('title', 'Dashboard'));
 @endphp
@@ -64,28 +65,17 @@
         <span class="topbar-divider topbar-school-divider" aria-hidden="true"></span>
     @endif
 
-    {{-- Global patient search --}}
-    @if ($showSearch)
-        <form class="topbar-search" data-topbar-search role="search" method="GET" action="{{ route('patients.index') }}">
-            <label for="topbarSearch" class="visually-hidden">Search patients</label>
-            <x-ui.icon name="search" />
-            <input id="topbarSearch" type="search" name="search" class="form-control" placeholder="Search patients"
-                   value="{{ request()->routeIs('patients.index') ? request('search') : '' }}" autocomplete="off" enterkeyhint="search">
-            <kbd class="d-none d-xl-inline" aria-hidden="true">/</kbd>
-            <button type="button" class="btn-topbar topbar-search-close" data-search-close aria-label="Close search">
-                <x-ui.icon name="x-lg" />
-            </button>
-        </form>
-        <button type="button" class="btn-topbar d-md-none" data-search-open aria-label="Search patients">
-            <x-ui.icon name="search" />
-        </button>
-    @endif
+    {{-- Spotlight: search patients, jump to a page, or ask the assistant (resources/js/ui/spotlight.js) --}}
+    <button type="button" class="btn-topbar btn-spotlight" data-spotlight-open aria-label="Search (Ctrl K)" title="Search (Ctrl K)">
+        <x-ui.icon name="search" />
+    </button>
 
-    {{-- AI assistant --}}
+    {{-- AI assistant: a capsule with the orb and a thin light running round it --}}
     @if ($showAi)
         <a href="{{ route('ai-assistant.index') }}" class="btn-cobi-pill" aria-label="Ask {{ $aiName }}">
-            <x-ui.coco-orb size="2xs" still />
-            <span class="d-none d-xl-inline">Ask {{ $aiName }}</span>
+            <span class="c-ask-ring" aria-hidden="true"></span>
+            <x-ui.coco-orb size="xs" />
+            <span class="d-none d-md-inline">Ask {{ $aiName }}</span>
         </a>
     @endif
 
@@ -103,3 +93,28 @@
         </div>
     @endif
 </header>
+
+{{-- Spotlight palette. A native <dialog> opens in the top layer, above modals and the topbar. --}}
+<dialog class="spotlight" data-spotlight aria-label="Search"
+    data-lookup-url="{{ $canLookup ? route('patients.lookup') : '' }}"
+    data-patient-url="{{ $canLookup && Route::has('patients.show') ? route('patients.show', '__ID__') : '' }}"
+    data-patients-url="{{ $canLookup ? route('patients.index') : '' }}"
+    data-ask-url="{{ $showAi ? route('ai-assistant.index') : '' }}"
+    data-ai-name="{{ $aiName }}">
+    <div class="spotlight-panel">
+        <div class="spotlight-field">
+            <x-ui.icon name="search" />
+            <input type="text" data-spotlight-input role="combobox" aria-expanded="true" aria-controls="spotlightList"
+                   aria-autocomplete="list" autocomplete="off" spellcheck="false" enterkeyhint="go"
+                   placeholder="{{ $canLookup ? 'Search patients, pages' : 'Search pages' }}{{ $showAi ? ', or ask '.$aiName : '' }}"
+                   aria-label="Search">
+            <kbd>Esc</kbd>
+        </div>
+        <div class="spotlight-results" id="spotlightList" role="listbox" aria-label="Results" data-spotlight-list></div>
+        <div class="spotlight-foot" aria-hidden="true">
+            <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> to move</span>
+            <span><kbd>Enter</kbd> to open</span>
+            <span class="ms-auto"><kbd>Ctrl</kbd><kbd>K</kbd> anywhere</span>
+        </div>
+    </div>
+</dialog>

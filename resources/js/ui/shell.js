@@ -3,8 +3,7 @@
  *   - desktop sidebar collapse to a 72px icon rail, remembered in localStorage
  *     (the <head> no-flash script applies it before first paint);
  *   - tooltips on rail items while collapsed;
- *   - compact topbar search on phones (icon that expands; Esc closes);
- *   - "/" focuses the patient search;
+ *   - (search lives in ./spotlight: Ctrl K or "/");
  *   - time-of-day greeting for #dashGreeting (dashboard hero).
  * Drawer (<lg) behaviour, Esc and focus trapping come from Bootstrap's
  * .offcanvas-lg on #appSidebar.
@@ -74,55 +73,6 @@ if (sidebar) {
     desktop.addEventListener('change', syncTips);
     syncToggles();
     syncTips();
-}
-
-// ─── Topbar search (phones: icon expands the field) ─────────────────────────
-const topbar = document.querySelector('.app-topbar');
-const searchInput = topbar ? topbar.querySelector('[data-topbar-search] input') : null;
-
-function openSearch() {
-    if (!topbar || !searchInput) return;
-    topbar.classList.add('search-open');
-    searchInput.focus();
-}
-
-function closeSearch(returnFocus = true) {
-    if (!topbar || !topbar.classList.contains('search-open')) return;
-    topbar.classList.remove('search-open');
-    if (returnFocus) {
-        const opener = topbar.querySelector('[data-search-open]');
-        if (opener) opener.focus();
-    }
-}
-
-if (topbar && searchInput) {
-    topbar.querySelectorAll('[data-search-open]').forEach((btn) => btn.addEventListener('click', openSearch));
-    topbar.querySelectorAll('[data-search-close]').forEach((btn) => btn.addEventListener('click', () => closeSearch()));
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if (searchInput.value) {
-                searchInput.value = '';
-            } else {
-                closeSearch();
-                searchInput.blur();
-            }
-        }
-    });
-
-    // "/" focuses the search unless the user is typing somewhere.
-    document.addEventListener('keydown', (e) => {
-        if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
-        const t = e.target;
-        if (t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-        if (document.querySelector('.modal.show, .offcanvas.show')) return;
-        e.preventDefault();
-        if (window.matchMedia('(min-width: 768px)').matches) {
-            searchInput.focus();
-            searchInput.select();
-        } else {
-            openSearch();
-        }
-    });
 }
 
 // ─── Greeting (dashboard) ────────────────────────────────────────────────────

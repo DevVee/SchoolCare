@@ -126,25 +126,6 @@
         }
     }
 
-    .topbar-search {
-        position: relative;
-        display: none;
-        align-items: center;
-        flex-shrink: 1;
-        min-width: 0;
-        margin: 0;
-        @include media-breakpoint-up(md) { display: flex; width: 220px; }
-        @include media-breakpoint-up(lg) { width: 240px; }
-        @include media-breakpoint-up(xl) { width: 300px; }
-        .form-control { width: 100%; }
-        .topbar-search-close { display: none; }
-        .form-control { min-height: 2.25rem; height: 2.25rem; border-radius: $border-radius-pill; padding-left: 2.25rem; font-size: .9375rem; background: rgba(0, 0, 0, .045); border-color: transparent; transition: background-color $dur-fast ease-out, box-shadow $dur-fast ease-out; }
-        .form-control:hover { background: rgba(0, 0, 0, .06); }
-        .form-control:focus { background: #fff; border-color: var(--brand-600); }
-        > .c-icon, > .bi { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); font-size: .9375rem; color: var(--c-muted); pointer-events: none; }
-        kbd { position: absolute; right: .625rem; top: 50%; transform: translateY(-50%); font-size: .75rem; background: #fff; color: var(--c-ink-2); border: 1px solid var(--c-hairline); box-shadow: none; padding: 1px 6px; border-radius: $border-radius-sm; }
-    }
-
     // Clinic status: static dot (no pulsing "live" indicator)
     .clinic-status {
         display: inline-flex;
@@ -163,49 +144,32 @@
         time { font-weight: 700; color: var(--c-ink); font-variant-numeric: tabular-nums; }
     }
 
-    // Ask Cobi: a quiet capsule with a small brand glyph (no gradient)
+    // Ask the assistant: a white capsule with the live orb and a thin brand light
+    // running round its edge (the dashboard ask box's ring, _dashboard.scss).
     .btn-cobi-pill {
+        position: relative;
+        isolation: isolate;
+        flex-shrink: 0;
         display: inline-flex;
         align-items: center;
-        gap: .4rem;
-        height: 2.25rem;
-        padding: 0 1rem;
+        gap: .5rem;
+        height: 2.5rem;
+        padding: 0 1rem 0 .375rem;
         border-radius: $border-radius-pill;
-        border: 1px solid var(--c-hairline);
         background: #fff;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+        box-shadow: 0 8px 20px -12px rgba(var(--brand-rgb), .65);
         color: var(--c-ink);
         font-family: $font-ui;
         font-size: .875rem;
-        font-weight: 560;
+        font-weight: 600;
+        letter-spacing: -.01em;
         text-decoration: none;
-        transition: background-color $dur-fast ease-out, border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
-        .c-icon, .bi { color: tone("cobi", 600); }
-        &:hover { border-color: rgba(var(--brand-rgb), .3); box-shadow: 0 6px 16px -10px rgba(var(--brand-rgb), .6); color: var(--c-ink); }
-        &:active { transform: scale($press-scale); }
-    }
-
-    // Phones: the search icon expands the field across the bar (Esc / close button collapses it)
-    &.search-open .topbar-search {
-        display: flex;
-        position: absolute;
-        inset: 0;
-        z-index: 2;
-        width: auto;
-        gap: .5rem;
-        padding: 0 .5rem 0 1rem;
-        background: var(--c-material-thick);
-        > .c-icon { left: 1.75rem; }
-        .topbar-search-close { display: inline-flex; }
-    }
-
-    .btn-cobi-pill {
-        flex-shrink: 0;
-        // Icon only below xl: same quiet look as the other topbar icon buttons
-        @include media-breakpoint-down(xl) {
-            padding: 0; width: 2.25rem; justify-content: center; border-color: transparent;
-            .c-icon, .bi { font-size: 1.125rem; }
-        }
+        transition: box-shadow $dur-base ease-out, transform $dur-base $ease-out;
+        &:hover { color: var(--c-ink); transform: translateY(-1px); box-shadow: 0 12px 26px -12px rgba(var(--brand-rgb), .75); }
+        &:active { transform: scale($press-scale); transition-duration: $dur-press; }
+        &:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .35); }
+        // Orb only below md
+        @include media-breakpoint-down(md) { width: 2.75rem; height: 2.75rem; padding: 0; justify-content: center; }
     }
 
     .user-trigger {
@@ -234,7 +198,7 @@
 }
 
 @media (pointer: coarse), (max-width: 767.98px) {
-    .app-topbar .btn-cobi-pill { width: 2.75rem; height: 2.75rem; }
+    .app-topbar .btn-cobi-pill { height: 2.75rem; }
     .app-topbar .user-trigger { min-height: 2.75rem; }
 }
 @media (max-width: 575.98px) {

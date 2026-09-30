@@ -108,9 +108,16 @@
 <div class="row g-4 mb-4">
     @if($showTrend)
     <div class="{{ $showAppts ? 'col-lg-7 col-xl-8' : 'col-12' }}">
-        <x-ui.card module="logbook" icon="graph-up" title="Clinic visits" :subtitle="'Last '.$trend['days'].' days'" class="h-100">
+        <x-ui.card module="logbook" icon="graph-up" title="Clinic visits" :subtitle="$trend['label']" class="h-100">
+            <x-slot:actions>
+                {{-- Capsule segmented control (ServiceCo); plain links, so it works without JS --}}
+                <nav class="c-segmented" aria-label="Chart range">
+                    <a href="{{ route('dashboard', ['range' => '30d']) }}" @class(['is-on' => $trend['range'] === '30d']) @if ($trend['range'] === '30d') aria-current="true" @endif>30 days</a>
+                    <a href="{{ route('dashboard', ['range' => '12m']) }}" @class(['is-on' => $trend['range'] === '12m']) @if ($trend['range'] === '12m') aria-current="true" @endif>12 months</a>
+                </nav>
+            </x-slot:actions>
             <x-ui.chart type="line" :series="$trend['series']" :categories="$trend['categories']" height="260"
-                :empty="'No visits in the last '.$trend['days'].' days.'" />
+                :empty="$trend['range'] === '12m' ? 'No visits in the last 12 months.' : 'No visits in the last 30 days.'" />
         </x-ui.card>
     </div>
     @endif
@@ -149,12 +156,12 @@
 <div class="row g-4">
     @if($canLogs)
     <div class="{{ $bottomCol }}">
-        <x-ui.card module="logbook" icon="clipboard2-pulse" title="Top reasons for visit" :subtitle="'This month ('.now()->format('F').')'" class="h-100">
+        <x-ui.card module="logbook" icon="clipboard2-pulse" title="Top reasons for visit" :subtitle="$reasonsPeriod" class="h-100">
             <x-ui.chart type="horizontal-bar"
                 :series="[['name' => 'Visits', 'data' => $topReasons->pluck('total')->all()]]"
                 :categories="$topReasons->pluck('reason')->all()"
                 :height="max(160, 38 * $topReasons->count() + 40)"
-                empty="No visits logged this month." />
+                empty="No visits logged in the last 12 months." />
         </x-ui.card>
     </div>
     @endif

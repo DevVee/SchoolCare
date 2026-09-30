@@ -20,10 +20,15 @@
     }
     .modal-subtitle { font-size: .875rem; color: var(--c-muted); margin: .125rem 0 0; }
 }
+// Explicit padding: Bootstrap computes the footer's from calc(var(--bs-modal-padding) - gap),
+// which is invalid for our two-value $modal-inner-padding, so it fell to 0 and buttons
+// touched the modal's edges.
 .modal-footer {
     gap: .5rem;
+    padding: .875rem 1.5rem 1.125rem;
     background: var(--c-surface);
     > * { margin: 0; }
+    @include media-breakpoint-down(sm) { padding: .75rem 1rem 1rem; }
 }
 // Dim to focus: the page behind softens as well as darkens
 .modal-backdrop.show, .offcanvas-backdrop.show {

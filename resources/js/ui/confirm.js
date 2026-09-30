@@ -85,9 +85,33 @@ function ensureModal() {
             const target = o?.input ? part('input') : (o?.variant === 'danger' ? part('cancel') : part('ok'));
             target?.focus();
         });
-        modalEl.addEventListener('hidden.bs.modal', () => settle(false));
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            settle(false);
+            // Asked from inside another modal: give that modal back its scroll lock and focus
+            // (Bootstrap clears both when any modal closes).
+            modalEl.style.zIndex = '';
+            const under = document.querySelector('.modal.show');
+            if (under) {
+                document.body.classList.add('modal-open');
+                under.focus();
+            }
+        });
     }
     return modalEl;
+}
+
+// Every Bootstrap modal shares one z-index, so a confirm asked from inside an open
+// modal (e.g. deleting a question in Coco's History) would open behind it. Lift the
+// dialog and its backdrop above whatever is already open.
+function stackAboveOpenModal() {
+    const open = [...document.querySelectorAll('.modal.show')].some((m) => m !== modalEl);
+    if (!open) return () => {};
+    modalEl.style.zIndex = '1075';
+    return () => {
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        const mine = backdrops[backdrops.length - 1];
+        if (mine) mine.style.zIndex = '1070';
+    };
 }
 
 function part(name) {
@@ -163,7 +187,9 @@ export function confirmDialog(opts = {}) {
 
     return new Promise((resolve) => {
         pending = { resolve, opts: o };
+        const liftBackdrop = stackAboveOpenModal();
         Modal.getOrCreateInstance(modalEl).show();
+        liftBackdrop(); // Bootstrap appends the backdrop synchronously inside show()
     });
 }
 
