@@ -12,6 +12,9 @@ name: Deploy to Hostinger
 on:
   push:
     branches: [main]
+    # Workflow-only changes are never uploaded (rsync skips .github/), so they don't deploy.
+    paths-ignore:
+      - '.github/**'
   workflow_dispatch:
 
 concurrency:

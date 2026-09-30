@@ -1,0 +1,122 @@
+# Production database maintenance (manual only, Actions > Maintenance > Run workflow).
+#
+#   check    READ ONLY. Copies each candidate database to a temp folder and checks
+#            the copy: SQLite quick_check, row counts and latest dates. Candidates:
+#            the live database, the old iccbiclinic.site copy if it still exists,
+#            and the newest backups in ~/backups. Prints no patient data (this
+#            repository's logs are public).
+#   restore  Puts the site in maintenance mode, moves the live database (and its
+#            -wal/-shm files) aside as *.malformed-<time>, copies `source` in,
+#            migrates, clears caches and brings the site back up. Refuses unless
+#            `confirm` is RESTORE and `source` passes quick_check.
+name: Maintenance
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: check (read only) or restore
+        type: choice
+        options: [check, restore]
+        default: check
+      source:
+        description: 'restore only: database file to restore, e.g. ~/backups/schoolcare-20260930-100512.sqlite'
+        required: false
+        default: ''
+      confirm:
+        description: 'restore only: type RESTORE'
+        required: false
+        default: ''
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  APP_DIR: domains/schoolcare.online/public_html
+  OLD_DIR: domains/iccbiclinic.site/public_html
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          echo "SSH=ssh -i $HOME/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" >> "$GITHUB_ENV"
+          echo "TARGET=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" >> "$GITHUB_ENV"
+
+      - name: Check databases (read only)
+        run: |
+          $SSH "$TARGET" "APP_DIR='$APP_DIR' OLD_DIR='$OLD_DIR' bash -s" <<'EOS'
+          set -u
+          check() {
+            f="$1"
+            if [ ! -f "$f" ]; then echo "MISSING   $f"; return; fi
+            t=$(mktemp -d)
+            cp "$f" "$t/db.sqlite"
+            [ -f "$f-wal" ] && cp "$f-wal" "$t/db.sqlite-wal"
+            res=$(php -r '
+              try {
+                $db = new PDO("sqlite:".$argv[1], null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+                $out = ["check" => $db->query("PRAGMA quick_check")->fetchColumn()];
+                foreach (["users", "patients", "patient_logs", "appointments", "medicines", "audit_logs"] as $t) {
+                  try { $out[$t] = (int) $db->query("select count(*) from $t")->fetchColumn(); } catch (Throwable $e) { $out[$t] = "n/a"; }
+                }
+                foreach (["patient_logs", "appointments", "audit_logs"] as $t) {
+                  try { $out["latest_".$t] = $db->query("select max(created_at) from $t")->fetchColumn(); } catch (Throwable $e) {}
+                }
+                echo json_encode($out);
+              } catch (Throwable $e) { echo "ERROR ".$e->getMessage(); }
+            ' "$t/db.sqlite" 2>&1)
+            rm -rf "$t"
+            wal=""; [ -f "$f-wal" ] && wal=" +wal $(stat -c %s "$f-wal")b"
+            echo "$(stat -c %s "$f")b$wal  $(date -u -r "$f" +%FT%TZ)  $f"
+            echo "          $res"
+          }
+          echo "== domain folders"; ls -1 ~/domains/
+          echo "== live database folder"; ls -la ~/"$APP_DIR"/database/ | grep -i sqlite
+          echo "== backups (newest first)"; ls -1t ~/backups/*.sqlite 2>/dev/null | head -8
+          echo
+          echo "== checks"
+          check ~/"$APP_DIR"/database/database.sqlite
+          check ~/"$OLD_DIR"/database/database.sqlite
+          for b in $(ls -1t ~/backups/*.sqlite 2>/dev/null | head -6); do check "$b"; done
+          EOS
+
+      - name: Restore
+        if: inputs.action == 'restore'
+        env:
+          SOURCE: ${{ inputs.source }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          [ "$CONFIRM" = "RESTORE" ] || { echo "::error::Type RESTORE in confirm to restore. Nothing was changed."; exit 1; }
+          [ -n "$SOURCE" ] || { echo "::error::Give the source database path. Nothing was changed."; exit 1; }
+          [[ "$SOURCE" =~ ^[A-Za-z0-9._/~-]+$ ]] || { echo "::error::The source path may only contain letters, digits and . _ / ~ -. Nothing was changed."; exit 1; }
+          $SSH "$TARGET" "APP_DIR='$APP_DIR' SOURCE='$SOURCE' bash -s" <<'EOS'
+          set -eu
+          src="${SOURCE/#\~/$HOME}"
+          [ -f "$src" ] || { echo "::error::$src not found. Nothing was changed."; exit 1; }
+          t=$(mktemp -d); cp "$src" "$t/db.sqlite"
+          ok=$(php -r '$db = new PDO("sqlite:".$argv[1]); echo $db->query("PRAGMA quick_check")->fetchColumn();' "$t/db.sqlite" 2>&1 || true)
+          rm -rf "$t"
+          [ "$ok" = "ok" ] || { echo "::error::$src fails quick_check ($ok). Nothing was changed."; exit 1; }
+
+          cd ~/"$APP_DIR"
+          stamp=$(date -u +%Y%m%d-%H%M%S)
+          mode=$(stat -c %a database/database.sqlite 2>/dev/null || echo 664)
+          php artisan down || true
+          for s in "" -wal -shm; do
+            if [ -f "database/database.sqlite$s" ]; then mv "database/database.sqlite$s" "database/database.sqlite$s.malformed-$stamp"; fi
+          done
+          cp "$src" database/database.sqlite
+          chmod "$mode" database/database.sqlite
+          echo "Restored $src (damaged files kept as database/*.malformed-$stamp)"
+          php artisan migrate --force
+          php artisan optimize:clear
+          php artisan up
+          echo "Site is back up."
+          EOS
