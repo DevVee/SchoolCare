@@ -84,9 +84,11 @@ Route::get('/health', function () {
 })->withoutMiddleware([\Illuminate\Session\Middleware\StartSession::class]);
 
 // ─── Public website ───────────────────────────────────────────────────────────
-// Landing page for guests (signed-in staff go straight to the dashboard) and the
-// privacy notice. Content: Administration → Website.
+// "/" is the product page for guests (signed-in staff go straight to the
+// dashboard; copy: App\Support\ProductSite). "/clinic" is the school clinic's
+// own page and "/privacy" its privacy notice (content: Administration → Website).
 Route::get('/', [\App\Http\Controllers\LandingController::class, 'show'])->name('home');
+Route::get('/clinic', [\App\Http\Controllers\LandingController::class, 'clinic'])->name('clinic');
 Route::get('/privacy', [\App\Http\Controllers\LandingController::class, 'privacy'])->name('privacy');
 
 // ─── Public: online appointment requests + clinic schedule board ─────────────

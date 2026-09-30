@@ -17,7 +17,7 @@
         </ol>
 
         <div class="pub-done-actions">
-            <x-ui.button :href="url('/')" variant="secondary">Back to the home page</x-ui.button>
+            <x-ui.button :href="route('clinic')" variant="secondary">Back to the clinic page</x-ui.button>
         </div>
     </x-ui.card>
 </div>

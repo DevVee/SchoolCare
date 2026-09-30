@@ -1,16 +1,18 @@
-{{-- Meta tags + the public website stylesheet. Expects $page, optional $description. --}}
+{{--
+    Meta tags + the public website stylesheet and script.
+    Expects $page. Optional: $title and $description (default: the clinic's SEO
+    text from Administration > Website), $image (og:image URL).
+--}}
 @push('styles')
     <meta name="description" content="{{ $description ?? $page['seo']['description'] }}">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ $page['seo']['title'] }}">
+    <meta property="og:title" content="{{ $title ?? $page['seo']['title'] }}">
     <meta property="og:description" content="{{ $description ?? $page['seo']['description'] }}">
     <meta property="og:url" content="{{ url()->current() }}">
-    @if ($page['hero']['image'])
-        <meta property="og:image" content="{{ $page['hero']['image']['url'] }}">
+    @if (! empty($image))
+        <meta property="og:image" content="{{ $image }}">
     @endif
     <meta name="theme-color" content="#FFFFFF">
-    {{-- Lets the hero headline wait for its word rise (landing.js); without JS nothing is hidden. --}}
-    <script>document.documentElement.classList.add('lp-js');</script>
     @vite('resources/scss/landing.scss')
 @endpush
 

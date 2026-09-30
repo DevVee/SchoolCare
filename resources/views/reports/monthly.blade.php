@@ -20,6 +20,8 @@
 @endphp
 
 @section('content')
+{{-- Printed only: letterhead banner (Admin > Settings > Printing), as on the PDF --}}
+@include('reports.pdf._letterhead', ['document' => 'reports', 'screen' => true, 'printOnly' => true])
 
 <x-ui.page-header title="Monthly report" :description="$monthStart->format('F Y')"
     :breadcrumbs="['Reports' => route('reports.index'), 'Monthly report' => null]">
@@ -235,5 +237,8 @@
         </x-slot:empty>
     </x-ui.table>
 </x-ui.card>
+
+{{-- Printed only: signatures and footer line, as on the PDF --}}
+@include('reports.pdf._signatures', ['document' => 'reports', 'screen' => true])
 
 @endsection

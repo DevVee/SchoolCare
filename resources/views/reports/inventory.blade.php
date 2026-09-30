@@ -5,6 +5,8 @@
 @use('App\Support\DisplayFormat')
 
 @section('content')
+{{-- Printed only: letterhead banner (Admin > Settings > Printing), as on the PDF --}}
+@include('reports.pdf._letterhead', ['document' => 'reports', 'screen' => true, 'printOnly' => true])
 
 <x-ui.page-header title="Inventory snapshot"
     :description="'Current stock as of '.DisplayFormat::date(now()).' '.DisplayFormat::time(now())"
@@ -68,5 +70,8 @@
         </x-slot:empty>
     </x-ui.table>
 </x-ui.card>
+
+{{-- Printed only: signatures and footer line, as on the PDF --}}
+@include('reports.pdf._signatures', ['document' => 'reports', 'screen' => true])
 
 @endsection

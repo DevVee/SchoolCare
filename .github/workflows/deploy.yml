@@ -67,6 +67,21 @@ jobs:
           $SSH "$TARGET" "test -f ~/$APP_DIR/artisan && test -f ~/$APP_DIR/.env && test -f ~/$APP_DIR/database/database.sqlite" \
             || { echo "::error::~/$APP_DIR is not the installed app (artisan, .env or database missing). Nothing was changed."; exit 1; }
 
+      # Never upload code or migrate on top of a damaged database (it happened once,
+      # after the domain move). Checks a copy, so the live file is only read.
+      - name: Preflight, the database passes an integrity check
+        run: |
+          result=$($SSH "$TARGET" "APP_DIR='$APP_DIR' bash -s" <<'EOS'
+          t=$(mktemp -d)
+          cp ~/"$APP_DIR"/database/database.sqlite "$t/db.sqlite"
+          [ -f ~/"$APP_DIR"/database/database.sqlite-wal ] && cp ~/"$APP_DIR"/database/database.sqlite-wal "$t/db.sqlite-wal"
+          php -r 'try { echo (new PDO("sqlite:".$argv[1]))->query("PRAGMA quick_check")->fetchColumn(); } catch (Throwable $e) { echo $e->getMessage(); }' "$t/db.sqlite"
+          rm -rf "$t"
+          EOS
+          )
+          echo "quick_check: $result"
+          [ "$result" = "ok" ] || { echo "::error::The live database fails its integrity check. Nothing was changed. Restore a backup with Actions > Maintenance first."; exit 1; }
+
       - name: Back up the database (keeps the latest 20)
         run: |
           $SSH "$TARGET" "mkdir -p ~/backups && cp ~/$APP_DIR/database/database.sqlite ~/backups/schoolcare-\$(date +%Y%m%d-%H%M%S).sqlite && ls -1t ~/backups/schoolcare-*.sqlite | tail -n +21 | xargs -r rm --"

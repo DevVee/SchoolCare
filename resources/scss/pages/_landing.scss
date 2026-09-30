@@ -1,92 +1,101 @@
 // =============================================================================
-// Public website (landing/*): the school clinic's own site, in the ServiceCo /
-// Apple language. Inter with tight display tracking, one brand blue, Apple
-// grays, white cards on #F5F5F7 sections, capsule buttons, a faint engineering
-// grid behind the hero, a translucent sticky header whose divider appears only
-// once content scrolls under it.
-// Motion (landing.js): the hero headline's words rise out of a mask, the rest
-// of the hero rises in on load, the stage below it settles flat as it scrolls
-// in, blocks fade and rise 24px as they scroll into view (staggered, once),
-// link cards lift and carry a soft pointer spotlight, the steps line fills as
-// the section scrolls past. Only transform and opacity animate. Reduced motion:
-// fades only. Nothing stays hidden if the script fails.
+// Public website (landing/*)
+//   "/"        product page: what the app is (copy: App\Support\ProductSite)
+//   "/clinic"  the school clinic's own page (Administration > Website)
+//   "/privacy" the clinic's privacy notice
+// A calm, clinical product site: left-aligned headings with a small brand
+// eyebrow, a drawn dashboard preview built in HTML, a bento grid of features
+// with small working-looking screens, white 16 to 20px cards on the #F5F5F7
+// canvas, capsule buttons, one brand blue. Green marks live / open / active
+// states only (#34C759 dots, #15803D text); red marks danger only.
+// Motion (landing.js): a gentle rise on load, blocks fade and rise 16px as they
+// scroll in, the mini screens' rows slide in and numbers count up once, cards
+// lift a little on hover. Only transform and opacity animate. Reduced motion:
+// fades only, nothing moves. Nothing is hidden if the script never runs.
 // =============================================================================
 
 $lp-header-h: 4rem;
-$lp-header-h-sm: 3.5rem;
-$lp-r-tile: 1.25rem;    // 20: tiles, today panel, photo
-$lp-r-card: 1.5rem;     // 24: section cards
-$lp-r-big: 1.75rem;     // 28: service cards (ServiceCo marketing cards)
+$lp-subnav-h: 3rem;
+$lp-r-card: 1.25rem;    // 20: cards, the preview window, the CTA
+$lp-r-tile: 1rem;       // 16: tiles inside sections
+$lp-r-inner: .75rem;    // 12: mini screens inside cards
 $lp-shadow-card: 0 2px 4px rgba(0, 0, 0, .02), 0 12px 32px -20px rgba(0, 0, 0, .22);
 $lp-shadow-lift: 0 2px 4px rgba(0, 0, 0, .02), 0 22px 44px -22px rgba(0, 0, 0, .28);
-$lp-shadow-stage: 0 2px 4px rgba(0, 0, 0, .02), 0 28px 70px -18px rgba(0, 0, 0, .2);
-$lp-grid-line: rgba(0, 0, 0, .045);
+$lp-shadow-window: 0 2px 4px rgba(0, 0, 0, .03), 0 32px 80px -28px rgba(0, 0, 0, .3);
+$lp-green: var(--c-online, #34C759);
+$lp-green-text: var(--c-success-700, #15803D);
+$lp-green-tint: rgba(52, 199, 89, .14);
 
-// White surface with a hairline ring and the layered card shadow
 @mixin lp-surface {
     background: var(--c-surface);
     box-shadow: 0 0 0 1px var(--c-hairline), $lp-shadow-card;
 }
 
 html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
+html:has(.lp-clinic) { scroll-padding-top: calc(#{$lp-header-h} + #{$lp-subnav-h} + 1rem); }
 
 .lp-body {
     background: var(--c-surface);
     color: var(--c-ink);
     font-size: 1.0625rem;
-    line-height: 1.47;
+    line-height: 1.5;
     letter-spacing: -.012em;
 }
 .pub-main-bare { flex: 1 0 auto; outline: none; }
 
 .lp-container {
     width: 100%;
-    max-width: 1168px;
+    max-width: 1200px;
     margin-inline: auto;
     padding-inline: 1.25rem;
     @include media-breakpoint-up(sm) { padding-inline: 1.5rem; }
-    @include media-breakpoint-up(md) { padding-inline: 2rem; }
+    @include media-breakpoint-up(lg) { padding-inline: 2rem; }
 }
 
-// -- Shared type ----------------------------------------------------------------
+// -- Type -----------------------------------------------------------------------------
+.lp-eyebrow {
+    margin: 0 0 .875rem;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--brand-600);
+}
 .lp-h2 {
+    margin: 0;
     font-family: $font-display;
-    font-size: clamp(2rem, 1.4rem + 2.2vw, 3rem);
+    font-size: clamp(1.875rem, 1.35rem + 1.9vw, 2.75rem);
     font-weight: 660;
     line-height: 1.08;
     letter-spacing: -.032em;
     color: var(--c-ink);
     text-wrap: balance;
-    margin: 0;
 }
 .lp-h3 {
+    margin: 0;
     font-family: $font-display;
-    font-size: clamp(1.1875rem, 1.1rem + .35vw, 1.375rem);
+    font-size: 1.1875rem;
     font-weight: 650;
-    line-height: 1.2;
+    line-height: 1.25;
     letter-spacing: -.02em;
     color: var(--c-ink);
     text-wrap: balance;
-    margin: 0;
 }
 .lp-lead {
-    margin: 1rem auto 0;
-    max-width: 40rem;
-    font-size: clamp(1.0625rem, 1rem + .3vw, 1.25rem);
-    line-height: 1.45;
-    letter-spacing: -.014em;
+    margin: 1rem 0 0;
+    max-width: 38rem;
+    font-size: clamp(1.0625rem, 1rem + .25vw, 1.1875rem);
+    line-height: 1.5;
     color: var(--c-muted);
     text-wrap: pretty;
 }
 .lp-muted { color: var(--c-muted); }
 .lp-section-head {
-    max-width: 48rem;
-    margin: 0 auto 2.5rem;
-    text-align: center;
-    @include media-breakpoint-up(md) { margin-bottom: 3.5rem; }
+    max-width: 44rem;
+    margin: 0 0 2.25rem;
+    @include media-breakpoint-up(md) { margin-bottom: 3rem; }
 }
 
-// Text link: brand, semibold, a chevron that nudges forward on hover
 .lp-link {
     display: inline-flex;
     align-items: center;
@@ -103,40 +112,58 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     &:hover .bi-chevron-left { transform: translateX(-2px); }
 }
 
-// Buttons: the app's capsules, a touch larger on the public site (44px+)
+// -- Buttons: the app's capsules, a touch larger here -----------------------------------
 .lp-btn { min-height: 2.75rem; padding-inline: 1.25rem; }
-.lp-btn-lg {
-    min-height: 3rem;
-    padding-inline: 1.75rem;
-    font-size: 1.0625rem;
-    &.btn-primary { box-shadow: 0 10px 30px -10px rgba(var(--brand-rgb), .6); }
-    &.btn-primary:hover { box-shadow: 0 14px 34px -10px rgba(var(--brand-rgb), .7); }
+.lp-btn-lg { min-height: 3rem; padding-inline: 1.5rem; font-size: 1rem; }
+.lp-btn-light {
+    --bs-btn-bg: #fff;
+    --bs-btn-color: var(--brand-700);
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-bg: #fff;
+    --bs-btn-hover-color: var(--brand-800);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-bg: #{$gray-50};
+    --bs-btn-active-color: var(--brand-800);
+    --bs-btn-active-border-color: transparent;
+    box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .35);
 }
+.lp-btn-ghost-light {
+    --bs-btn-bg: transparent;
+    --bs-btn-color: #fff;
+    --bs-btn-border-color: rgba(255, 255, 255, .45);
+    --bs-btn-hover-bg: rgba(255, 255, 255, .1);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-border-color: rgba(255, 255, 255, .75);
+    --bs-btn-active-bg: rgba(255, 255, 255, .16);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-border-color: rgba(255, 255, 255, .75);
+}
+.lp-btn-light:focus-visible, .lp-btn-ghost-light:focus-visible { box-shadow: 0 0 0 3px rgba(255, 255, 255, .7); }
 
-// Live status dot: grey when closed, brand with a breathing ring while open
-.lp-dot, .lp-status-dot {
+// -- Live status: green dot (breathing) while open, grey when closed ---------------------
+.lp-dot {
     position: relative;
     display: inline-block;
     flex: none;
-    width: .4375rem;
-    height: .4375rem;
+    width: .5rem;
+    height: .5rem;
     border-radius: 50%;
     background: var(--c-faint);
 }
-.is-open > .lp-dot, .is-open > .lp-status-dot {
-    background: var(--brand-600);
+.is-open .lp-dot {
+    background: $lp-green;
     &::after {
         content: "";
         position: absolute;
         inset: 0;
         border-radius: inherit;
         background: inherit;
-        animation: lp-live 2.2s cubic-bezier(0, 0, .2, 1) infinite;
+        animation: lp-live 2.4s cubic-bezier(0, 0, .2, 1) infinite;
     }
 }
 @keyframes lp-live {
-    0%        { transform: scale(1);   opacity: .55; }
-    80%, 100% { transform: scale(2.6); opacity: 0; }
+    0%        { transform: scale(1);   opacity: .5; }
+    80%, 100% { transform: scale(2.4); opacity: 0; }
 }
 .lp-status-tag {
     display: inline-flex;
@@ -144,101 +171,45 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     gap: .5rem;
     font-weight: 500;
     color: var(--c-ink-2);
-    &.is-open { color: var(--c-ink); }
+    &.is-open { color: $lp-green-text; }
 }
 
-// Plain brand glyph (no tile behind it)
-.lp-glyph { font-size: 2rem; line-height: 1; color: var(--brand-600); }
+.lp-glyph { font-size: 1.5rem; line-height: 1; color: var(--brand-600); }
 .lp-glyph-sm { font-size: 1.25rem; }
 
-// -- Sections -----------------------------------------------------------------------
+// -- Sections ---------------------------------------------------------------------------------
 .lp-section {
     --lp-bg: var(--c-surface);
     position: relative;
     background: var(--lp-bg);
-    padding-block: 4.5rem;
-    @include media-breakpoint-up(md) { padding-block: 6rem; }
-    @include media-breakpoint-up(lg) { padding-block: 7.5rem; }
+    padding-block: 4rem;
+    @include media-breakpoint-up(md) { padding-block: 5.5rem; }
+    @include media-breakpoint-up(lg) { padding-block: 6.5rem; }
     &.is-tinted { --lp-bg: var(--c-canvas); }
 }
 .lp-section-compact {
-    padding-block: 3.5rem;
-    @include media-breakpoint-up(lg) { padding-block: 5rem; }
+    padding-block: 3rem;
+    @include media-breakpoint-up(lg) { padding-block: 4.5rem; }
 }
 .lp-section-links {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     gap: 0 2rem;
-    margin-top: 1.75rem;
-}
-
-// Faint engineering grid, faded out from the top centre by a mask
-.lp-grid {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image:
-        linear-gradient(to right, $lp-grid-line 1px, transparent 1px),
-        linear-gradient(to bottom, $lp-grid-line 1px, transparent 1px);
-    background-size: 56px 56px;
-    background-position: center -1px;
-    -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 0%, #000 20%, transparent 75%);
-    mask-image: radial-gradient(ellipse 65% 55% at 50% 0%, #000 20%, transparent 75%);
+    margin-top: 1.5rem;
 }
 
 // =============================================================================
-// Utility bar + header
+// Header: brand, Product / Clinic, Sign in; the clinic page adds a section row
 // =============================================================================
-.lp-utility {
-    background: var(--c-canvas);
-    font-size: .8125rem;
-    color: var(--c-ink-2);
-}
-.lp-utility-inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0 1rem;
-    min-height: 2.25rem;
-    padding-block: .125rem;
-}
-.lp-status {
-    display: inline-flex;
-    align-items: center;
-    gap: .5rem;
-    min-height: 2rem;
-    margin: 0;
-    font-weight: 500;
-    color: var(--c-ink);
-    min-width: 0;
-}
-.lp-utility-call {
-    display: inline-flex;
-    align-items: center;
-    gap: .375rem;
-    min-height: 2rem;
-    color: var(--c-ink-2);
-    font-weight: 500;
-    text-decoration: none;
-    white-space: nowrap;
-    strong { color: var(--c-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-    .c-icon { color: var(--brand-600); }
-    &:hover { color: var(--brand-700); strong { color: var(--brand-700); } }
-}
-
 .lp-header {
     position: sticky;
     top: 0;
     z-index: 1030;
-    background: rgba(255, 255, 255, .78);
+    background: rgba(255, 255, 255, .8);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 1px solid transparent;
     transition: border-color $dur-lift ease-out;
-    // The divider appears only once content scrolls under the bar (landing.js)
     &.is-scrolled { border-bottom-color: var(--c-hairline); }
     @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
         background: var(--c-surface);
@@ -252,9 +223,9 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
 .lp-header-inner {
     display: flex;
     align-items: center;
-    gap: .75rem;
-    min-height: $lp-header-h-sm;
-    @include media-breakpoint-up(md) { min-height: $lp-header-h; }
+    gap: .25rem;
+    min-height: 3.5rem;
+    @include media-breakpoint-up(md) { min-height: $lp-header-h; gap: .5rem; }
 }
 .lp-brand {
     display: inline-flex;
@@ -269,13 +240,15 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
 }
 .lp-brand-logo {
     flex: none;
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     object-fit: contain;
     // The built-in mark (public/brand/logo.png) has its own rounded corners
     &:not([src*="/brand/logo.png"]) { border-radius: 24%; }
 }
-.lp-brand-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+// Phones keep the header to logo, links and Sign in
+.lp-header .lp-brand-text { display: none; @include media-breakpoint-up(sm) { display: flex; } }
+.lp-brand-text { flex-direction: column; min-width: 0; line-height: 1.2; display: flex; }
 .lp-brand-name {
     font-size: .9375rem;
     font-weight: 650;
@@ -285,22 +258,14 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     text-overflow: ellipsis;
 }
 .lp-brand-sub {
+    max-width: 20rem;
     font-size: .75rem;
     color: var(--c-muted);
-    letter-spacing: -.004em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 22rem;
 }
-
-.lp-nav {
-    display: none;
-    align-items: center;
-    gap: .25rem;
-    @include media-breakpoint-up(lg) { display: flex; }
-    @include media-breakpoint-up(xl) { gap: 1rem; }
-}
+.lp-nav { display: flex; align-items: center; gap: .125rem; @include media-breakpoint-up(md) { gap: .5rem; } }
 .lp-nav-link {
     display: inline-flex;
     align-items: center;
@@ -312,197 +277,320 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     white-space: nowrap;
     transition: color $dur-fast ease-out;
     &:hover { color: var(--c-ink); }
-    &.is-active, &[aria-current] { color: var(--brand-600); font-weight: 500; }
+    &[aria-current] { color: var(--c-ink); font-weight: 600; }
 }
-.lp-header-actions {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
+.lp-header-cta {
     flex: none;
-    margin-left: .25rem;
-    @include media-breakpoint-up(lg) { margin-left: 1rem; }
-}
-.lp-signin {
-    display: none;
-    align-items: center;
-    min-height: 2.75rem;
-    padding: 0 .5rem;
+    margin-left: .375rem;
+    padding-inline: 1.125rem;
     font-size: .875rem;
+    @media (pointer: fine) { min-height: 2.25rem; }
+}
+
+// Clinic page: the sections, as a scrollable row of capsules
+.lp-subnav { border-top: 1px solid var(--c-hairline); }
+.lp-subnav-inner {
+    display: flex;
+    gap: .25rem;
+    margin-inline: -.375rem;
+    padding: .5rem 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+}
+.lp-subnav-link {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0 .875rem;
+    border-radius: 999px;
+    font-size: .8125rem;
     font-weight: 500;
     color: var(--c-ink-2);
     text-decoration: none;
     white-space: nowrap;
-    &:hover { color: var(--c-ink); }
-    @include media-breakpoint-up(md) { display: inline-flex; }
+    transition: background-color $dur-fast ease-out, color $dur-fast ease-out;
+    &:hover { background: rgba(0, 0, 0, .04); color: var(--c-ink); }
+    &.is-active, &[aria-current] { background: rgba(var(--brand-rgb), .1); color: var(--brand-700); }
+    @media (pointer: coarse) { min-height: 2.5rem; }
 }
-.lp-header-cta {
-    display: none;
-    padding-inline: 1.125rem;
-    @media (pointer: fine) { min-height: 2.5rem; }
-    font-size: .9375rem;
-    box-shadow: 0 8px 22px -8px rgba(var(--brand-rgb), .75);
-    @include media-breakpoint-up(sm) { display: inline-flex; }
-}
-.lp-menu-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    margin-right: -.625rem;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--c-ink);
-    font-size: 1.375rem;
-    -webkit-tap-highlight-color: transparent;
-    transition: background-color $dur-fast ease-out, transform $dur-press ease-out;
-    &:hover { background: rgba(0, 0, 0, .04); }
-    &:active { background: rgba(0, 0, 0, .06); transform: scale($press-scale); }
-    @include media-breakpoint-up(lg) { display: none; }
-}
-
-// Mobile menu: bottom sheet (slides up, leaves downward)
-.lp-sheet.offcanvas-bottom {
-    --bs-offcanvas-bg: var(--c-surface);
-    height: auto;
-    max-height: 85vh;
-    border-top: 0;
-    border-radius: $lp-r-tile $lp-r-tile 0 0;
-    box-shadow: 0 -24px 48px -24px rgba(0, 0, 0, .25);
-    padding-bottom: env(safe-area-inset-bottom);
-    .offcanvas-header { padding: 1.25rem 1.25rem .25rem; }
-    .offcanvas-title {
-        font-size: .75rem;
-        font-weight: 600;
-        letter-spacing: .12em;
-        text-transform: uppercase;
-        color: var(--c-muted);
-    }
-    .offcanvas-body { padding: .25rem 1.25rem 1.5rem; }
-}
-.lp-sheet-nav { display: flex; flex-direction: column; margin-bottom: 1.5rem; }
-.lp-sheet-link {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 3.5rem;
-    border-bottom: 1px solid var(--c-hairline);
-    font-size: 1.375rem;
-    font-weight: 600;
-    letter-spacing: -.02em;
-    color: var(--c-ink);
-    text-decoration: none;
-    .c-icon { font-size: 1.125rem; color: var(--c-faint); }
-    &:hover { color: var(--c-ink); }
-    &:active { color: var(--brand-600); }
-}
-.lp-sheet-actions { display: grid; gap: .625rem; }
 
 // =============================================================================
-// Hero: centered headline over the grid, then the stage below
+// Hero (product and clinic): copy on the left, a visual on the right
 // =============================================================================
 .lp-hero {
     position: relative;
-    isolation: isolate;
-    overflow: clip;   // clip, not hidden: keeps the scroll-driven stage timeline on the page
     background: var(--c-surface);
-    padding-block: 3.5rem 3rem;
-    @include media-breakpoint-up(md) { padding-block: 6rem 4.5rem; }
-    @include media-breakpoint-up(lg) { padding-block: 7rem 5.5rem; }
+    padding-block: 3rem 3.5rem;
+    @include media-breakpoint-up(md) { padding-block: 4.5rem 5rem; }
+    @include media-breakpoint-up(lg) { padding-block: 5.5rem 6rem; }
 }
-.lp-hero-head {
-    display: flex;
-    flex-direction: column;
+.lp-hero-grid {
+    display: grid;
+    gap: 3rem;
     align-items: center;
-    text-align: center;
-}
-.lp-hero-title {
-    max-width: 12em;
-    margin: 0;
-    font-family: $font-display;
-    font-size: clamp(2.25rem, 10.5vw, 3rem);
-    font-weight: 680;
-    line-height: 1.04;
-    letter-spacing: -.04em;
-    color: var(--c-ink);
-    text-wrap: balance;
-    @include media-breakpoint-up(sm) {
-        font-size: clamp(3rem, 1.2rem + 5.2vw, 5.5rem);
-        line-height: 1;
-        letter-spacing: -.045em;
+    @include media-breakpoint-up(lg) {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+        gap: 4rem;
     }
 }
-.lp-hero-sub {
-    max-width: 34ch;
-    margin: 1.5rem 0 0;
-    font-size: clamp(1.1875rem, 1.05rem + .45vw, 1.5rem);
-    line-height: 1.4;
-    letter-spacing: -.014em;
-    color: var(--c-muted);
-    text-wrap: balance;
-    @include media-breakpoint-up(md) { max-width: 40rem; margin-top: 1.75rem; }
+.lp-hero-clinic .lp-hero-grid {
+    align-items: start;
+    @include media-breakpoint-up(lg) { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
 }
-.lp-hero-desc {
-    max-width: 38rem;
-    margin: 1rem 0 0;
-    font-size: 1.0625rem;
+.lp-hero-copy { min-width: 0; }
+.lp-hero-title {
+    max-width: 14em;
+    margin: 0;
+    font-family: $font-display;
+    font-size: clamp(2.375rem, 1.5rem + 3.3vw, 4rem);
+    font-weight: 680;
+    line-height: 1.04;
+    letter-spacing: -.038em;
+    color: var(--c-ink);
+    text-wrap: balance;
+}
+.lp-hero-lede {
+    max-width: 34rem;
+    margin: 1.25rem 0 0;
+    font-size: clamp(1.0625rem, 1rem + .35vw, 1.25rem);
     line-height: 1.5;
     color: var(--c-muted);
-    text-wrap: balance;
+    text-wrap: pretty;
+}
+.lp-hero-desc {
+    max-width: 34rem;
+    margin: .875rem 0 0;
+    color: var(--c-muted);
+    text-wrap: pretty;
 }
 .lp-hero-actions {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     gap: .75rem;
-    margin-top: 2.25rem;
-    @include media-breakpoint-up(md) { margin-top: 2.5rem; }
+    margin-top: 2rem;
     @include media-breakpoint-down(sm) {
         flex-direction: column;
-        align-items: center;
-        width: 100%;
-        .btn { width: 100%; max-width: 20.625rem; }
+        .btn { width: 100%; }
     }
 }
 .lp-hero-note {
-    max-width: 36rem;
-    margin: 1.75rem 0 0;
+    max-width: 32rem;
+    margin: 1.25rem 0 0;
     font-size: .9375rem;
     line-height: 1.5;
     color: var(--c-muted);
-    text-wrap: balance;
     .c-icon { margin-right: .375rem; color: var(--brand-600); }
     a { font-weight: 600; color: var(--brand-600); text-decoration: none; text-underline-offset: 3px; }
     a:hover { color: var(--brand-700); text-decoration: underline; }
 }
+.lp-hero-visual { min-width: 0; }
 
-// The stage: a soft canvas frame, like a product shot on ServiceCo
-.lp-stage {
-    max-width: 64rem;
-    margin: 3.5rem auto 0;
-    padding: .75rem;
-    border-radius: $lp-r-big;
-    background: var(--c-canvas);
-    @include media-breakpoint-up(sm) { padding: 1.5rem; }
-    @include media-breakpoint-up(md) { margin-top: 4.5rem; padding: 2.5rem; border-radius: 2.5rem; }
-}
-.lp-stage-inner { position: relative; transform-origin: 50% 20%; }
-
-// "Today at the clinic" panel (no photo)
-.lp-today {
-    overflow: hidden;
-    border-radius: $lp-r-tile;
+// Clinic status pill above the product headline (opens the clinic page)
+.lp-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    max-width: 100%;
+    min-height: 2.25rem;
+    margin-bottom: 1.75rem;
+    padding: .25rem .375rem .25rem .875rem;
+    border-radius: 999px;
     background: var(--c-surface);
-    box-shadow: 0 0 0 1px var(--c-hairline), $lp-shadow-stage;
-    text-align: left;
+    box-shadow: 0 0 0 1px var(--c-hairline), 0 1px 2px rgba(0, 0, 0, .04);
+    font-size: .8125rem;
+    color: var(--c-ink-2);
+    text-decoration: none;
+    transition: box-shadow $dur-lift $ease-out;
+    &:hover { color: var(--c-ink-2); box-shadow: 0 0 0 1px rgba(0, 0, 0, .1), $lp-shadow-card; }
+    &:hover .c-icon { transform: translateX(2px); }
 }
-.lp-today-head {
+.lp-pill-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-pill-name { display: none; @include media-breakpoint-up(sm) { display: inline; } }
+.is-open .lp-pill-text { color: $lp-green-text; }
+.lp-pill-link {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .125rem;
+    padding: .25rem .625rem;
+    border-radius: 999px;
+    background: var(--c-canvas);
+    font-weight: 600;
+    color: var(--brand-600);
+    .c-icon { font-size: .75rem; transition: transform $dur-base $ease-out; }
+}
+
+// -- The drawn dashboard preview --------------------------------------------------------------
+.lp-preview { margin: 0; }
+.lp-window {
+    overflow: hidden;
+    border-radius: $lp-r-card;
+    background: var(--c-surface);
+    box-shadow: 0 0 0 1px var(--c-hairline), $lp-shadow-window;
+    font-size: .8125rem;
+    line-height: 1.4;
+    letter-spacing: -.006em;
+    text-align: left;
+    user-select: none;
+}
+.lp-window-bar {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    height: 2.75rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--c-hairline);
+}
+.lp-window-dots {
+    display: flex;
+    gap: .375rem;
+    i { width: .625rem; height: .625rem; border-radius: 50%; background: rgba(0, 0, 0, .1); }
+}
+.lp-window-title { font-weight: 600; color: var(--c-ink); }
+.lp-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    margin-left: auto;
+    padding: .1875rem .625rem;
+    border-radius: 999px;
+    background: $lp-green-tint;
+    font-size: .75rem;
+    font-weight: 600;
+    color: $lp-green-text;
+    .lp-dot { width: .375rem; height: .375rem; }
+}
+.lp-window-body {
+    display: grid;
+    gap: .75rem;
+    padding: 1rem;
+    background: var(--c-canvas);
+    @include media-breakpoint-up(sm) { padding: 1.25rem; }
+}
+.lp-window-head { display: flex; flex-direction: column; }
+.lp-window-greet { font-size: .75rem; color: var(--c-muted); }
+.lp-window-heading { font-size: 1.0625rem; font-weight: 650; letter-spacing: -.02em; color: var(--c-ink); }
+.lp-mock-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .625rem; }
+.lp-mock-stat {
     display: flex;
     flex-direction: column;
     gap: .25rem;
-    padding: 1.25rem 1.25rem 1.125rem;
-    @include media-breakpoint-up(md) { padding: 1.5rem 2rem 1.375rem; }
+    min-width: 0;
+    padding: .75rem .875rem;
+    border-radius: $lp-r-inner;
+    background: var(--c-surface);
+    box-shadow: 0 0 0 1px var(--c-hairline);
+}
+.lp-mock-label { font-size: .6875rem; color: var(--c-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lp-mock-value {
+    font-size: 1.5rem;
+    font-weight: 650;
+    line-height: 1.1;
+    letter-spacing: -.03em;
+    color: var(--c-ink);
+    font-variant-numeric: tabular-nums;
+}
+.lp-mock-card {
+    padding: .875rem 1rem;
+    border-radius: $lp-r-inner;
+    background: var(--c-surface);
+    box-shadow: 0 0 0 1px var(--c-hairline);
+}
+.lp-mock-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 0 .5rem;
+    font-weight: 600;
+    color: var(--c-ink);
+    .bi { color: var(--brand-600); }
+}
+.lp-mock-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 .375rem;
+    border-radius: 999px;
+    background: rgba(var(--brand-rgb), .1);
+    font-size: .6875rem;
+    font-weight: 600;
+    color: var(--brand-700);
+}
+.lp-mock-list { list-style: none; margin: 0; padding: 0; }
+.lp-mock-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: .75rem;
+    padding: .5rem 0;
+    border-top: 1px solid var(--c-hairline);
+    &:first-child { border-top: 0; padding-top: .125rem; }
+}
+.lp-mock-who {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    font-weight: 550;
+    color: var(--c-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    small { font-size: .6875rem; font-weight: 400; color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; }
+}
+.lp-mock-time { font-size: .75rem; color: var(--c-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lp-mock-state {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .1875rem .5rem;
+    border-radius: 999px;
+    background: $lp-green-tint;
+    font-size: .6875rem;
+    font-weight: 500;
+    color: $lp-green-text;
+    white-space: nowrap;
+    &::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: $lp-green; }
+}
+@media (max-width: 399.98px) { .lp-mock-time { display: none; } }
+.lp-mock-lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: .375rem;
+    li { position: relative; padding-left: .875rem; color: var(--c-ink-2); }
+    li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: .5em;
+        width: .3125rem;
+        height: .3125rem;
+        border-radius: 50%;
+        background: var(--brand-600);
+    }
+}
+.lp-preview-caption { margin-top: .875rem; font-size: .75rem; color: var(--c-muted); text-align: center; }
+
+// -- Clinic page: "Today at the clinic" (under the clinic's photo when set) --------------------
+.lp-today {
+    position: relative;
+    overflow: hidden;
+    border-radius: $lp-r-card;
+    background: var(--c-surface);
+    box-shadow: 0 0 0 1px var(--c-hairline), $lp-shadow-window;
+}
+.lp-today-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .25rem 1rem;
+    padding: 1.25rem 1.5rem 0;
 }
 .lp-today-title {
     margin: 0;
@@ -512,120 +600,402 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     text-transform: uppercase;
     color: var(--c-muted);
 }
-.lp-today-date {
-    margin: 0;
-    font-size: clamp(1.25rem, 1.1rem + .5vw, 1.625rem);
+.lp-today-date { margin: 0; font-size: .875rem; color: var(--c-muted); }
+.lp-today-status {
+    display: flex;
+    margin: .625rem 1.5rem 0;
+    font-size: 1.25rem;
     font-weight: 650;
-    letter-spacing: -.025em;
-    line-height: 1.2;
+    letter-spacing: -.02em;
+    line-height: 1.3;
     color: var(--c-ink);
+    .lp-dot { width: .5625rem; height: .5625rem; }
 }
-.lp-today-list {
-    margin: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
-}
-.lp-today-cell {
-    // Hairlines between cells, whatever the column count; the panel clips the outer ones
-    box-shadow: -1px -1px 0 var(--c-hairline);
-    padding: 1.25rem 1.25rem 1.375rem;
-    @include media-breakpoint-up(md) { padding: 1.5rem 2rem 1.75rem; }
+.lp-today-list { margin: 1rem 0 0; padding: 0 1.5rem; }
+.lp-today-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .875rem 0;
+    border-top: 1px solid var(--c-hairline);
     dt {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: .875rem;
-        font-size: .8125rem;
-        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: .625rem;
+        flex: none;
+        font-size: .9375rem;
+        font-weight: 400;
         color: var(--c-muted);
-        .c-icon { font-size: 1.5rem; color: var(--brand-600); }
+        .c-icon { font-size: 1rem; color: var(--brand-600); }
     }
-    dd {
-        margin: .25rem 0 0;
-        font-size: 1.0625rem;
-        font-weight: 600;
-        letter-spacing: -.015em;
-        color: var(--c-ink);
-        overflow-wrap: anywhere;
-    }
+    dd { margin: 0; min-width: 0; text-align: right; font-weight: 600; color: var(--c-ink); overflow-wrap: anywhere; }
     dd a { color: var(--c-ink); text-decoration: none; font-variant-numeric: tabular-nums; text-underline-offset: 3px; }
     dd a:hover { color: var(--brand-700); text-decoration: underline; }
-    .lp-status-tag { font-weight: 600; }
 }
-.lp-today-foot {
-    padding: .25rem 1.25rem;
-    box-shadow: 0 -1px 0 var(--c-hairline);
-    @include media-breakpoint-up(md) { padding-inline: 2rem; }
-}
-
-// The clinic's own photo (admin upload) with today's hours floating on it
+.lp-today-foot { padding: .125rem 1.5rem .25rem; border-top: 1px solid var(--c-hairline); }
 .lp-hero-media { margin: 0; }
 .lp-hero-photo {
     display: block;
     width: 100%;
     height: auto;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 10;
     object-fit: cover;
-    border-radius: $lp-r-tile;
+    border-radius: $lp-r-card;
     background: var(--c-surface-2);
-    box-shadow: 0 0 0 1px var(--c-hairline), $lp-shadow-stage;
-    @include media-breakpoint-up(md) { aspect-ratio: 16 / 9; }
 }
-.lp-hero-today {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: .375rem 1.25rem;
-    margin: 1rem 0 0;
-    font-size: .9375rem;
-    color: var(--c-ink-2);
-    .c-icon { color: var(--brand-600); margin-right: .375rem; }
-    @include media-breakpoint-up(md) {
-        position: absolute;
-        left: 1.25rem;
-        bottom: 1.25rem;
-        margin: 0;
-        padding: .625rem 1.125rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, .78);
-        -webkit-backdrop-filter: saturate(180%) blur(20px);
-        backdrop-filter: saturate(180%) blur(20px);
-        box-shadow: 0 0 0 1px rgba(0, 0, 0, .05), 0 12px 28px -14px rgba(0, 0, 0, .3);
-        color: var(--c-ink);
-        @media (prefers-reduced-transparency: reduce) {
-            background: var(--c-surface);
-            -webkit-backdrop-filter: none;
-            backdrop-filter: none;
-        }
-    }
+.lp-hero-visual.has-photo .lp-today {
+    margin: -3.5rem .75rem 0;
+    @include media-breakpoint-up(sm) { margin: -4.5rem 1.5rem 0; }
 }
-.lp-hero-today-hours { display: inline-flex; align-items: center; font-weight: 500; }
 
 // =============================================================================
-// Advisories
+// Product: bento grid of features, each with a small drawn screen
 // =============================================================================
+.lp-bento {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+    @include media-breakpoint-up(md) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+    @include media-breakpoint-up(lg) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.lp-bento-card {
+    @include lp-surface;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 0;
+    padding: 1.5rem;
+    border-radius: $lp-r-card;
+    transition: transform $dur-lift $ease-out, box-shadow $dur-lift $ease-out;
+    @include media-breakpoint-up(md) { padding: 1.75rem; }
+    &:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px var(--c-hairline), $lp-shadow-lift; }
+}
+.lp-bento-text {
+    min-width: 0;
+    .lp-h3 { margin-top: 1rem; }
+    p { margin: .5rem 0 0; max-width: 36ch; font-size: 1rem; color: var(--c-muted); }
+}
+.lp-bento-logbook, .lp-bento-assistant { @include media-breakpoint-up(md) { grid-column: span 2; } }
+.lp-bento-privacy { @include media-breakpoint-up(lg) { grid-column: span 3; } }
+.lp-bento-logbook, .lp-bento-assistant, .lp-bento-privacy {
+    @include media-breakpoint-up(lg) {
+        flex-direction: row;
+        align-items: center;
+        gap: 2.5rem;
+        .lp-bento-text { flex: 0 0 36%; }
+        .lp-demo { flex: 1; margin-top: 0; }
+    }
+}
+
+// The mini screen
+.lp-demo {
+    min-width: 0;
+    margin-top: auto;
+    padding: .875rem;
+    border-radius: $lp-r-inner;
+    background: var(--c-canvas);
+    font-size: .8125rem;
+    line-height: 1.4;
+    letter-spacing: -.006em;
+    user-select: none;
+}
+.lp-demo-log, .lp-demo-list, .lp-demo-stock, .lp-demo-checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: .375rem;
+    > li {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: .75rem;
+        min-width: 0;
+        padding: .5rem .75rem;
+        border-radius: .625rem;
+        background: var(--c-surface);
+        box-shadow: 0 0 0 1px var(--c-hairline);
+    }
+}
+.lp-demo-time { font-size: .75rem; color: var(--c-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lp-demo-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    font-weight: 550;
+    color: var(--c-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    small { display: block; font-size: .6875rem; font-weight: 400; color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; }
+    strong { font-weight: 600; }
+}
+.lp-demo-tag {
+    padding: .1875rem .5rem;
+    border-radius: 999px;
+    background: var(--c-canvas);
+    font-size: .6875rem;
+    font-weight: 500;
+    color: var(--c-ink-2);
+    white-space: nowrap;
+    &.is-active { background: $lp-green-tint; color: $lp-green-text; }
+}
+// Patients
+.lp-demo-search {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    height: 2.25rem;
+    padding: 0 .75rem;
+    border-radius: .625rem;
+    background: var(--c-surface);
+    box-shadow: 0 0 0 1px var(--c-hairline);
+    color: var(--c-muted);
+}
+.lp-demo-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .375rem;
+    margin: .625rem 0;
+    span {
+        padding: .25rem .625rem;
+        border-radius: 999px;
+        background: rgba(var(--brand-rgb), .1);
+        font-size: .6875rem;
+        font-weight: 600;
+        color: var(--brand-700);
+    }
+    &.is-roles { margin-top: 0; }
+    &.is-roles span { background: var(--c-surface); box-shadow: 0 0 0 1px var(--c-hairline); color: var(--c-ink-2); }
+    &.is-roles span.is-on { background: var(--brand-600); box-shadow: none; color: var(--brand-contrast); }
+}
+.lp-demo-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px var(--c-hairline);
+    color: var(--c-muted);
+}
+.lp-demo-flag { font-size: .6875rem; font-weight: 500; color: tone("danger", 700); white-space: nowrap; }
+// Appointments
+.lp-demo-sms {
+    display: flex;
+    gap: .5rem;
+    margin: .625rem 0 0;
+    padding: .625rem .75rem;
+    border-radius: .875rem .875rem .875rem .25rem;
+    background: var(--c-surface);
+    box-shadow: 0 0 0 1px var(--c-hairline);
+    color: var(--c-ink-2);
+    .bi { color: var(--brand-600); }
+}
+// Medicines
+.lp-demo-stock > li { grid-template-columns: minmax(0, 1fr) 5.5rem; row-gap: .25rem; }
+.lp-demo-bar {
+    height: .375rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .07);
+    i {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--brand-600);
+        transform-origin: left center;
+        transform: scaleX(var(--w, 1));
+    }
+    &.is-low i { background: tone("danger", 600); }
+}
+.lp-demo-alert {
+    grid-column: 1 / -1;
+    font-size: .6875rem;
+    font-weight: 500;
+    color: var(--c-ink-2);
+    &.is-danger { color: tone("danger", 700); }
+}
+// Reports
+.lp-demo-chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .75rem;
+    font-weight: 600;
+    color: var(--c-ink);
+}
+.lp-demo-button {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .25rem .625rem;
+    border-radius: 999px;
+    background: var(--brand-600);
+    font-size: .6875rem;
+    font-weight: 600;
+    color: var(--brand-contrast);
+    white-space: nowrap;
+}
+.lp-demo-chart {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    align-items: end;
+    gap: .5rem;
+    height: 7.5rem;
+    padding: .75rem .75rem .5rem;
+    border-radius: .625rem;
+    background: var(--c-surface);
+    box-shadow: 0 0 0 1px var(--c-hairline);
+}
+.lp-demo-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .375rem;
+    height: 100%;
+    i {
+        width: 100%;
+        max-width: 1.75rem;
+        height: calc(var(--h, 1) * 4.5rem);
+        border-radius: .375rem .375rem .1875rem .1875rem;
+        background: rgba(var(--brand-rgb), .22);
+        transform-origin: bottom center;
+    }
+    &:last-child i { background: var(--brand-600); }
+    small { font-size: .625rem; color: var(--c-muted); }
+}
+// Assistant
+.lp-demo-chat { display: flex; flex-direction: column; gap: .5rem; }
+.lp-demo-bubble {
+    max-width: 88%;
+    margin: 0;
+    padding: .625rem .875rem;
+    border-radius: 1rem 1rem 1rem .25rem;
+    background: var(--c-surface);
+    box-shadow: 0 0 0 1px var(--c-hairline);
+    color: var(--c-ink);
+    .bi { margin-right: .375rem; color: var(--brand-600); }
+    &.is-me {
+        align-self: flex-end;
+        border-radius: 1rem 1rem .25rem 1rem;
+        background: var(--brand-600);
+        box-shadow: none;
+        color: var(--brand-contrast);
+    }
+}
+// Roles and audit log
+.lp-demo-list.is-log > li { grid-template-columns: minmax(0, 1fr) auto; }
+// Privacy
+.lp-demo-checks > li {
+    grid-template-columns: auto minmax(0, 1fr);
+    color: var(--c-ink);
+    font-weight: 500;
+    .bi { color: var(--brand-600); }
+}
+
+// =============================================================================
+// Steps (product "How it works" and the clinic's "How to get care")
+// =============================================================================
+.lp-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+    @include media-breakpoint-up(md) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+}
+.lp-step {
+    @include lp-surface;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-radius: $lp-r-card;
+    @include media-breakpoint-up(md) { padding: 1.75rem; }
+}
+.lp-step-num {
+    font-size: 2.25rem;
+    font-weight: 650;
+    line-height: 1;
+    letter-spacing: -.04em;
+    color: var(--brand-600);
+    font-variant-numeric: tabular-nums;
+}
+.lp-step-text p { margin: .5rem 0 0; font-size: 1rem; color: var(--c-muted); }
+
+// =============================================================================
+// Closing call to action (product page)
+// =============================================================================
+.lp-section-cta {
+    padding-top: 0;
+    @include media-breakpoint-up(md) { padding-top: 0; }
+    @include media-breakpoint-up(lg) { padding-top: 0; }
+}
+.lp-cta {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2.25rem 1.5rem;
+    border-radius: $lp-r-card;
+    background: var(--brand-600);
+    color: var(--brand-contrast);
+    @include media-breakpoint-up(md) { padding: 3rem; }
+    @include media-breakpoint-up(lg) {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 3rem;
+        padding: 3.5rem 4rem;
+    }
+    p { max-width: 36rem; margin: .875rem 0 0; color: rgba(255, 255, 255, .86); }
+}
+.lp-cta-title {
+    margin: 0;
+    font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+    font-weight: 660;
+    line-height: 1.1;
+    letter-spacing: -.03em;
+    color: #fff;
+    text-wrap: balance;
+}
+.lp-cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    flex: none;
+    @include media-breakpoint-down(sm) { flex-direction: column; .btn { width: 100%; } }
+}
+
+// =============================================================================
+// Clinic sections
+// =============================================================================
+// Advisories
 .lp-advisories {
     list-style: none;
     max-width: 50rem;
-    margin: 0 auto;
+    margin: 0;
     padding: 0;
     display: grid;
     gap: .875rem;
 }
 .lp-advisory {
-    --tone: var(--c-info-600);
+    --tone: var(--brand-600);
     @include lp-surface;
     display: grid;
     grid-template-columns: 1.75rem minmax(0, 1fr);
     gap: 1rem;
-    padding: 1.5rem 1.25rem;
+    padding: 1.375rem 1.25rem;
     border-radius: $lp-r-card;
-    @include media-breakpoint-up(md) { padding: 1.75rem 2rem; gap: 1.25rem; }
-    &.tone-warning { --tone: var(--c-warning-600); }
-    &.tone-danger  { --tone: var(--c-danger-600); }
+    @include media-breakpoint-up(md) { padding: 1.5rem 1.75rem; }
+    &.tone-danger { --tone: #{tone("danger", 600)}; }
 }
-.lp-advisory-icon { font-size: 1.5rem; line-height: 1.1; color: var(--tone); }
+.lp-advisory-icon { font-size: 1.375rem; line-height: 1.15; color: var(--tone); }
 .lp-advisory-meta {
     display: flex;
     flex-wrap: wrap;
@@ -644,9 +1014,7 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
 .lp-advisory-body { margin: .5rem 0 0; color: var(--c-ink-2); white-space: pre-line; }
 .lp-advisory .lp-link { margin-top: .25rem; font-size: .9375rem; }
 
-// =============================================================================
-// Services: white cards; linked ones lift, carry a spotlight, and are one target
-// =============================================================================
+// Services: white cards; a card with a link is one big target and lifts
 .lp-services {
     list-style: none;
     margin: 0;
@@ -663,62 +1031,29 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     flex-direction: column;
     align-items: flex-start;
     min-width: 0;
-    padding: 1.75rem 1.5rem;
-    border-radius: $lp-r-big;
-    @include media-breakpoint-up(md) { padding: 2.25rem 2rem; }
-    .lp-h3 { margin-top: 1.5rem; }
-    p { margin: .5rem 0 0; max-width: 34ch; color: var(--c-muted); }
-    .lp-link { position: static; margin-top: auto; padding-top: 1rem; font-size: 1rem; }
+    padding: 1.5rem;
+    border-radius: $lp-r-card;
+    @include media-breakpoint-up(md) { padding: 1.75rem; }
+    .lp-h3 { margin-top: 1rem; }
+    p { margin: .5rem 0 0; max-width: 36ch; font-size: 1rem; color: var(--c-muted); }
+    .lp-link { margin-top: auto; padding-top: .75rem; font-size: .9375rem; }
 }
-.lp-service-img {
-    width: 3rem;
-    height: 3rem;
-    object-fit: cover;
-    border-radius: $radius-md;
-}
+.lp-service-img { width: 2.75rem; height: 2.75rem; object-fit: cover; border-radius: $radius-md; }
 .lp-card-link {
     transition: transform $dur-lift $ease-out, box-shadow $dur-lift $ease-out;
-    &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 0 0 1px var(--c-hairline), $lp-shadow-lift;
-    }
-    &:active { transform: translateY(-2px) scale(.985); transition-duration: $dur-press; }
+    &:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px var(--c-hairline), $lp-shadow-lift; }
+    &:active { transform: translateY(-1px) scale(.99); transition-duration: $dur-press; }
     &:has(.lp-stretch:focus-visible) { box-shadow: 0 0 0 1px var(--c-hairline), $lp-shadow-lift, var(--c-glow); }
 }
-// The card's one link covers the whole card
 .lp-stretch {
-    &::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        border-radius: inherit;
-    }
+    &::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
     &:focus-visible { box-shadow: none; }
 }
-// Pointer spotlight (landing.js sets --spot-x / --spot-y)
-.lp-spot {
-    isolation: isolate;
-    &::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: -1;
-        border-radius: inherit;
-        pointer-events: none;
-        opacity: 0;
-        background: radial-gradient(420px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(var(--brand-rgb), .07), transparent 65%);
-        transition: opacity $dur-lift ease-out;
-    }
-    &:hover::before { opacity: 1; }
-}
 
-// =============================================================================
-// Schedule: weekly hours + specialist visit days
-// =============================================================================
+// Schedule
 .lp-now {
     display: inline-flex;
-    margin: 1.5rem 0 0;
+    margin: 1.25rem 0 0;
     padding: .5rem 1rem;
     border-radius: 999px;
     background: var(--c-surface);
@@ -729,10 +1064,9 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     display: grid;
     gap: 1rem;
     max-width: 40rem;
-    margin: 0 auto;
     &.has-visits {
         @include media-breakpoint-up(lg) {
-            max-width: 64rem;
+            max-width: none;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 1.25rem;
             align-items: start;
@@ -748,7 +1082,7 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     display: flex;
     align-items: center;
     gap: .75rem;
-    padding: 1.25rem 1.5rem;
+    padding: 1.125rem 1.5rem;
     border-bottom: 1px solid var(--c-hairline);
     .lp-h3 { font-size: 1.0625rem; }
 }
@@ -762,7 +1096,7 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
         padding: .875rem 1.125rem;
         border-bottom: 1px solid var(--c-hairline);
         font-size: .9375rem;
-        @include media-breakpoint-up(sm) { padding: 1rem 1.5rem; font-size: 1rem; }
+        @include media-breakpoint-up(sm) { padding: .9375rem 1.5rem; font-size: 1rem; }
     }
     tr:last-child > * { border-bottom: 0; }
     th { font-weight: 600; color: var(--c-ink); text-align: left; }
@@ -778,7 +1112,6 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     background: var(--brand-600);
     font-size: .6875rem;
     font-weight: 600;
-    letter-spacing: .02em;
     line-height: 1.4;
     color: var(--brand-contrast);
     vertical-align: .125rem;
@@ -793,150 +1126,44 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     @include media-breakpoint-down(sm) { grid-template-columns: 1fr; }
 }
 .lp-visit-type { font-weight: 600; color: var(--c-ink); }
-.lp-visit-date { color: var(--c-muted); font-size: .9375rem; }
+.lp-visit-date { font-size: .9375rem; color: var(--c-muted); }
 .lp-visit-time {
     grid-row: span 2;
     align-self: center;
-    font-variant-numeric: tabular-nums;
     color: var(--c-ink-2);
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
     @include media-breakpoint-down(sm) { grid-row: auto; }
 }
 
-// =============================================================================
-// How to get care: numbered steps joined by a line that fills on scroll
-// =============================================================================
-.lp-steps {
-    --n: 3;
-    position: relative;
-    list-style: none;
-    max-width: 64rem;
-    margin: 0 auto;
-    padding: 0;
-    display: grid;
-    gap: 2.25rem;
-    @include media-breakpoint-up(md) {
-        grid-template-columns: repeat(var(--n), minmax(0, 1fr));
-        gap: 1.5rem;
-    }
-}
-// Desktop: a hairline track between the first and last number, and a brand fill
-.lp-steps.has-line {
-    @include media-breakpoint-up(md) {
-        &::before, &::after {
-            content: "";
-            position: absolute;
-            z-index: 0;
-            top: 1.75rem;
-            left: calc(100% / (2 * var(--n)));
-            right: calc(100% / (2 * var(--n)));
-            height: 1px;
-            pointer-events: none;
-        }
-        &::before { background: rgba(0, 0, 0, .1); }
-        &::after {
-            height: 2px;
-            margin-top: -.5px;
-            border-radius: 999px;
-            background: var(--brand-600);
-            transform-origin: left center;
-            transform: scaleX(var(--lp-fill, 0));
-            transition: transform $dur-slow ease-out;
-        }
-    }
-}
-.lp-step {
-    position: relative;
-    display: grid;
-    grid-template-columns: 3.5rem minmax(0, 1fr);
-    gap: 1.25rem;
-    align-items: start;
-    // Phones: a hairline joins each number to the next
-    .has-line > &:not(:last-child)::before {
-        content: "";
-        position: absolute;
-        left: 1.75rem;
-        top: 3.5rem;
-        bottom: -2.25rem;
-        width: 1px;
-        background: rgba(0, 0, 0, .1);
-    }
-    @include media-breakpoint-up(md) {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        .has-line > &:not(:last-child)::before { content: none; }
-    }
-}
-.lp-step-num {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 50%;
-    background: var(--brand-600);
-    color: var(--brand-contrast);
-    font-size: 1.125rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    // A ring in the section colour cuts the line cleanly around each number
-    box-shadow: 0 0 0 10px var(--lp-bg, #fff), 0 12px 28px -10px rgba(var(--brand-rgb), .75);
-}
-.lp-step-text {
-    min-width: 0;
-    padding-top: .875rem;
-    @include media-breakpoint-up(md) { padding-top: .25rem; }
-    .lp-h3 { max-width: 20ch; }
-    p { margin: .5rem 0 0; max-width: 34ch; color: var(--c-muted); }
-    @include media-breakpoint-up(md) {
-        .lp-h3, p { margin-inline: auto; }
-    }
-}
-
-// =============================================================================
 // Team
-// =============================================================================
 .lp-team {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
     gap: 1rem;
-    justify-content: center;
-    grid-template-columns: repeat(auto-fit, minmax(15rem, 20rem));
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
     @include media-breakpoint-down(sm) { grid-template-columns: minmax(0, 1fr); }
 }
 .lp-person {
     @include lp-surface;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 2rem 1.5rem;
+    align-items: flex-start;
+    padding: 1.5rem;
     border-radius: $lp-r-card;
-    text-align: center;
-    .lp-h3 { margin-top: 1.25rem; font-size: 1.1875rem; }
+    .lp-h3 { margin-top: 1rem; font-size: 1.125rem; }
 }
-.lp-person-photo {
-    width: 4.5rem;
-    height: 4.5rem;
-    border-radius: 50%;
-    object-fit: cover;
-    background: var(--c-surface-2);
-}
+.lp-person-photo { width: 4rem; height: 4rem; border-radius: 50%; object-fit: cover; background: var(--c-surface-2); }
 .lp-person-role { margin: .25rem 0 0; font-size: .9375rem; color: var(--c-muted); }
-.lp-person-note { margin: .875rem 0 0; font-size: .9375rem; color: var(--c-ink-2); }
+.lp-person-note { margin: .75rem 0 0; font-size: .9375rem; color: var(--c-ink-2); }
 
-// =============================================================================
 // FAQ: one white card of accordion rows (Bootstrap collapse)
-// =============================================================================
-.lp-faq { max-width: 50rem; margin: 0 auto; }
+.lp-faq { max-width: 50rem; }
 .lp-faq-item {
     margin-inline: 1.25rem;
-    @include media-breakpoint-up(md) { margin-inline: 2rem; }
+    @include media-breakpoint-up(md) { margin-inline: 1.75rem; }
     & + & { border-top: 1px solid var(--c-hairline); }
 }
 .lp-faq-q { margin: 0; }
@@ -946,8 +1173,8 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     justify-content: space-between;
     gap: 1rem;
     width: 100%;
-    min-height: 4rem;
-    padding: 1.125rem 0;
+    min-height: 3.75rem;
+    padding: 1rem 0;
     border: 0;
     background: none;
     text-align: left;
@@ -958,46 +1185,24 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     color: var(--c-ink);
     cursor: pointer;
     transition: color $dur-fast ease-out;
-    @include media-breakpoint-up(md) { font-size: 1.125rem; }
     &:hover { color: var(--brand-700); }
     &:focus-visible { border-radius: $radius-sm; }
-    .c-icon {
-        flex: none;
-        font-size: 1rem;
-        color: var(--c-muted);
-        transition: transform $dur-lift $ease-out, color $dur-fast ease-out;
-    }
+    .c-icon { flex: none; font-size: 1rem; color: var(--c-muted); transition: transform $dur-lift $ease-out, color $dur-fast ease-out; }
     &[aria-expanded="true"] .c-icon { transform: rotate(180deg); color: var(--brand-600); }
 }
-.lp-faq-a {
-    margin: 0;
-    padding: 0 2.5rem 1.375rem 0;
-    max-width: 68ch;
-    color: var(--c-muted);
-    white-space: pre-line;
-}
+.lp-faq-a { margin: 0; padding: 0 2.5rem 1.25rem 0; max-width: 68ch; color: var(--c-muted); white-space: pre-line; }
 .lp-faq .collapsing { transition-duration: $dur-slow; }
 .lp-faq-help {
-    margin: 2rem 0 0;
-    text-align: center;
+    margin: 1.5rem 0 0;
     color: var(--c-muted);
-    a { color: var(--brand-600); font-weight: 500; text-decoration: none; text-underline-offset: 3px; }
+    a { font-weight: 500; color: var(--brand-600); text-decoration: none; text-underline-offset: 3px; }
     a:hover { color: var(--brand-700); text-decoration: underline; }
 }
 
-// =============================================================================
-// Contact: white tiles with a plain glyph, label and value
-// =============================================================================
-.lp-contact-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: .75rem;
-    margin-top: 2rem;
-}
+// Contact
+.lp-contact-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; }
 .lp-contact {
-    max-width: 64rem;
-    margin: 0 auto;
+    margin: 0;
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
@@ -1006,37 +1211,24 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
 .lp-contact-tile {
     @include lp-surface;
     min-width: 0;
-    padding: 1.5rem 1.5rem 1.625rem;
+    padding: 1.375rem 1.5rem 1.5rem;
     border-radius: $lp-r-tile;
     dt {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: .875rem;
+        gap: .75rem;
         font-size: .8125rem;
         font-weight: 500;
         color: var(--c-muted);
-        .c-icon { font-size: 1.5rem; color: var(--brand-600); }
+        .c-icon { font-size: 1.375rem; color: var(--brand-600); }
     }
-    dd {
-        margin: .25rem 0 0;
-        font-size: 1.0625rem;
-        font-weight: 600;
-        letter-spacing: -.015em;
-        color: var(--c-ink);
-        overflow-wrap: anywhere;
-    }
+    dd { margin: .25rem 0 0; font-size: 1.0625rem; font-weight: 600; letter-spacing: -.015em; color: var(--c-ink); overflow-wrap: anywhere; }
     dd a { color: var(--c-ink); text-decoration: none; text-underline-offset: 3px; }
     dd a:hover { color: var(--brand-700); text-decoration: underline; }
     .lp-hours-summary { margin: 0; padding: 0; list-style: none; font-weight: 500; }
 }
-.lp-social {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: .5rem;
-    margin-top: 2rem;
-}
+.lp-social { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.5rem; }
 .lp-social-link {
     display: inline-flex;
     align-items: center;
@@ -1058,14 +1250,13 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
 }
 
 // =============================================================================
-// Footer: quiet, Apple style
+// Footer
 // =============================================================================
 .lp-footer {
     background: var(--c-canvas);
     border-top: 1px solid var(--c-hairline);
     font-size: .875rem;
     color: var(--c-muted);
-    .lp-brand-name { font-size: .9375rem; }
 }
 .lp-footer-grid {
     display: grid;
@@ -1074,7 +1265,7 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     @include media-breakpoint-up(md) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     @include media-breakpoint-up(lg) { grid-template-columns: minmax(0, 4fr) repeat(3, minmax(0, 2.5fr)); gap: 3rem; }
 }
-.lp-footer-about { margin: .875rem 0 0; max-width: 42ch; line-height: 1.5; }
+.lp-footer-about { margin: .875rem 0 0; max-width: 40ch; line-height: 1.5; }
 .lp-footer-title {
     margin: 0 0 .5rem;
     font-size: .75rem;
@@ -1109,26 +1300,24 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
     padding-block: 1.25rem 1.5rem;
     border-top: 1px solid var(--c-hairline);
     font-size: .8125rem;
-    color: var(--c-muted);
     p { margin: 0; }
     a { color: var(--c-ink-2); text-decoration: none; text-underline-offset: 3px; &:hover { color: var(--c-ink); text-decoration: underline; } }
 }
 .lp-footer-legal { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1.25rem; }
 
 // =============================================================================
-// Privacy notice page
+// Privacy notice
 // =============================================================================
-.lp-doc { max-width: 44rem; margin-inline: auto; }
+.lp-doc { max-width: 44rem; }
 .lp-doc h1 {
     margin: .5rem 0 0;
     font-family: $font-display;
-    font-size: clamp(2.25rem, 1.6rem + 2.4vw, 3.5rem);
+    font-size: clamp(2.125rem, 1.5rem + 2.2vw, 3.25rem);
     font-weight: 680;
-    letter-spacing: -.04em;
-    line-height: 1.04;
+    line-height: 1.05;
+    letter-spacing: -.036em;
     text-wrap: balance;
 }
-.lp-doc .lp-lead { margin-inline: 0; }
 .lp-doc-body {
     margin-top: 2.5rem;
     padding-top: 2.5rem;
@@ -1139,90 +1328,54 @@ html { scroll-padding-top: calc(#{$lp-header-h} + 1rem); }
 // =============================================================================
 // Motion
 // =============================================================================
-// Hero headline: words rise out of a mask (landing.js wraps them). Until the
-// script has split them the headline waits unseen; a delayed keyframe shows it
-// anyway if the script never runs.
-.lp-js [data-lp-words]:not(.is-split) {
-    opacity: 0;
-    animation: lp-show 1ms 1.5s forwards;
-}
-@keyframes lp-show { to { opacity: 1; } }
-.lp-word {
-    display: inline-block;
-    overflow: hidden;
-    vertical-align: top;
-    // Room for glyph overhang (tight tracking, descenders) without moving the words
-    margin: 0 -.1em -.16em;
-    padding: 0 .1em .16em;
-    > span {
-        display: inline-block;
-        transform: translateY(110%);
-        animation: lp-word-rise 1s $ease-out forwards;
-        animation-delay: calc(var(--i, 0) * 60ms + 60ms);
-    }
-}
-@keyframes lp-word-rise { to { transform: none; } }
-
-// The rest of the hero rises in on load (CSS only), then the stage
-.lp-rise { animation: lp-rise 900ms $ease-out both; }
-.lp-rise-1 { animation-delay: 300ms; }
-.lp-rise-2 { animation-delay: 380ms; }
-.lp-rise-3 { animation-delay: 460ms; }
-.lp-rise-4 { animation-delay: 540ms; }
-.lp-rise-5 { animation: lp-rise-far 1300ms 520ms $ease-out both; }
-@keyframes lp-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-@keyframes lp-rise-far { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: none; } }
+// The hero arrives on load (CSS only)
+.lp-rise { animation: lp-rise 800ms $ease-out both; }
+.lp-rise-1 { animation-delay: 80ms; }
+.lp-rise-2 { animation-delay: 160ms; }
+.lp-rise-3 { animation-delay: 240ms; }
+.lp-rise-4 { animation-delay: 320ms; }
+.lp-hero-visual.lp-rise { animation-duration: 1000ms; animation-delay: 240ms; }
+@keyframes lp-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes lp-fade { from { opacity: 0; } to { opacity: 1; } }
 
-// The stage settles flat as it scrolls into place (scroll-driven, no script;
-// browsers without scroll timelines show it flat)
-@supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-        .lp-stage-inner {
-            animation: lp-settle linear both;
-            animation-timeline: view();
-            animation-range: entry 10% cover 45%;
-        }
-    }
-}
-@keyframes lp-settle {
-    from { transform: perspective(1800px) rotateX(14deg) scale(.94); }
-    to   { transform: none; }
-}
-
-// Scroll reveal: fade + 24px rise, staggered, once. Only blocks below the fold
-// are hidden, and only by landing.js (content is visible without JS).
-.lp-reveal.is-pending {
-    opacity: 0;
-    transform: translateY(24px);
-}
+// Scroll reveal: only blocks below the fold are hidden, and only by landing.js
+.lp-reveal.is-pending { opacity: 0; transform: translateY(16px); }
 .lp-reveal.is-revealing {
-    transition: opacity 700ms $ease-out, transform 900ms $ease-out !important;
+    transition: opacity 600ms $ease-out, transform 800ms $ease-out !important;
     transition-delay: var(--lp-delay, 0ms) !important;
 }
 
+// Mini screens come alive once in view (.lp-live.is-live, landing.js). Without
+// the script they simply show their final state.
+.lp-live.is-live {
+    .lp-anim { animation: lp-in 560ms $ease-out both; animation-delay: calc(var(--i, 0) * 90ms + 120ms); }
+    .lp-demo-log .lp-anim { animation-name: lp-slide; }
+    .lp-grow-x { animation: lp-grow-x 1000ms $ease-out both; animation-delay: 250ms; }
+    .lp-grow-y { animation: lp-grow-y 900ms $ease-out both; animation-delay: calc(var(--i, 0) * 70ms + 150ms); }
+}
+@keyframes lp-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes lp-slide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+@keyframes lp-grow-x { from { transform: scaleX(0); } to { transform: scaleX(var(--w, 1)); } }
+@keyframes lp-grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
 @media (prefers-reduced-motion: reduce) {
-    .lp-js [data-lp-words]:not(.is-split) { opacity: 1; animation: none; }
-    .lp-word > span { transform: none; animation: none; }
-    .lp-rise, .lp-rise-5 { animation-name: lp-fade; animation-duration: 400ms; }
+    .lp-rise, .lp-hero-visual.lp-rise { animation-name: lp-fade; animation-duration: 400ms; }
     .lp-reveal.is-pending { transform: none; }
-    .is-open > .lp-dot::after, .is-open > .lp-status-dot::after { animation: none; }
-    .lp-card-link:hover, .lp-card-link:active, .lp-social-link:active, .lp-menu-btn:active { transform: none; }
-    .lp-header, .lp-faq-btn .c-icon, .lp-link .c-icon { transition: none; }
-    .lp-steps.has-line::after { transition: none; }
+    .lp-live.is-live :is(.lp-anim, .lp-grow-x, .lp-grow-y) { animation: none; }
+    .is-open .lp-dot::after { animation: none; }
+    .lp-bento-card:hover, .lp-card-link:hover, .lp-card-link:active, .lp-social-link:active { transform: none; }
+    .lp-header, .lp-faq-btn .c-icon, .lp-link .c-icon, .lp-pill .c-icon { transition: none; }
 }
 
-// High contrast: solid surfaces, visible borders, no grid
 @media (prefers-contrast: more) {
-    .lp-grid { display: none; }
     .lp-header { background: var(--c-surface); backdrop-filter: none; border-bottom-color: var(--c-ink-2); }
-    .lp-service, .lp-card, .lp-today, .lp-contact-tile, .lp-person, .lp-advisory, .lp-social-link {
+    .lp-service, .lp-card, .lp-today, .lp-contact-tile, .lp-person, .lp-advisory, .lp-social-link,
+    .lp-bento-card, .lp-step, .lp-window, .lp-pill {
         box-shadow: 0 0 0 1px var(--c-ink-2);
     }
 }
 
 @media print {
-    .lp-utility, .lp-header, .lp-sheet, .lp-grid, .lp-footer-bottom .lp-footer-credit { display: none !important; }
-    .lp-reveal.is-pending, .lp-rise, [data-lp-words] { opacity: 1 !important; transform: none !important; animation: none !important; }
-    .lp-stage-inner { animation: none !important; transform: none !important; }
+    .lp-header, .lp-footer-bottom .lp-footer-credit { display: none !important; }
+    .lp-reveal.is-pending, .lp-rise { opacity: 1 !important; transform: none !important; animation: none !important; }
 }

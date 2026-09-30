@@ -1,7 +1,7 @@
 {{--
     Services: white cards with a plain brand glyph (or a small photo), title and
-    line. A card with a link is one big target: it lifts on hover and a soft
-    light follows the pointer. Expects: $page, $tinted.
+    line. A card with a link is one big target and lifts on hover.
+    Expects: $page, $tinted.
 --}}
 <section id="services" @class(['lp-section', 'is-tinted' => $tinted]) aria-labelledby="lp-services-title">
     <div class="lp-container">
@@ -13,7 +13,7 @@
         </header>
         <ul class="lp-services">
             @foreach ($page['services'] as $s)
-                <li @class(['lp-service', 'lp-reveal', 'lp-card-link lp-spot' => $s['link_url']])>
+                <li @class(['lp-service', 'lp-reveal', 'lp-card-link' => $s['link_url']])>
                     @if ($s['image'])
                         <img src="{{ $s['image'] }}" alt="" width="48" height="48" class="lp-service-img" loading="lazy" decoding="async">
                     @else

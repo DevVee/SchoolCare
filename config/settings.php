@@ -311,6 +311,126 @@ return [
         ],
 
         // ─────────────────────────────────────────────────────────────────
+        // Printed documents: letterhead banner, signatories and footer of the PDF
+        // reports (reports/pdf) and the patient health record (patients/pdf), and
+        // of their browser print versions. Read through App\Support\PrintBranding.
+        // Defaults print exactly what the documents printed before this page
+        // existed: no banner, no signatures, the same footers.
+        // 'resize' on an image field: [max width, max height] in pixels; the upload
+        // is made smaller and re-saved without metadata (App\Services\ImageResizer).
+        'printing' => [
+            'label'       => 'Printing',
+            'icon'        => 'bi-printer',
+            'description' => 'Letterhead, signatures and footer of printed reports and health records.',
+            'partial'     => 'admin.settings.partials.printing',
+            'fields'      => [
+                'print_banner' => [
+                    'type' => 'image', 'label' => 'Letterhead banner', 'default' => '', 'fallback' => '',
+                    'resize' => [2400, 2400],
+                    'help' => 'PNG, JPG or WebP, up to 5 MB. A wide image works best, such as the school seal and name side by side. Transparent PNGs stay transparent. Large images are made smaller when you save.',
+                    'rules' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+                ],
+                'print_banner_height' => [
+                    'type' => 'integer', 'label' => 'Banner height (mm)', 'default' => 30,
+                    'help' => 'From 15 to 60 millimetres.',
+                    'rules' => ['required', 'integer', 'between:15,60'],
+                ],
+                'print_banner_align' => [
+                    'type' => 'select', 'label' => 'Banner position', 'default' => 'center',
+                    'options' => ['left' => 'Left', 'center' => 'Center', 'right' => 'Right'],
+                    'rules' => ['required', 'in:left,center,right'],
+                ],
+                'print_banner_fit' => [
+                    'type' => 'select', 'label' => 'Banner size', 'default' => 'width',
+                    'options' => ['width' => 'Full page width', 'natural' => 'Natural size'],
+                    'rules' => ['required', 'in:width,natural'],
+                ],
+
+                // "Prepared by" with the name of whoever prints the document.
+                'print_prepared_by_label' => [
+                    'type' => 'string', 'label' => 'Signed-in user caption', 'default' => 'Prepared by',
+                    'rules' => ['nullable', 'string', 'max:40'],
+                ],
+                'print_prepared_by_on_reports' => [
+                    'type' => 'boolean', 'label' => 'Signed-in user on reports', 'default' => false,
+                    'rules' => ['boolean'],
+                ],
+                'print_prepared_by_on_health' => [
+                    'type' => 'boolean', 'label' => 'Signed-in user on health records', 'default' => false,
+                    'rules' => ['boolean'],
+                ],
+
+                // Up to three signatories. One prints only when its name is filled in.
+                ...(function (): array {
+                    $fields = [];
+                    foreach ([1 => 'Prepared by', 2 => 'Noted by', 3 => 'Approved by'] as $n => $caption) {
+                        $fields += [
+                            "print_sig{$n}_label" => [
+                                'type' => 'string', 'label' => "Signatory {$n} caption", 'default' => $caption,
+                                'rules' => ['nullable', 'string', 'max:40'],
+                            ],
+                            "print_sig{$n}_name" => [
+                                'type' => 'string', 'label' => "Signatory {$n} name", 'default' => '',
+                                'rules' => ['nullable', 'string', 'max:100'],
+                            ],
+                            "print_sig{$n}_position" => [
+                                'type' => 'string', 'label' => "Signatory {$n} position", 'default' => '',
+                                'rules' => ['nullable', 'string', 'max:100'],
+                            ],
+                            "print_sig{$n}_license" => [
+                                'type' => 'string', 'label' => "Signatory {$n} license number", 'default' => '',
+                                'rules' => ['nullable', 'string', 'max:50'],
+                            ],
+                            "print_sig{$n}_image" => [
+                                'type' => 'image', 'label' => "Signatory {$n} signature image", 'default' => '', 'fallback' => '',
+                                'resize' => [1200, 600],
+                                'rules' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
+                            ],
+                            "print_sig{$n}_height" => [
+                                'type' => 'integer', 'label' => "Signatory {$n} signature height (mm)", 'default' => 15,
+                                'rules' => ['required', 'integer', 'between:8,30'],
+                            ],
+                            "print_sig{$n}_on_reports" => [
+                                'type' => 'boolean', 'label' => "Signatory {$n} on reports", 'default' => true,
+                                'rules' => ['boolean'],
+                            ],
+                            "print_sig{$n}_on_health" => [
+                                'type' => 'boolean', 'label' => "Signatory {$n} on health records", 'default' => true,
+                                'rules' => ['boolean'],
+                            ],
+                        ];
+                    }
+
+                    return $fields;
+                })(),
+
+                'print_footer_text' => [
+                    'type' => 'text', 'label' => 'Footer text',
+                    'default' => 'Confidential health information from the records of {clinic}.',
+                    'placeholders' => ['school'],
+                    'help' => 'One short line at the bottom of the page. {clinic} is replaced with the clinic name and {school} with the school name.',
+                    'rules' => ['nullable', 'string', 'max:300'],
+                ],
+                'print_footer_on_reports' => [
+                    'type' => 'boolean', 'label' => 'Footer text on reports', 'default' => false,
+                    'rules' => ['boolean'],
+                ],
+                'print_footer_on_health' => [
+                    'type' => 'boolean', 'label' => 'Footer text on health records', 'default' => true,
+                    'rules' => ['boolean'],
+                ],
+                'print_page_numbers_reports' => [
+                    'type' => 'boolean', 'label' => 'Page numbers on reports', 'default' => true,
+                    'rules' => ['boolean'],
+                ],
+                'print_page_numbers_health' => [
+                    'type' => 'boolean', 'label' => 'Page numbers on health records', 'default' => false,
+                    'rules' => ['boolean'],
+                ],
+            ],
+        ],
+
+        // ─────────────────────────────────────────────────────────────────
         'appointments' => [
             'label'       => 'Appointments',
             'icon'        => 'bi-calendar-check',
@@ -484,7 +604,7 @@ return [
             'partial'     => 'admin.settings.partials.sms',
             'fields'      => [
                 'sms_sender_name' => [
-                    'type' => 'string', 'label' => 'Sender Name', 'default' => env('SEMAPHORE_SENDER_NAME', 'SCHOOLCARE'),
+                    'type' => 'string', 'label' => 'Sender Name', 'default' => env('SEMAPHORE_SENDER_NAME', 'SchoolCare'),
                     'help' => 'The name people see instead of a phone number. Up to 11 letters or numbers. It must be approved by the SMS provider first. Leave empty to use the name set up on the server.',
                     'rules' => ['nullable', 'string', 'max:11', 'regex:/^[A-Za-z0-9 ]*$/'],
                 ],

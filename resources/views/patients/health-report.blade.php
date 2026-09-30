@@ -5,10 +5,10 @@
 @use('App\Support\DisplayFormat')
 @php
     $categoryLabels = \App\Models\Patient::categoryLabels();
-    $brandLogo  = settings()->imageUrl('brand_logo');
-    $schoolLogo = settings()->imageUrl('school_logo', '');
-    $orgName    = trim((string) settings('org_name', ''));
-    $clinicName = settings('clinic_name') ?: settings('app_name');
+    // School logo and names from settings (never the product name or mark): App\Support\PrintBranding.
+    $schoolLogo = \App\Support\PrintBranding::logoUrl();
+    $orgName    = \App\Support\PrintBranding::orgName();
+    $clinicName = \App\Support\PrintBranding::clinicName();
     $hasCharts  = view()->exists('components.ui.chart');
     $academic   = collect([$patient->year_level, $patient->section, $patient->program_strand])->filter()->implode(', ');
 @endphp
@@ -27,19 +27,26 @@
 
 <article class="health-report vstack gap-3" aria-labelledby="hr-title">
 
-    {{-- Letterhead --}}
+    {{-- Letterhead: the banner from Admin > Settings > Printing when one is uploaded (same partial as the PDF) --}}
     <x-ui.card>
-        <div class="d-flex flex-wrap align-items-center gap-3">
-            <img src="{{ $brandLogo }}" alt="" width="48" height="48" class="hr-logo">
-            <div class="flex-grow-1 min-w-0">
-                <div class="small text-muted">{{ $clinicName }}@if ($orgName !== ''), {{ $orgName }}@endif</div>
+        @if (\App\Support\PrintBranding::hasBanner())
+            @include('reports.pdf._letterhead', ['document' => 'health', 'screen' => true])
+            <div class="mt-3">
                 <h1 class="h4 mb-0 font-display" id="hr-title">Health Report Card</h1>
                 <div class="small text-muted">Prepared {{ DisplayFormat::date(now()) }} by {{ auth()->user()->name }}</div>
             </div>
-            @if ($schoolLogo !== '')
-                <img src="{{ $schoolLogo }}" alt="{{ $orgName !== '' ? $orgName.' seal' : 'School seal' }}" width="48" height="48" class="hr-logo">
-            @endif
-        </div>
+        @else
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                @if ($schoolLogo)
+                    <img src="{{ $schoolLogo }}" alt="{{ $orgName !== '' ? $orgName.' logo' : 'School logo' }}" width="48" height="48" class="hr-logo">
+                @endif
+                <div class="flex-grow-1 min-w-0">
+                    <div class="small text-muted">{{ $clinicName }}@if ($orgName !== '' && $orgName !== $clinicName), {{ $orgName }}@endif</div>
+                    <h1 class="h4 mb-0 font-display" id="hr-title">Health Report Card</h1>
+                    <div class="small text-muted">Prepared {{ DisplayFormat::date(now()) }} by {{ auth()->user()->name }}</div>
+                </div>
+            </div>
+        @endif
     </x-ui.card>
 
     {{-- Patient summary --}}
@@ -224,7 +231,8 @@
         </x-ui.table>
     </x-ui.card>
 
-    <p class="small text-muted print-only">This report was generated from the clinic records on {{ DisplayFormat::date(now()) }}. It is confidential health information.</p>
+    {{-- Printed only: signatures and footer line, as on the PDF (Admin > Settings > Printing) --}}
+    @include('reports.pdf._signatures', ['document' => 'health', 'screen' => true])
 </article>
 </div>
 @endsection

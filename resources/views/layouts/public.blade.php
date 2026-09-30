@@ -16,8 +16,8 @@
     @section('document_title') (the whole <title>), @section('body_class').
 --}}
 @php
-    $appName    = settings('app_name');
-    $clinicName = trim((string) settings('clinic_name')) ?: $appName;
+    // Public pages belong to the school: its own names, never the product name.
+    $clinicName = trim((string) settings('clinic_name')) ?: 'School Clinic';
     $orgName    = trim((string) settings('org_name'));
     $address    = trim((string) settings('clinic_address'));
     $phone      = trim((string) settings('clinic_contact'));
@@ -47,7 +47,7 @@
     @else
     <header class="pub-top">
         <div class="pub-container pub-top-inner">
-            <a href="{{ url('/') }}" class="pub-brand">
+            <a href="{{ route('clinic') }}" class="pub-brand">
                 <img src="{{ settings()->imageUrl('brand_logo') }}" alt="" width="40" height="40" class="pub-brand-logo">
                 <span class="pub-brand-text">
                     <span class="pub-brand-name">{{ $clinicName }}</span>
@@ -98,7 +98,7 @@
                     </p>
                 @endif
             </div>
-            <p class="pub-footer-copy">&copy; {{ date('Y') }} {{ $orgName !== '' ? $orgName : $appName }}</p>
+            <p class="pub-footer-copy">&copy; {{ date('Y') }} {{ $orgName !== '' ? $orgName : $clinicName }}</p>
         </div>
     </footer>
     @endif
