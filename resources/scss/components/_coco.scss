@@ -61,17 +61,20 @@
 @keyframes c-orb-spin { to { rotate: 1turn; } }
 
 // -- Chat page ---------------------------------------------------------------------
+// The page scrolls, not a box inside it (owner: "make this scroll, the whole, not static").
+// The card grows with the conversation; the composer stays pinned to the bottom of the
+// screen. overflow: clip (not hidden) keeps the rounded corners without making the card
+// a scroll container, so the sticky composer follows the window.
 .coco {
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - var(--c-topbar-h) - 3rem);
-    min-height: 32rem;
+    min-height: calc(100dvh - var(--c-topbar-h) - 3rem);
     background: var(--c-surface);
     border: 1px solid var(--c-hairline);
     border-radius: $radius-xl;
     box-shadow: var(--c-shadow-card);
-    overflow: hidden;
-    @include media-breakpoint-down(sm) { height: calc(100dvh - var(--c-topbar-h) - 2rem); border-radius: $radius-lg; }
+    overflow: clip;
+    @include media-breakpoint-down(sm) { min-height: calc(100dvh - var(--c-topbar-h) - 2rem); border-radius: $radius-lg; }
 }
 
 .coco-head {
@@ -91,9 +94,6 @@
 
 .coco-messages {
     flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
     gap: .75rem;
@@ -118,7 +118,7 @@
     align-items: flex-end;
     gap: .5rem;
     max-width: min(80%, 46rem);
-    scroll-margin-top: 1rem;
+    scroll-margin-top: calc(var(--c-topbar-h) + 1rem);   // lands below the sticky topbar
     animation: coco-in .45s $ease-out both;
     &.is-you { align-self: flex-end; flex-direction: row-reverse; }
     &.is-ai { align-self: flex-start; }
@@ -202,7 +202,15 @@
 }
 
 // -- Composer ------------------------------------------------------------------------
+// Pinned to the bottom of the screen while the page scrolls; a light material so the
+// conversation reads through as it passes underneath.
 .coco-compose {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background: var(--c-material-thick);
+    -webkit-backdrop-filter: var(--c-blur);
+    backdrop-filter: var(--c-blur);
     padding: .5rem 1.25rem 1rem;
     @include media-breakpoint-down(sm) { padding: .5rem .75rem .75rem; }
 }
