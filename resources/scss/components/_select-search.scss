@@ -1,0 +1,281 @@
+// =============================================================================
+// Searchable dropdowns (resources/js/ui/select-search.js): long .form-select
+// lists become a search box that looks exactly like .form-select (10px radius,
+// 1px input border, chevron, brand focus ring, invalid icon) and a floating list
+// panel (12px radius, hairline, dropdown shadow) with 10px rows. The original
+// <select> stays in the DOM, visually hidden, and is what the form submits.
+// =============================================================================
+
+// -- The hidden native select --------------------------------------------------
+// Out of flow and invisible, but not display:none: labels, focus() and the form
+// still reach it. !important beats .form-select sizing and page rules.
+select.select-search-native {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+    clip-path: inset(50%) !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+}
+
+// -- Field ------------------------------------------------------------------------
+.select-search {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+.select-search-control {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    width: 100%;
+    min-width: 0;
+    min-height: 2.625rem;
+    padding: $form-select-padding-y $form-select-indicator-padding $form-select-padding-y $form-select-padding-x;
+    font-family: $form-select-font-family;
+    font-size: $form-select-font-size;
+    font-weight: $form-select-font-weight;
+    line-height: $form-select-line-height;
+    color: var(--c-ink);
+    background-color: var(--c-surface);
+    background-image: escape-svg($form-select-indicator);
+    background-repeat: no-repeat;
+    background-position: $form-select-bg-position;
+    background-size: $form-select-bg-size;
+    border: $form-select-border-width solid var(--c-input-border);
+    border-radius: var(--c-radius);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color var(--c-dur-fast) ease-out, box-shadow var(--c-dur-fast) ease-out, background-color var(--c-dur-fast) ease-out;
+}
+
+.select-search:not(.is-disabled):not(.is-focused):not(.is-invalid) .select-search-control:hover {
+    border-color: var(--c-input-border-hover);
+}
+
+.select-search.is-focused .select-search-control {
+    border-color: var(--brand-600);
+    box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .25);
+}
+
+// Server validation error: same red border, tint and icon as .form-select.is-invalid
+.select-search.is-invalid .select-search-control {
+    padding-right: $form-select-feedback-icon-padding-end;
+    border-color: var(--#{$prefix}form-invalid-border-color);
+    background-color: tone("danger", 50);
+    background-image: escape-svg($form-select-indicator), escape-svg($form-feedback-icon-invalid);
+    background-position: $form-select-bg-position, $form-select-feedback-icon-position;
+    background-size: $form-select-bg-size, $form-select-feedback-icon-size;
+}
+.select-search.is-invalid.is-focused .select-search-control {
+    border-color: var(--#{$prefix}form-invalid-border-color);
+    box-shadow: 0 0 0 3px rgba(var(--#{$prefix}danger-rgb), .25);
+}
+
+.select-search.is-disabled .select-search-control,
+fieldset:disabled .select-search-control {
+    background-color: $form-select-disabled-bg;
+    cursor: default;
+}
+
+// Sizes (form-select-sm / -lg on the original select)
+.select-search-sm .select-search-control {
+    min-height: 2.25rem;
+    padding-top: $form-select-padding-y-sm;
+    padding-bottom: $form-select-padding-y-sm;
+    padding-left: $form-select-padding-x-sm;
+    font-size: $form-select-font-size-sm;
+}
+.select-search-lg .select-search-control {
+    padding-top: $form-select-padding-y-lg;
+    padding-bottom: $form-select-padding-y-lg;
+    padding-left: $form-select-padding-x-lg;
+    font-size: $form-select-font-size-lg;
+}
+
+// The search box sits inside the field. When focused but closed, the choice is
+// its placeholder in ink; once the list opens the placeholder dims to a hint.
+.select-search-input {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    box-shadow: none;
+    font: inherit;
+    line-height: inherit;
+    color: inherit;
+    text-overflow: ellipsis;
+    cursor: inherit;
+    appearance: none;
+
+    &::placeholder { color: var(--c-muted); opacity: 1; }
+    &::-ms-clear { display: none; }
+    &:disabled { color: inherit; opacity: 1; -webkit-text-fill-color: currentColor; }
+}
+.select-search.has-value:not(.is-open) .select-search-input::placeholder { color: var(--c-ink); }
+.select-search.is-open .select-search-input { cursor: text; }
+
+// Clear (optional selects with a value): glyph only, 44px hit area on touch
+.select-search-clear {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--c-muted);
+    font-size: .75rem;
+    line-height: 1;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color var(--c-dur-fast) ease-out, transform var(--c-dur-press) ease-out;
+
+    &:hover { color: var(--c-ink); }
+    &:active { transform: scale(var(--c-press-scale)); }
+}
+
+// -- List panel ----------------------------------------------------------------------
+// Fixed, placed by JS under (or above) the field with the field's width. Above the
+// sticky save bar (1010), below the topbar (1020); inside a modal it stacks within
+// the modal.
+.select-search-menu {
+    position: fixed;
+    z-index: 1015;
+    max-height: min(22rem, 60vh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: .375rem;
+    background: var(--c-surface);
+    border: 1px solid var(--c-hairline);
+    border-radius: var(--c-radius-md);
+    box-shadow: var(--c-shadow-dropdown);
+    font-family: var(--c-font-ui);
+    font-size: .9375rem;
+    color: var(--c-ink);
+    transform-origin: top center;
+    animation: c-select-search-in var(--c-dur-fast) var(--c-ease-out);
+    -webkit-tap-highlight-color: transparent;
+
+    &.is-above { transform-origin: bottom center; }
+}
+
+.select-search-option {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 2.25rem;
+    padding: .4375rem .625rem;
+    border-radius: var(--c-radius);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color var(--c-dur-fast) ease-out, color var(--c-dur-fast) ease-out;
+
+    &.is-active, &:active { background: var(--c-surface-2); }
+    &.is-selected { color: var(--brand-700); font-weight: 600; }
+    &.is-disabled {
+        color: var(--c-muted);
+        opacity: .6;
+        cursor: default;
+        &:active { background: transparent; }
+    }
+}
+.select-search-option-label {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.select-search-check {
+    flex: 0 0 auto;
+    margin-left: auto;
+    font-size: 1rem;
+    color: var(--brand-700);
+}
+
+.select-search-group + .select-search-group,
+.select-search-option + .select-search-group,
+.select-search-group + .select-search-option {
+    margin-top: .25rem;
+    padding-top: .25rem;
+    border-top: 1px solid var(--c-border);
+}
+.select-search-group-label {
+    padding: .375rem .625rem .25rem;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+}
+
+.select-search-message {
+    margin: 0;
+    padding: .5rem .625rem;
+    font-size: .875rem;
+    line-height: 1.45;
+    color: var(--c-muted);
+}
+.select-search-list:not(:empty) + .select-search-message {
+    margin-top: .375rem;
+    padding-top: .625rem;
+    border-top: 1px solid var(--c-border);
+    font-size: .8125rem;
+}
+
+@keyframes c-select-search-in {
+    from { opacity: 0; transform: scale(.98); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes c-select-search-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+// -- Layouts that size the select themselves --------------------------------------
+// x-ui.filters inline filters (see _toolbar.scss) and the report period picker.
+.filter-inline > .select-search { width: 10rem; flex: 0 0 10rem; }
+.report-period .select-search { width: auto; flex: 0 0 auto; }
+@include media-breakpoint-down(md) {
+    .filter-inline > .select-search { flex: 1 1 0; width: auto; }
+}
+@include media-breakpoint-down(sm) {
+    .report-period .select-search { flex: 1 1 8rem; }
+}
+
+// -- Touch: 44px field, rows and clear target; 16px text so iOS does not zoom -----
+@media (pointer: coarse), (max-width: 767.98px) {
+    .select-search-control,
+    .select-search-sm .select-search-control { min-height: 2.75rem; }
+    .select-search-sm .select-search-input { font-size: 1rem; }
+    .select-search-option { min-height: 2.75rem; }
+    .select-search-clear::after {
+        content: "";
+        position: absolute;
+        inset: -.625rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .select-search-menu { animation-name: c-select-search-fade; }
+    .select-search-control,
+    .select-search-option,
+    .select-search-clear { transition: none; }
+    .select-search-clear:active { transform: none; }
+}

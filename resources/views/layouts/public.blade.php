@@ -2,7 +2,8 @@
     Public pages that need no sign in (health information form, appointment
     request, clinic schedule and their confirmation pages).
     A simple white top bar with the school logo and clinic name, the page
-    content, and a quiet footer with the clinic contact details from Settings.
+    content, and the footer (layouts.partials.public-footer): today's hours with
+    an open or closed status, quick links and the clinic contact details.
 
     @extends('layouts.public')
     @section('title', 'Request an appointment')     (browser tab title)
@@ -19,9 +20,6 @@
     // Public pages belong to the school: its own names, never the product name.
     $clinicName = trim((string) settings('clinic_name')) ?: 'School Clinic';
     $orgName    = trim((string) settings('org_name'));
-    $address    = trim((string) settings('clinic_address'));
-    $phone      = trim((string) settings('clinic_contact'));
-    $email      = trim((string) settings('clinic_email'));
     $booking    = (bool) settings('public_booking_enabled', false);
     $current    = trim($__env->yieldContent('nav'));
     $pageTitle  = trim($__env->yieldContent('title'));
@@ -80,27 +78,7 @@
     @hasSection('footer')
     @yield('footer')
     @else
-    <footer class="pub-footer">
-        <div class="pub-container pub-footer-inner">
-            <div class="pub-footer-contact">
-                <p class="pub-footer-name">{{ $clinicName }}</p>
-                @if ($address !== '')
-                    <p class="pub-footer-line"><x-ui.icon name="geo-alt" />{{ $address }}</p>
-                @endif
-                @if ($phone !== '' || $email !== '')
-                    <p class="pub-footer-line pub-footer-links">
-                        @if ($phone !== '')
-                            <a href="tel:{{ preg_replace('/[^0-9+]/', '', $phone) }}"><x-ui.icon name="telephone" />{{ $phone }}</a>
-                        @endif
-                        @if ($email !== '')
-                            <a href="mailto:{{ $email }}"><x-ui.icon name="envelope" />{{ $email }}</a>
-                        @endif
-                    </p>
-                @endif
-            </div>
-            <p class="pub-footer-copy">&copy; {{ date('Y') }} {{ $orgName !== '' ? $orgName : $clinicName }}</p>
-        </div>
-    </footer>
+    @include('layouts.partials.public-footer')
     @endif
 
     <x-ui.flash-toasts :errors="false" />

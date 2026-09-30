@@ -6,7 +6,7 @@
 <div class="vstack gap-3">
 
     <x-ui.page-header title="Appointment time slots"
-        description="The times patients can be booked, how many per slot, and on which days. Used by staff booking and online requests."
+        description="The times patients can be booked, how many per slot, and on which days. Used by staff booking and online requests. The online form offers only times inside the clinic hours; its own limits are under Settings, Appointments."
         :breadcrumbs="['Dashboard' => route('dashboard'), 'Administration' => null, 'Appointment time slots' => null]">
         <x-slot:actions>
             <x-ui.button icon="plus-lg" :href="route('admin.appointment-slots.create')">Add slot</x-ui.button>

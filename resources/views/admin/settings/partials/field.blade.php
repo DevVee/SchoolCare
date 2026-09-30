@@ -89,7 +89,7 @@
     <div class="{{ $col }}">
         <x-ui.field :label="$label" :name="$key" :for="$id" :help="$help" :required="$required">
             <div class="list-editor" data-list-editor data-mode="{{ $type === 'options' ? 'options' : 'list' }}"
-                 data-label="{{ $label }}" data-noun="choice" data-nouns="choices">
+                 data-label="{{ $label }}" data-noun="{{ $def['noun'] ?? 'choice' }}" data-nouns="{{ ($def['noun'] ?? 'choice').'s' }}">
                 <textarea name="{{ $key }}" id="{{ $id }}" rows="{{ $rows ?? min(12, max(4, substr_count($listText, "\n") + 2)) }}"
                           @class(['form-control', 'is-invalid' => $hasErr]) spellcheck="false"
                           @if ($hasErr) aria-invalid="true" aria-describedby="{{ $id }}-error" @endif>{{ $listText }}</textarea>

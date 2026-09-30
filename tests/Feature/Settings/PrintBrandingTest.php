@@ -11,6 +11,7 @@ use App\Support\PrintBranding;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\Feature\Clinical\ClinicalTestCase;
+use Tests\Feature\Clinical\InspectsPdf;
 
 /**
  * Admin > Settings > Printing: letterhead banner, signatures and footer, and how
@@ -18,6 +19,8 @@ use Tests\Feature\Clinical\ClinicalTestCase;
  */
 class PrintBrandingTest extends ClinicalTestCase
 {
+    use InspectsPdf;
+
     /** @var list<string> temporary image files made by the tests */
     private array $tempFiles = [];
 
@@ -258,12 +261,17 @@ class PrintBrandingTest extends ClinicalTestCase
         $this->assertStringNotContainsString('class="signatures"', $report);
         $this->assertStringNotContainsString('class="footer-note"', $report);
 
+        // Health record: formal letterhead (logo and names), footer line, a line to sign by hand.
         $health = $this->healthHtml($patient);
-        $this->assertStringContainsString('Riverside Clinic: Health Report Card', $health);
-        $this->assertStringContainsString('Confidential health information from the records of Riverside Clinic. Prepared by '.e($this->admin->name).'.', $health);
+        $this->assertStringContainsString('class="letterhead"', $health);
+        $this->assertStringContainsString('Riverside Clinic', $health);
+        $this->assertStringContainsString('Health Record', $health);
+        $this->assertStringContainsString('Prepared by '.e($this->admin->name), $health);
+        $this->assertStringContainsString('Confidential health information from the records of Riverside Clinic.', $health);
+        $this->assertStringContainsString('This is a true copy of the health record kept by Riverside Clinic.', $health);
+        $this->assertStringContainsString('Signature over printed name', $health);
         $this->assertStringNotContainsString('letterhead-banner', $health);
         $this->assertStringNotContainsString('class="signatures"', $health);
-        $this->assertStringNotContainsString('class="pagefoot"', $health);
 
         // Browser print pages: the report page prints the school letterhead (no banner, no signatures).
         $this->get(route('reports.daily', ['date' => '2026-09-10']))->assertOk()
@@ -324,11 +332,12 @@ class PrintBrandingTest extends ClinicalTestCase
         $health = $this->healthHtml($patient);
         $this->assertStringContainsString('letterhead-banner', $health);
         $this->assertStringContainsString('width: 174mm', $health);
-        $this->assertStringContainsString('Health Report Card', $health);
-        $this->assertStringNotContainsString('Riverside Clinic: Health Report Card', $health);
+        $this->assertStringContainsString('Health Record', $health);
+        $this->assertStringNotContainsString('class="letterhead"', $health);      // the banner replaces the logo and names
         $this->assertStringContainsString('Maria Santos', $health);
         $this->assertStringNotContainsString('Dr. Jose Reyes', $health);          // turned off for health records
-        $this->assertStringContainsString('Prepared by '.e($this->admin->name).'.', $health); // still in the footer
+        $this->assertStringNotContainsString('Signature over printed name', $health); // signatories instead of a blank line
+        $this->assertStringContainsString('Prepared by '.e($this->admin->name), $health); // still in the footer
 
         // The real PDFs render with the banner and signatures.
         $pdf = $this->get(route('reports.export', ['type' => 'daily', 'date' => '2026-09-10', 'format' => 'pdf']))->assertOk();
@@ -369,10 +378,13 @@ class PrintBrandingTest extends ClinicalTestCase
 
         $health = $this->healthHtml($patient);
         $this->assertStringNotContainsString('Property of', $health);
-        $this->assertStringContainsString('class="pagefoot"', $health);
         // "Prepared by" moved from the footer into the signatures.
         $this->assertStringContainsString('Prepared by:', $health);
-        $this->assertStringNotContainsString('Prepared by '.e($this->admin->name).'.', $health);
+        $this->assertStringNotContainsString('Prepared by '.e($this->admin->name), $health);
+        // Page numbers are drawn on the health record PDF ("Page 1 of 1").
+        $pdf = $this->get(route('patients.health-report.pdf', $patient))->assertOk()->getContent();
+        $this->assertStringContainsString('Page 1 of 1', $this->pdfText($pdf));
+        $this->assertStringNotContainsString('Property of', $this->pdfText($pdf));
 
         $this->get(route('reports.daily'))->assertOk()->assertSee('Property of Mabini High School. Do not copy.');
     }
@@ -420,8 +432,10 @@ class PrintBrandingTest extends ClinicalTestCase
         $this->assertStringContainsString('School Clinic', $report);
         $this->assertStringNotContainsString('SchoolCare', $report);
         $health = $this->healthHtml($patient);
-        $this->assertStringContainsString('School Clinic: Health Report Card', $health);
+        $this->assertStringContainsString('School Clinic', $health);
+        $this->assertStringContainsString('kept by School Clinic.', $health);
         $this->assertStringNotContainsString('SchoolCare', $health);
+        $this->assertStringNotContainsString('SchoolCare', $this->pdfText($this->get(route('patients.health-report.pdf', $patient))->getContent()));
     }
 
     public function test_banner_box_keeps_the_shape_within_the_page(): void

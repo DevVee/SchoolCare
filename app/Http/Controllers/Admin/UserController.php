@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\User;
 use App\Notifications\InviteUserNotification;
 use App\Services\AuditLogService;
+use App\Services\SignInCodes;
 use App\Support\PermissionCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -143,7 +144,26 @@ class UserController extends Controller
         $clinicalRecords = $user->clinicalRecordCount();
         $isSuperAdmin    = $user->isAdmin();
 
-        return view('admin.users.show', compact('user', 'recentLogs', 'lastLogin', 'clinicalRecords', 'isSuperAdmin'));
+        // Browsers remembered for the email sign-in code (Settings > Security).
+        $devices = $user->trustedDevices()->active()->latest('last_used_at')->get(['id', 'last_used_at', 'expires_at']);
+
+        return view('admin.users.show', compact('user', 'recentLogs', 'lastLogin', 'clinicalRecords', 'isSuperAdmin', 'devices'));
+    }
+
+    /**
+     * Forget every browser this user chose to remember for the email sign-in
+     * code; they are asked for a code on their next sign-in everywhere.
+     */
+    public function forgetDevices(User $user, SignInCodes $codes): RedirectResponse
+    {
+        $this->authorize('manage-users');
+        $this->ensureCanTouchAdmin($user);
+
+        $count = $codes->forgetDevices($user);
+
+        AuditLogService::log('updated', 'users', "Forgot remembered devices for: {$user->name} ({$user->email}), {$count} removed");
+
+        return back()->with('success', "{$user->name} will be asked for a sign-in code on every device next time.");
     }
 
     public function edit(User $user)

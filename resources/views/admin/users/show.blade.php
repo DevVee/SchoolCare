@@ -111,7 +111,24 @@
                     </x-ui.description-item>
                     <x-ui.description-item label="Signed in from" empty="Not recorded">{{ $loginIp }}</x-ui.description-item>
                     <x-ui.description-item label="Added">{{ $user->created_at->format('M j, Y') }}</x-ui.description-item>
+                    @if (settings('otp_enabled') || $devices->isNotEmpty())
+                        {{-- Browsers that skip the email sign-in code (Settings > Security). --}}
+                        @php
+                            $lastUsed = $devices->first()?->last_used_at;
+                            $devicesText = $devices->isEmpty() ? '' : $devices->count().' '.\Illuminate\Support\Str::plural('device', $devices->count())
+                                .($lastUsed ? ', last used '.$lastUsed->diffForHumans() : '');
+                        @endphp
+                        <x-ui.description-item label="Remembered devices" empty="None">{{ $devicesText }}</x-ui.description-item>
+                    @endif
                 </x-ui.description-list>
+                @if ($canTouch && $devices->isNotEmpty())
+                    <form method="POST" action="{{ route('admin.users.forget-devices', $user) }}" class="mt-3"
+                          data-confirm="{{ $user->name }} will be asked for a sign-in code the next time they sign in, on every device."
+                          data-confirm-title="Forget remembered devices?" data-confirm-variant="primary" data-confirm-button="Forget devices">
+                        @csrf
+                        <x-ui.button type="submit" variant="secondary" size="sm" icon="phone">Forget remembered devices</x-ui.button>
+                    </form>
+                @endif
             </x-ui.card>
         </div>
 

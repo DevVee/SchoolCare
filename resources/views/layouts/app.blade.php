@@ -36,8 +36,33 @@
             </div>
         </main>
 
+        @php
+            $footOrg    = trim((string) settings('org_name')) ?: (trim((string) settings('clinic_name')) ?: 'School Clinic');
+            $footClinic = trim((string) settings('clinic_name'));
+            $footAiName = trim((string) settings('ai_assistant_name')) ?: 'Coco';
+            $footAi     = filter_var(settings('ai_enabled', true), FILTER_VALIDATE_BOOLEAN)
+                && auth()->user()?->can('use-ai-assistant') && Route::has('ai-assistant.index');
+        @endphp
         <footer class="app-footer">
-            &copy; {{ date('Y') }} {{ filled(settings('org_name')) ? settings('org_name') : settings('app_name') }}
+            <div class="app-footer-inner">
+                <div class="app-footer-brand">
+                    <img src="{{ settings()->imageUrl('brand_logo') }}" alt="" width="24" height="24" decoding="async">
+                    <div class="min-w-0">
+                        <p class="app-footer-name">{{ $footOrg }}</p>
+                        @if ($footClinic !== '' && $footClinic !== $footOrg)<p class="app-footer-sub">{{ $footClinic }}</p>@endif
+                    </div>
+                </div>
+                <nav class="app-footer-links" aria-label="Footer">
+                    @if (Route::has('clinic'))<a href="{{ route('clinic') }}" target="_blank" rel="noopener">Clinic page</a>@endif
+                    @if (Route::has('privacy'))<a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy</a>@endif
+                    @if ($footAi)<a href="{{ route('ai-assistant.index') }}">Ask {{ $footAiName }}</a>@endif
+                    <button type="button" class="app-footer-search" data-spotlight-open><kbd>Ctrl</kbd><kbd>K</kbd> Search</button>
+                </nav>
+            </div>
+            <div class="app-footer-meta">
+                <span>&copy; {{ date('Y') }} {{ $footOrg }}. Health records in this system are confidential.</span>
+                <span>Powered by {{ settings('app_name') ?: 'SchoolCare' }}</span>
+            </div>
         </footer>
     </div>
 

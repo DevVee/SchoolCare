@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Concerns\CompletesSignIn;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Services\AuditLogService;
+use App\Services\SignInCodes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +15,8 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
+    use CompletesSignIn;
+
     /**
      * Display the login view.
      */
@@ -25,38 +29,49 @@ class AuthenticatedSessionController extends Controller
      * Handle an incoming authentication request.
      *
      * MED-10 FIX: Records login event in audit_logs and updates last_login_at.
+     * With Settings > Security > "Ask for a sign-in code by email" on, a correct
+     * password does not sign in yet: a code is emailed and the person is sent
+     * to the code page (SignInCodeController), unless this browser is remembered.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, SignInCodes $codes): RedirectResponse
     {
-        $request->authenticate();
+        if (! $codes->active()) {
+            $request->authenticate();
 
-        $user = auth()->user();
+            $user = auth()->user();
 
-        // Deactivated accounts must not be able to sign in at all.
+            // Deactivated accounts must not be able to sign in at all.
+            if (! $user->is_active) {
+                Auth::guard('web')->logout();
+
+                throw ValidationException::withMessages([
+                    'email' => 'Your account has been deactivated. Please contact the administrator.',
+                ]);
+            }
+
+            return $this->completeSignIn($request, $user);
+        }
+
+        // Check the password without signing in.
+        $user = $request->validateCredentials();
+
         if (! $user->is_active) {
-            Auth::guard('web')->logout();
-
             throw ValidationException::withMessages([
                 'email' => 'Your account has been deactivated. Please contact the administrator.',
             ]);
         }
 
-        $request->session()->regenerate();
+        if (! $codes->requiredFor($user, $request)) {
+            Auth::guard('web')->login($user, $request->boolean('remember'));
 
-        // Update last login timestamp + IP (shown on the admin user page)
-        $user->forceFill([
-            'last_login_at' => now(),
-            'last_login_ip' => $request->ip(),
-        ])->save();
+            return $this->completeSignIn($request, $user);
+        }
 
-        // Audit: record successful login with IP for forensic trail
-        AuditLogService::log(
-            action: 'logged_in',
-            module: 'auth',
-            description: "User '{$user->name}' logged in from {$request->ip()}",
-        );
+        if ($error = $codes->start($request, $user, $request->boolean('remember'))) {
+            throw ValidationException::withMessages(['email' => $error]);
+        }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->route('login.code');
     }
 
     /**

@@ -324,3 +324,121 @@ $auth-card-w: 30.5rem;   // 488px
     .auth-grid, .auth-aside { display: none !important; }
     .auth-card, .auth-quote { animation: none; box-shadow: none; }
 }
+
+// =============================================================================
+// OTP: email sign-in code page (auth/sign-in-code.blade.php, js/ui/otp-input.js).
+// Six square boxes, 56px on the card from sm and down to about 44 to 48px on
+// small phones, 12px corners, the brand focus ring. Without JavaScript the
+// single .otp-single input is shown instead of the boxes.
+// =============================================================================
+.auth-lead-email {
+    color: var(--c-ink);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.otp-field {
+    display: flex;
+    flex-direction: column;
+    > .invalid-feedback { justify-content: center; text-align: center; }
+}
+
+// No-JS fallback: one input, digits spaced out and centered
+.auth-form .otp-single {
+    padding-left: calc(.75rem + .375em);
+    font-size: 1.375rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .375em;
+    text-align: center;
+    &::placeholder {
+        font-size: 1rem;
+        font-weight: 400;
+        letter-spacing: -.011em;
+    }
+}
+
+.otp-boxes {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 3.5rem));
+    justify-content: center;
+    gap: .5rem;
+    @include media-breakpoint-up(sm) { gap: .75rem; }
+    &[hidden] { display: none; }
+}
+
+.otp-box {
+    width: 100%;
+    min-width: 0;
+    min-height: 3rem;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 1px solid var(--c-input-border);
+    border-radius: $radius-md;
+    background: var(--c-surface);
+    color: var(--c-ink);
+    font-family: $font-ui;
+    font-size: 1.5rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    text-align: center;
+    caret-color: var(--brand-600);
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color $dur-fast ease-out, box-shadow $dur-fast ease-out;
+    &::selection { background: rgba(var(--brand-rgb), .16); }
+    &:hover { border-color: var(--c-border-strong); }
+    &:focus {
+        outline: 0;
+        border-color: var(--brand-600);
+        box-shadow: 0 0 0 4px rgba(var(--brand-rgb), .16);
+    }
+    &.is-invalid { border-color: tone("danger", 600); }
+    &.is-invalid:focus { box-shadow: 0 0 0 4px rgba(var(--c-danger-rgb), .14); }
+}
+
+// "Didn't get it? Resend code" and "Use a different account", under the form
+.otp-links {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .125rem;
+    margin-top: 1.25rem;
+    font-size: .875rem;
+    color: var(--c-muted);
+    text-align: center;
+    .auth-link { display: inline-flex; align-items: center; min-height: 2.75rem; }
+}
+.otp-resend {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: .25rem;
+    margin: 0;
+}
+.otp-resend-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 .25rem;
+    border: 0;
+    border-radius: $radius-xs;
+    background: none;
+    color: var(--brand-600);
+    font: inherit;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    -webkit-tap-highlight-color: transparent;
+    &:hover:not(:disabled) {
+        color: var(--brand-700);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+    &:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .35); }
+    &:disabled { color: var(--c-muted); cursor: default; opacity: 1; }
+}
+
+@media (prefers-contrast: more) {
+    .otp-box { border-color: var(--c-border-strong); }
+}

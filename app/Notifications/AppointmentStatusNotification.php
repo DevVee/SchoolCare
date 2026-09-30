@@ -38,7 +38,8 @@ class AppointmentStatusNotification extends Notification implements ShouldQueue
         $clinic  = settings('clinic_name') ?: config('app.name');
         $date    = $a->appointment_date?->format('F d, Y');
         $time    = $a->appointment_time ? Carbon::parse($a->appointment_time)->format('h:i A') : '';
-        $name    = $a->patient?->first_name ?: 'there';
+        // An online request not linked to a patient yet: the name typed on the form.
+        $name    = $a->patient?->first_name ?: (strtok(trim((string) $a->requester_name), ' ') ?: 'there');
 
         [$subject, $intro] = match ($this->event) {
             'created'     => ['Appointment request received', "We received your appointment request for {$date} at {$time}. It is pending approval."],

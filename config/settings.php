@@ -487,9 +487,98 @@ return [
                 ],
                 'appointment_purposes' => [
                     'type' => 'json_list', 'label' => 'Appointment Reasons',
-                    'help' => 'Reasons offered on the online request form.',
+                    'help' => 'Reasons offered on the online request form. A reason that starts with "Other" asks the person to type their own. Leave the list empty to let people type any reason.',
                     'default' => ['General Checkup', 'Dental Consultation', 'Follow-up Visit', 'Vaccination', 'Medical Certificate', 'Illness or Injury', 'Mental Health Consultation', 'Other'],
                     'rules' => ['nullable', 'string', 'max:2000'],
+                ],
+
+                // -- Online request form (App\Services\OnlineBooking) ----------------------
+                'public_booking_intro' => [
+                    'type' => 'text', 'label' => 'Text at the top of the form',
+                    'default' => 'Send a request to the school clinic. The clinic staff will review it and confirm by text message.',
+                    'rules' => ['nullable', 'string', 'max:500'],
+                ],
+                'public_booking_success_message' => [
+                    'type' => 'text', 'label' => 'Message after sending',
+                    'default' => 'Thank you. Your appointment request is now with the clinic staff. You do not need to send it again.',
+                    'help' => 'Shown on the confirmation page.',
+                    'rules' => ['nullable', 'string', 'max:1000'],
+                ],
+                'public_booking_closed_message' => [
+                    'type' => 'text', 'label' => 'Message while online requests are off',
+                    'default' => 'The clinic is not taking online appointment requests right now. Please visit the clinic during clinic hours or call the clinic.',
+                    'help' => 'Shown to anyone who opens the request page while online requests are turned off.',
+                    'rules' => ['nullable', 'string', 'max:500'],
+                ],
+                'public_booking_days_ahead' => [
+                    'type' => 'integer', 'label' => 'How far ahead (days)', 'default' => 30,
+                    'help' => 'The form offers dates from today up to this many days ahead. A shorter booking window above wins.',
+                    'rules' => ['required', 'integer', 'min:1', 'max:365'],
+                ],
+                'public_booking_min_notice_hours' => [
+                    'type' => 'integer', 'label' => 'Minimum notice (hours)', 'default' => 0,
+                    'help' => 'Times sooner than this are not offered. 0 allows any open time later today; 24 starts from the same time tomorrow.',
+                    'rules' => ['required', 'integer', 'min:0', 'max:720'],
+                ],
+                'public_booking_slot_limit' => [
+                    'type' => 'integer', 'label' => 'Online requests per time slot', 'default' => 0,
+                    'help' => 'How many places of each time slot online requests may take, so the rest stay free for walk-ins and staff bookings. 0 = all places. The places per slot are set in Administration > Appointment Slots.',
+                    'rules' => ['required', 'integer', 'min:0', 'max:500'],
+                ],
+                'public_booking_specialist_days_only' => [
+                    'type' => 'boolean', 'label' => 'Doctor and dentist requests only on their visit days', 'default' => false,
+                    'help' => 'When someone chooses a specialist (Specialist Types under Clinic), the form offers only the days that specialist is scheduled to visit, within the visit hours.',
+                    'rules' => ['boolean'],
+                ],
+                'public_booking_closed_dates' => [
+                    'type' => 'json_list', 'label' => 'Closed dates', 'default' => [], 'noun' => 'date',
+                    'help' => 'Days with no online requests, such as holidays and school events. One per line: the date as YYYY-MM-DD, then an optional note. Example: 2026-12-25 Christmas Day',
+                    // Every non-empty line must start with a YYYY-MM-DD date.
+                    'rules' => ['nullable', 'string', 'max:5000', 'not_regex:/^(?!\s*$)(?!\s*\d{4}-\d{2}-\d{2}(?:\s|$)).*$/m'],
+                ],
+                'public_booking_field_category' => [
+                    'type' => 'select', 'label' => 'Category', 'default' => 'required',
+                    'options' => ['required' => 'Required', 'optional' => 'Optional', 'hidden' => 'Hidden'],
+                    'help' => 'Choices come from Patient Categories under Clinic.',
+                    'rules' => ['required', 'in:required,optional,hidden'],
+                ],
+                'public_booking_field_school' => [
+                    'type' => 'select', 'label' => 'Grade, program and section', 'default' => 'optional',
+                    'options' => ['required' => 'Required', 'optional' => 'Optional', 'hidden' => 'Hidden'],
+                    'help' => 'Choices follow the category (Settings > Academic).',
+                    'rules' => ['required', 'in:required,optional,hidden'],
+                ],
+                'public_booking_field_student_id' => [
+                    'type' => 'select', 'label' => 'Student or employee ID', 'default' => 'optional',
+                    'options' => ['required' => 'Required', 'optional' => 'Optional', 'hidden' => 'Hidden'],
+                    'help' => 'With a matching mobile number, the request is linked to the patient automatically.',
+                    'rules' => ['required', 'in:required,optional,hidden'],
+                ],
+                'public_booking_field_email' => [
+                    'type' => 'select', 'label' => 'Email', 'default' => 'optional',
+                    'options' => ['required' => 'Required', 'optional' => 'Optional', 'hidden' => 'Hidden'],
+                    'rules' => ['required', 'in:required,optional,hidden'],
+                ],
+                'public_booking_field_provider' => [
+                    'type' => 'select', 'label' => 'Appointment with', 'default' => 'optional',
+                    'options' => ['required' => 'Required', 'optional' => 'Optional', 'hidden' => 'Hidden'],
+                    'help' => 'Choices come from Appointment Types / Providers under Clinic.',
+                    'rules' => ['required', 'in:required,optional,hidden'],
+                ],
+                'public_booking_field_details' => [
+                    'type' => 'select', 'label' => 'Notes for the nurse', 'default' => 'optional',
+                    'options' => ['required' => 'Required', 'optional' => 'Optional', 'hidden' => 'Hidden'],
+                    'rules' => ['required', 'in:required,optional,hidden'],
+                ],
+                'public_booking_consent_required' => [
+                    'type' => 'boolean', 'label' => 'Ask people to agree to the privacy statement', 'default' => true,
+                    'help' => 'A required tick box above the Send button, with a link to the privacy notice.',
+                    'rules' => ['boolean'],
+                ],
+                'public_booking_consent_text' => [
+                    'type' => 'text', 'label' => 'Privacy statement',
+                    'default' => 'I agree that the school clinic may use the details in this request to schedule my visit and to contact me about it, as described in the privacy notice.',
+                    'rules' => ['nullable', 'string', 'max:1000'],
                 ],
             ],
         ],
@@ -592,6 +681,15 @@ return [
                     'type' => 'boolean', 'label' => 'Email: appointment updates to patient', 'default' => false,
                     'help' => 'Booked, approved, moved, cancelled and reminder emails, when the patient has an email address on file.', 'rules' => ['boolean'],
                 ],
+                'notify_email_online_request' => [
+                    'type' => 'boolean', 'label' => 'Email: new online request to the clinic', 'default' => false,
+                    'help' => 'Sent when someone requests an appointment on the website, with a link to review it.', 'rules' => ['boolean'],
+                ],
+                'online_request_notify_email' => [
+                    'type' => 'email', 'label' => 'Send new request emails to', 'default' => '',
+                    'help' => 'Leave empty to use the clinic email under Clinic.',
+                    'rules' => ['nullable', 'email', 'max:150'],
+                ],
                 // Invitation and password-reset emails always send: accounts cannot be set up without them.
             ],
         ],
@@ -683,6 +781,34 @@ return [
                     'type' => 'email', 'label' => 'From Address', 'default' => '',
                     'help' => 'Leave empty to use the address set up on the server. Your email provider must allow this address.',
                     'rules' => ['nullable', 'email', 'max:150'],
+                ],
+            ],
+        ],
+
+        // ─────────────────────────────────────────────────────────────────
+        // Email sign-in codes (App\Services\SignInCodes). Off by default. It cannot
+        // be turned on while email sending is not set up (UpdateSettingsRequest),
+        // and `php artisan auth:otp-off` turns it off from the server.
+        'security' => [
+            'label'       => 'Security',
+            'icon'        => 'bi-shield-lock',
+            'description' => 'Extra checks when people sign in.',
+            'partial'     => 'admin.settings.partials.security',
+            'fields'      => [
+                'otp_enabled' => [
+                    'type' => 'boolean', 'label' => 'Ask for a sign-in code by email', 'default' => false,
+                    'help' => 'After the password, people type a 6-digit code that is emailed to them. Email must be working first: send yourself a test email from Settings > Email. In an emergency, the person who manages the server can turn this off with the command php artisan auth:otp-off.',
+                    'rules' => ['boolean'],
+                ],
+                'otp_applies_to' => [
+                    'type' => 'select', 'label' => 'Who is asked for a code', 'default' => 'everyone',
+                    'options' => ['everyone' => 'Everyone', 'admins' => 'Administrators only'],
+                    'rules' => ['required', 'in:everyone,admins'],
+                ],
+                'otp_remember_days' => [
+                    'type' => 'integer', 'label' => 'Remember this device for (days)', 'default' => 30,
+                    'help' => 'After a correct code, people can choose to skip the code on that browser for this many days. 0 asks every time.',
+                    'rules' => ['required', 'integer', 'min:0', 'max:365'],
                 ],
             ],
         ],

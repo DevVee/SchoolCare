@@ -347,6 +347,8 @@ Route::middleware(['auth', 'check.active', 'password.changed'])->group(function 
             Route::post('users/{user}/resend-invitation', [UserController::class, 'resendInvitation'])
                  ->name('users.resend-invitation')
                  ->middleware('throttle:10,1');
+            Route::post('users/{user}/forget-devices', [UserController::class, 'forgetDevices'])
+                 ->name('users.forget-devices');
         });
 
         Route::resource('roles', RoleController::class)

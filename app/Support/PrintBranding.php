@@ -29,7 +29,7 @@ class PrintBranding
     /** Printable width in mm (A4 portrait minus the side margins of that document's PDF). */
     public const CONTENT_WIDTH_MM = [
         self::REPORTS => 182.0, // @page margin 14mm left and right
-        self::HEALTH  => 174.0, // dompdf default 12mm margins plus 22px body padding
+        self::HEALTH  => 174.0, // @page margin 18mm left and right (patients/pdf/health-report)
     ];
 
     /** Blank space (mm) left above the line when a signatory has no signature image. */

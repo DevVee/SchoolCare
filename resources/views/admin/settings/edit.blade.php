@@ -34,7 +34,10 @@
             'Booking rules' => ['Limits that apply when staff or patients book an appointment.', ['max_daily_appointments', 'booking_max_days_ahead', 'appointment_slot_minutes', 'allow_weekend_booking', 'appointment_cancel_reason_required']],
             'Opening hours' => ['The days and hours the clinic is open. Turn a day off to mark it closed.', ['clinic_weekly_hours']],
             'Reminders' => ['When patients get a reminder text before their appointment.', ['reminder_hours_before']],
-            'Online requests' => ['Let patients and parents request an appointment from the public website.', ['public_booking_enabled', 'appointment_purposes']],
+            'Online requests' => ['Let patients and parents request an appointment from the public website, and what the page says.', ['public_booking_enabled', 'public_booking_intro', 'public_booking_success_message', 'public_booking_closed_message']],
+            'Online request dates and times' => ['Which dates and times the request form offers. The times and the places in each come from Administration > Appointment Slots, and the days from the opening hours above.', ['public_booking_days_ahead', 'public_booking_min_notice_hours', 'public_booking_slot_limit', 'public_booking_specialist_days_only', 'public_booking_closed_dates']],
+            'Online request form' => ['The reasons offered and which questions the form asks. Categories and appointment types are set under Clinic; grades, programs and sections under Academic.', ['appointment_purposes', 'public_booking_field_category', 'public_booking_field_school', 'public_booking_field_student_id', 'public_booking_field_email', 'public_booking_field_provider', 'public_booking_field_details']],
+            'Online request privacy' => ['The statement people agree to before they send a request.', ['public_booking_consent_required', 'public_booking_consent_text']],
         ],
         'intake' => [
             'Online health form' => ['A public form where students and parents send health information. Nothing is added to patient records until staff approve it.', ['public_intake_enabled', 'intake_consent_text', 'intake_success_message']],
@@ -45,7 +48,7 @@
         ],
         'notifications' => [
             'Text messages (SMS)' => ['Which events send a text message. The main switch must be on for any text to go out.', ['sms_enabled', 'notify_sms_appointment_created', 'notify_sms_appointment_approved', 'notify_sms_appointment_rescheduled', 'notify_sms_appointment_cancelled', 'notify_sms_appointment_reminder', 'sms_log_guardian_enabled', 'notify_sms_clinic_discharge', 'notify_sms_intake_approved']],
-            'Email' => ['Which events send an email. Invitations and password resets always send.', ['notify_email_appointments']],
+            'Email' => ['Which events send an email. Invitations and password resets always send.', ['notify_email_appointments', 'notify_email_online_request', 'online_request_notify_email']],
         ],
     ];
 
