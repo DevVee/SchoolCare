@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Support\PermissionCatalog;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -18,7 +21,9 @@ class User extends Authenticatable
         'email',
         'password',
         'is_active',
+        'must_change_password',
         'last_login_at',
+        'last_login_ip',
         'avatar',
         'bio',
     ];
@@ -35,6 +40,7 @@ class User extends Authenticatable
             'last_login_at'     => 'datetime',
             'password'          => 'hashed',
             'is_active'         => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 
@@ -94,7 +100,57 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->hasRole('administrator');
+        return $this->hasRole(PermissionCatalog::superAdminRole());
+    }
+
+    /**
+     * Number of clinical / inventory records attributed to this user.
+     * Several of these foreign keys cascade or restrict on delete, so a user
+     * who owns records must be deactivated rather than deleted.
+     * Soft-deleted rows are included on purpose (they still reference the user).
+     */
+    public function clinicalRecordCount(): int
+    {
+        $refs = [
+            'consultations'          => ['nurse_id'],
+            'dispensing_records'     => ['dispensed_by'],
+            'patient_logs'           => ['logged_by'],
+            'patients'               => ['created_by', 'updated_by'],
+            'appointments'           => ['created_by', 'approved_by'],
+            'inventory_transactions' => ['performed_by'],
+            'medicines'              => ['created_by'],
+        ];
+
+        $total = 0;
+        foreach ($refs as $table => $columns) {
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+            $total += DB::table($table)
+                ->where(function ($q) use ($columns) {
+                    foreach ($columns as $column) {
+                        $q->orWhere($column, $this->getKey());
+                    }
+                })
+                ->count();
+        }
+
+        return $total;
+    }
+
+    /** Active administrators other than this user. */
+    public function otherActiveAdminCount(): int
+    {
+        return static::role(PermissionCatalog::superAdminRole())
+            ->where('is_active', true)
+            ->whereKeyNot($this->getKey())
+            ->count();
+    }
+
+    /** True when this user is the only remaining active administrator. */
+    public function isLastActiveAdmin(): bool
+    {
+        return $this->isAdmin() && $this->otherActiveAdminCount() === 0;
     }
 
     public function isNurse(): bool

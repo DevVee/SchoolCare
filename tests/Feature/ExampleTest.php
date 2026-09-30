@@ -11,26 +11,30 @@ class ExampleTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * Unauthenticated requests to the root URL are redirected to /login.
-     * Clinovia is a protected system — no public landing page.
+     * Guests see the public landing page at the root URL.
      */
-    public function test_root_redirects_guests_to_login(): void
+    public function test_root_shows_landing_page_to_guests(): void
     {
-        $response = $this->get('/');
-
-        $response->assertRedirect('/login');
+        $this->get('/')->assertOk();
     }
 
     /**
-     * Authenticated users visiting the root URL are redirected to the dashboard.
+     * Authenticated users visiting the root URL are sent to the dashboard.
+     */
+    public function test_root_redirects_authenticated_users_to_dashboard(): void
+    {
+        $user = User::factory()->create(['is_active' => true]);
+
+        $this->actingAs($user)->get('/')->assertRedirect(route('dashboard'));
+    }
+
+    /**
+     * The dashboard renders for any active authenticated user.
      */
     public function test_authenticated_users_reach_dashboard(): void
     {
         $user = User::factory()->create(['is_active' => true]);
 
-        $response = $this->actingAs($user)->get('/dashboard');
-
-        // Dashboard may further redirect to role-based page; at minimum it's not a 404/500.
-        $response->assertStatus(200);
+        $this->actingAs($user)->get('/dashboard')->assertOk();
     }
 }

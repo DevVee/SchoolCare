@@ -1,118 +1,67 @@
 @extends('layouts.app')
 
-@section('title', 'Appointments Report')
+@section('title', 'Appointments report')
+
+@use('App\Support\DisplayFormat')
+
+@php
+    $statusLabels = \App\Models\Appointment::statusLabels();
+    $statusCard = [
+        'pending'   => ['hourglass-split', 'warning'],
+        'approved'  => ['check2-circle', 'success'],
+        'completed' => ['check2-all', 'brand'],
+        'cancelled' => ['x-circle', 'neutral'],
+        'no_show'   => ['person-x', 'neutral'],
+    ];
+    $cards = collect($statusLabels)
+        ->map(fn ($label, $status) => [
+            'label' => $label, 'value' => (int) ($byStatus[$status] ?? 0),
+            'icon'  => $statusCard[$status][0] ?? 'calendar', 'tone' => $statusCard[$status][1] ?? 'neutral',
+        ])
+        ->values()
+        ->push(['label' => 'Total', 'value' => $appointments->count(), 'icon' => 'calendar-check', 'tone' => 'brand', 'module' => 'appointments'])
+        ->all();
+@endphp
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">Appointments Report</h4>
-        <p class="text-muted small mb-0">{{ \Carbon\Carbon::parse($from)->format('M d, Y') }} — {{ \Carbon\Carbon::parse($to)->format('M d, Y') }}</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i>Reports
-        </a>
-        <a href="{{ route('reports.export', 'appointments') }}?from={{ $from }}&to={{ $to }}&format=pdf" class="btn btn-danger btn-sm">
-            <i class="bi bi-file-earmark-pdf me-1"></i> PDF
-        </a>
-        <a href="{{ route('reports.export', 'appointments') }}?from={{ $from }}&to={{ $to }}&format=csv" class="btn btn-success btn-sm">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV
-        </a>
-    </div>
-</div>
 
-{{-- Date range --}}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body py-3">
-        <form method="GET" action="{{ route('reports.appointments') }}" class="row g-2 align-items-end">
-            <div class="col-sm-3">
-                <label class="form-label small fw-semibold mb-1">From</label>
-                <input type="date" name="from" value="{{ $from }}" class="form-control form-control-sm">
-            </div>
-            <div class="col-sm-3">
-                <label class="form-label small fw-semibold mb-1">To</label>
-                <input type="date" name="to" value="{{ $to }}" class="form-control form-control-sm">
-            </div>
-            <div class="col-sm-2"><button class="btn btn-primary btn-sm mt-3">Generate</button></div>
+<x-ui.page-header title="Appointments report" :description="DisplayFormat::date($from).' to '.DisplayFormat::date($to)"
+    :breadcrumbs="['Reports' => route('reports.index'), 'Appointments report' => null]">
+    <x-slot:actions>
+        <form method="GET" action="{{ route('reports.appointments') }}" class="report-period">
+            <x-ui.input type="date" name="from" :value="$from" aria-label="From date" />
+            <span class="report-period-sep">to</span>
+            <x-ui.input type="date" name="to" :value="$to" aria-label="To date" />
+            <x-ui.button type="submit" variant="secondary">Show</x-ui.button>
         </form>
-    </div>
-</div>
+        @include('reports.partials.export', ['type' => 'appointments', 'params' => ['from' => $from, 'to' => $to]])
+    </x-slot:actions>
+</x-ui.page-header>
 
-{{-- Status Summary --}}
-<div class="row g-3 mb-4">
-    @php
-    $statusConfig = [
-        'pending'   => ['warning', 'Clock'],
-        'approved'  => ['success', 'Check Circle'],
-        'completed' => ['primary', 'Check All'],
-        'cancelled' => ['danger',  'X Circle'],
-        'no_show'   => ['secondary','Slash Circle'],
-    ];
-    @endphp
-    @foreach($statusConfig as $status => [$color, $label])
-    <div class="col-6 col-sm-4 col-lg-2">
-        <div class="card border-0 shadow-sm text-center py-3">
-            <div class="fs-3 fw-bold text-{{ $color }}">{{ $byStatus[$status] ?? 0 }}</div>
-            <div class="text-muted small">{{ ucfirst($status) }}</div>
-        </div>
-    </div>
-    @endforeach
-    <div class="col-6 col-sm-4 col-lg-2">
-        <div class="card border-0 shadow-sm text-center py-3 border-primary">
-            <div class="fs-3 fw-bold">{{ $appointments->count() }}</div>
-            <div class="text-muted small">Total</div>
-        </div>
-    </div>
-</div>
+@include('reports.partials.stat-cards', ['cards' => $cards])
 
-{{-- Appointments Table --}}
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-transparent border-bottom fw-semibold">
-        <i class="bi bi-calendar-check me-2"></i> Appointment List
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 small">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Patient</th>
-                        <th>Purpose</th>
-                        <th class="text-center">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($appointments as $a)
-                    @php
-                        $badge = match($a->status) {
-                            'pending'   => 'warning',
-                            'approved'  => 'success',
-                            'completed' => 'primary',
-                            'cancelled' => 'danger',
-                            'no_show'   => 'secondary',
-                            default     => 'secondary',
-                        };
-                    @endphp
-                    <tr>
-                        <td>{{ $a->appointment_date->format('M d, Y') }}</td>
-                        <td class="text-muted">{{ $a->appointment_time ? \Carbon\Carbon::parse($a->appointment_time)->format('h:i A') : '—' }}</td>
-                        <td class="fw-semibold">{{ $a->patient->full_name ?? '—' }}</td>
-                        <td>{{ Str::limit($a->purpose, 50) }}</td>
-                        <td class="text-center">
-                            <span class="badge bg-{{ $badge }}-subtle text-{{ $badge }}-emphasis">
-                                {{ ucfirst(str_replace('_', ' ', $a->status)) }}
-                            </span>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">No appointments in this period.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+<x-ui.card flush module="appointments" title="Appointment list" :description="$appointments->count().' '.Str::plural('appointment', $appointments->count())">
+    <x-ui.table responsive="stack" caption="Appointment list">
+        <x-slot:head>
+            <x-ui.th>Date</x-ui.th>
+            <x-ui.th>Time</x-ui.th>
+            <x-ui.th>Patient</x-ui.th>
+            <x-ui.th priority="md">Purpose</x-ui.th>
+            <x-ui.th>Status</x-ui.th>
+        </x-slot:head>
+        @foreach($appointments as $a)
+        <tr>
+            <x-ui.td label="Date">{{ DisplayFormat::date($a->appointment_date, '-') }}</x-ui.td>
+            <x-ui.td label="Time" muted>{{ DisplayFormat::time($a->appointment_time, '-') }}</x-ui.td>
+            <x-ui.td identity>{{ $a->patient?->full_name ?? $a->requester_name ?? 'Unknown patient' }} <x-archived-badge :patient="$a->patient" /></x-ui.td>
+            <x-ui.td label="Purpose" priority="md" truncate>{{ $a->purpose ?: '-' }}</x-ui.td>
+            <x-ui.td label="Status"><x-ui.status-badge :status="$a->status" type="appointment" :label="$statusLabels[$a->status] ?? null" size="sm" /></x-ui.td>
+        </tr>
+        @endforeach
+        <x-slot:empty>
+            <x-ui.empty-state compact icon="calendar-check" title="No appointments in this period" description="Try a wider date range." />
+        </x-slot:empty>
+    </x-ui.table>
+</x-ui.card>
+
 @endsection

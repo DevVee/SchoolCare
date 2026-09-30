@@ -21,24 +21,32 @@ class DispensingController extends Controller
     {
         $this->authorize('view-dispensing');
 
-        $search   = $request->get('search', '');
-        $dateFrom = $request->get('date_from', '');
-        $dateTo   = $request->get('date_to', '');
+        $search     = trim((string) $request->get('search', ''));
+        $dateFrom   = $request->get('date_from', '');
+        $dateTo     = $request->get('date_to', '');
+        $medicineId = $request->integer('medicine_id') ?: '';
 
-        $records = DispensingRecord::with('patient', 'medicine', 'dispensedBy')
-            ->when($search, fn ($q) => $q->whereHas('patient', fn ($q2) =>
-                $q2->where('first_name', 'like', "%{$search}%")
-                   ->orWhere('last_name',  'like', "%{$search}%")
+        // Search is grouped in one where() so it never bypasses the date /
+        // medicine filters; matches patient name/number or medicine name.
+        $records = DispensingRecord::with('patient', 'medicine.category', 'dispensedBy')
+            ->when($search, fn ($q) => $q->where(fn ($w) => $w
+                ->whereHas('patient', fn ($p) => $p->withTrashed()->where(fn ($p2) => $p2
+                    ->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('patient_number', 'like', "%{$search}%")))
+                ->orWhereHas('medicine', fn ($m) => $m->withTrashed()->where('name', 'like', "%{$search}%"))
             ))
+            ->when($medicineId, fn ($q) => $q->where('medicine_id', $medicineId))
             ->when($dateFrom, fn ($q) => $q->whereDate('dispensed_at', '>=', $dateFrom))
             ->when($dateTo,   fn ($q) => $q->whereDate('dispensed_at', '<=', $dateTo))
             ->latest('dispensed_at')
             ->paginate(20)
             ->withQueryString();
 
-        $filters = compact('search', 'dateFrom', 'dateTo');
+        $filters   = compact('search', 'dateFrom', 'dateTo', 'medicineId');
+        $medicines = Medicine::withTrashed()->orderBy('name')->get(['id', 'name']);
 
-        return view('dispensing.index', compact('records', 'filters'));
+        return view('dispensing.index', compact('records', 'filters', 'medicines'));
     }
 
     /* ------------------------------------------------------------------ */
@@ -52,11 +60,14 @@ class DispensingController extends Controller
             ->orderBy('last_name')->orderBy('first_name')
             ->get(['id', 'first_name', 'middle_name', 'last_name', 'patient_number']);
 
+        // Only active, unexpired, in-stock medicines can be selected.
+        // usable_quantity / next_expiry: unexpired batches only (FEFO pool).
         $medicines = Medicine::with('category')
-            ->active()
-            ->where('quantity', '>', 0)
+            ->dispensable()
+            ->withSum(['batches as usable_quantity' => fn ($q) => $q->usable()], 'quantity')
+            ->withMin(['batches as next_expiry' => fn ($q) => $q->usable()], 'expiry_date')
             ->orderBy('name')
-            ->get(['id', 'name', 'quantity', 'unit', 'category_id', 'low_stock_threshold']);
+            ->get(['id', 'name', 'generic_name', 'quantity', 'unit', 'category_id', 'low_stock_threshold', 'expiration_date']);
 
         $consultations = Consultation::whereDate('visit_date', '>=', now()->subDays(30))
             ->orderByDesc('visit_date')
@@ -72,7 +83,9 @@ class DispensingController extends Controller
         try {
             $record = $this->service->dispense($request->validated());
         } catch (\RuntimeException $e) {
-            return back()->withInput()->withErrors(['quantity' => $e->getMessage()]);
+            $field = str_contains($e->getMessage(), 'Insufficient stock') ? 'quantity' : 'medicine_id';
+
+            return back()->withInput()->withErrors([$field => $e->getMessage()]);
         }
 
         return redirect()
@@ -87,7 +100,7 @@ class DispensingController extends Controller
     {
         $this->authorize('view-dispensing');
 
-        $dispensing->load('patient', 'medicine.category', 'dispensedBy', 'consultation');
+        $dispensing->load('patient', 'medicine.category', 'dispensedBy', 'consultation', 'patientLog', 'transactions');
 
         return view('dispensing.show', compact('dispensing'));
     }

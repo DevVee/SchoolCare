@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
  * even when `php artisan config:cache` is active (env() returns null
  * for variables that aren't real OS env vars after caching).
  *
- * Set TRUST_PROXIES=* in .env / render.yaml to trust all proxies.
+ * Set TRUST_PROXIES=* in .env to trust all proxies.
  * For a known proxy IP (e.g. 10.0.0.1), set TRUST_PROXIES=10.0.0.1.
  */
 class TrustProxies extends Middleware

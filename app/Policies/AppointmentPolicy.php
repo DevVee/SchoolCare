@@ -24,7 +24,7 @@ class AppointmentPolicy
 
     public function update(User $user, Appointment $appointment): bool
     {
-        return $user->can('update-appointments') && $appointment->isPending();
+        return $user->can('update-appointments') && $appointment->isEditable();
     }
 
     public function delete(User $user, Appointment $appointment): bool
@@ -34,22 +34,23 @@ class AppointmentPolicy
 
     public function approve(User $user, Appointment $appointment): bool
     {
-        return $user->can('approve-appointments') && $appointment->isPending();
+        // Unlinked online requests must be linked to a patient before approval.
+        return $user->can('approve-appointments') && $appointment->canTransitionTo('approved')
+            && ! $appointment->needsPatientLink();
     }
 
     public function cancel(User $user, Appointment $appointment): bool
     {
-        return $user->can('cancel-appointments')
-            && in_array($appointment->status, ['pending', 'approved']);
+        return $user->can('cancel-appointments') && $appointment->canTransitionTo('cancelled');
     }
 
     public function markNoShow(User $user, Appointment $appointment): bool
     {
-        return $user->can('approve-appointments') && $appointment->isApproved();
+        return $user->can('complete-appointments') && $appointment->canTransitionTo('no_show');
     }
 
     public function complete(User $user, Appointment $appointment): bool
     {
-        return $user->can('approve-appointments') && $appointment->isApproved();
+        return $user->can('complete-appointments') && $appointment->canTransitionTo('completed');
     }
 }

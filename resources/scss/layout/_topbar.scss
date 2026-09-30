@@ -1,0 +1,245 @@
+// =============================================================================
+// App topbar (layouts/partials/topbar.blade.php): sticky, white, 64px, bottom
+// hairline (owner round 3, ui_principles.md section 9). A soft shadow appears
+// once content scrolls under it (`.is-scrolled`, resources/js/ui/scroll-edge.js).
+// Left: sidebar toggle + title / breadcrumbs. Right: search, AI assistant,
+// avatar-only account menu. The school name shows only in rail mode.
+// =============================================================================
+
+.app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    height: var(--c-topbar-h);
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: 0 1rem;
+    // Owner round 3: white bar with a bottom hairline, matching the sidebar header
+    background: #fff;
+    border-bottom: 1px solid var(--c-border);
+    @include media-breakpoint-up(sm) { padding: 0 1.5rem; }
+
+    // Soft shadow once content scrolls under it (ui/scroll-edge.js)
+    transition: box-shadow $dur-base ease-out;
+    &.is-scrolled { box-shadow: 0 1px 3px rgba(15, 23, 42, .06); }
+
+    @media (prefers-contrast: more) { border-bottom-color: $gray-500; }
+
+    .topbar-divider { width: 1px; height: 18px; background: var(--c-border); flex-shrink: 0; }
+
+    .topbar-spacer { flex: 1 1 auto; min-width: .25rem; }
+
+    .topbar-title {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        min-width: 0;
+        flex: 0 1 auto;
+        font-family: $font-ui;
+        .section { font-size: .875rem; font-weight: 500; color: var(--c-ink-2); white-space: nowrap; }
+        .sep     { color: var(--c-faint); font-size: .75rem; }
+        .title   { font-size: 1rem; font-weight: 700; color: var(--c-ink); letter-spacing: -.01em; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+    }
+
+    // Breadcrumbs from @section('breadcrumb') (<li class="breadcrumb-item">)
+    .topbar-breadcrumb-nav { min-width: 0; }
+    .topbar-breadcrumb {
+        --bs-breadcrumb-margin-bottom: 0;
+        --bs-breadcrumb-divider-color: var(--c-muted);
+        --bs-breadcrumb-item-padding-x: .375rem;
+        --bs-breadcrumb-item-active-color: var(--c-ink);
+        flex-wrap: nowrap;
+        min-width: 0;
+        font-size: .875rem;
+        white-space: nowrap;
+        .breadcrumb-item { min-width: 0; }
+        .breadcrumb-item a { color: var(--c-ink-2); text-decoration: none; font-weight: 500; &:hover { color: var(--brand-700); text-decoration: underline; } }
+        .breadcrumb-item.active { font-weight: 700; color: var(--c-ink); overflow: hidden; text-overflow: ellipsis; }
+    }
+
+    // School identity: only when the sidebar is a rail (xl and up); uploaded logo only, short name preferred
+    .topbar-school, .topbar-school-divider { display: none; }
+    @include media-breakpoint-up(xl) {
+        @at-root .sidebar-collapsed .app-topbar .topbar-school { display: inline-flex; }
+        @at-root .sidebar-collapsed .app-topbar .topbar-school-divider { display: block; }
+    }
+    .topbar-school {
+        align-items: center;
+        gap: .5rem;
+        min-width: 0;
+        max-width: 360px;
+        flex-shrink: 1;
+        font-family: $font-ui;
+        .topbar-school-logo { width: 24px; height: 24px; border-radius: $radius-xs; object-fit: contain; flex-shrink: 0; }
+        .topbar-school-name {
+            font-size: .875rem;
+            font-weight: 600;
+            color: var(--c-ink-2);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-decoration: none;
+            cursor: default;
+        }
+    }
+
+    .btn-topbar {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: $border-radius;
+        border: 0;
+        background: transparent;
+        color: var(--c-ink-2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        font-size: 1.125rem;
+        flex-shrink: 0;
+        text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: background-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
+        &:hover, &[aria-expanded="true"] { background: var(--c-surface-2); color: var(--c-ink); }
+        &:active { transform: scale($press-scale); }
+        .count {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            min-width: 1.125rem;
+            height: 1.125rem;
+            padding: 0 .3125rem;
+            border-radius: $radius-xs;
+            background: tone("danger", 600);
+            color: #fff;
+            font-family: $font-ui;
+            font-size: .6875rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fff;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+    }
+
+    .topbar-search {
+        position: relative;
+        display: none;
+        align-items: center;
+        flex-shrink: 1;
+        min-width: 0;
+        margin: 0;
+        @include media-breakpoint-up(md) { display: flex; width: 220px; }
+        @include media-breakpoint-up(lg) { width: 240px; }
+        @include media-breakpoint-up(xl) { width: 300px; }
+        .form-control { width: 100%; }
+        .topbar-search-close { display: none; }
+        .form-control { min-height: 2.25rem; height: 2.25rem; border-radius: $border-radius; padding-left: 2.25rem; font-size: .9375rem; background: var(--c-surface-2); border-color: transparent; }
+        .form-control:focus { background: #fff; border-color: var(--brand-600); }
+        > .c-icon, > .bi { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); font-size: .9375rem; color: var(--c-muted); pointer-events: none; }
+        kbd { position: absolute; right: .5rem; top: 50%; transform: translateY(-50%); font-size: .75rem; background: #fff; color: var(--c-ink-2); border: 1px solid var(--c-border); box-shadow: none; padding: 1px 6px; border-radius: $border-radius-sm; }
+    }
+
+    // Clinic status: static dot (no pulsing "live" indicator)
+    .clinic-status {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        height: 2rem;
+        padding: 0 .75rem;
+        border-radius: $radius-sm;
+        border: 1px solid var(--c-border);
+        font-size: .8125rem;
+        font-weight: 500;
+        color: var(--c-ink-2);
+        background: #fff;
+        white-space: nowrap;
+        .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c-online); }
+        time { font-weight: 700; color: var(--c-ink); font-variant-numeric: tabular-nums; }
+    }
+
+    // Ask Cobi: quiet secondary button with a small brand icon (no gradient)
+    .btn-cobi-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        height: 2.25rem;
+        padding: 0 .875rem;
+        border-radius: $border-radius;
+        border: 1px solid var(--c-border-strong);
+        background: #fff;
+        color: var(--c-ink);
+        font-family: $font-ui;
+        font-size: .875rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background-color $dur-fast ease-out, border-color $dur-fast ease-out, transform $dur-press ease-out;
+        .c-icon, .bi { color: tone("cobi", 600); }
+        &:hover { background: var(--c-surface-2); color: var(--c-ink); }
+        &:active { transform: scale($press-scale); }
+    }
+
+    // Phones: the search icon expands the field across the bar (Esc / close button collapses it)
+    &.search-open .topbar-search {
+        display: flex;
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        width: auto;
+        gap: .5rem;
+        padding: 0 .5rem 0 1rem;
+        background: #fff;
+        > .c-icon { left: 1.75rem; }
+        .topbar-search-close { display: inline-flex; }
+    }
+
+    .btn-cobi-pill {
+        flex-shrink: 0;
+        // Icon only below xl: same quiet look as the other topbar icon buttons
+        @include media-breakpoint-down(xl) {
+            padding: 0; width: 2.25rem; justify-content: center; border-color: transparent;
+            .c-icon, .bi { font-size: 1.125rem; }
+        }
+    }
+
+    .user-trigger {
+        display: flex;
+        align-items: center;
+        gap: .625rem;
+        padding: 4px 8px 4px 4px;
+        border-radius: $radius-sm;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        transition: background-color $dur-fast ease-out;
+        &:hover, &[aria-expanded="true"] { background: var(--c-surface-2); }
+        .name { font-family: $font-ui; font-size: .875rem; font-weight: 700; color: var(--c-ink); line-height: 1.1; }
+        .role { font-size: .75rem; color: var(--c-muted); margin-top: 2px; line-height: 1.1; }
+        .user-trigger-text { flex-direction: column; min-width: 0; max-width: 11rem; }
+        .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .role { white-space: nowrap; }
+        .bi-chevron-down { font-size: .75rem; color: var(--c-muted); transition: transform $dur-fast ease-out; }
+        &[aria-expanded="true"] .bi-chevron-down { transform: rotate(180deg); }
+    }
+}
+
+@media (pointer: coarse), (max-width: 767.98px) {
+    .app-topbar .btn-topbar { width: 2.75rem; height: 2.75rem; }
+}
+
+@media (pointer: coarse), (max-width: 767.98px) {
+    .app-topbar .btn-cobi-pill { width: 2.75rem; height: 2.75rem; }
+    .app-topbar .user-trigger { min-height: 2.75rem; }
+}
+@media (max-width: 575.98px) {
+    .app-topbar { gap: .25rem; padding: 0 .5rem; }
+}
+
+// User menu header
+.user-menu .user-menu-head { display: flex; align-items: center; gap: .75rem; }
+.user-menu .user-menu-body { padding: .375rem 0; }
+
+// Avatar-only account button (name and role are in the sidebar profile card)
+.app-topbar .user-trigger-compact { padding: 4px; border-radius: 50%; }

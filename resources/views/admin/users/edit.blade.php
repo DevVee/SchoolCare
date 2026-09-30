@@ -1,149 +1,69 @@
 @extends('layouts.app')
 
-@section('title', 'Edit User — ' . $user->name)
+@section('title', 'Edit '.$user->name)
+
+@php
+    $roleOptions = $roles->mapWithKeys(fn ($r) => [$r->name => \Illuminate\Support\Str::headline($r->name)])->all();
+    $isSelf = $user->id === auth()->id();
+    $currentRole = $user->roles->first()?->name;
+@endphp
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">Edit User</h4>
-        <p class="text-muted small mb-0">Update account details for <strong>{{ $user->name }}</strong></p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{{ route('admin.users.show', $user) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-eye me-1"></i> View
-        </a>
-        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i> Back
-        </a>
-    </div>
-</div>
+<div class="vstack gap-3">
 
-<div class="row justify-content-center">
-    <div class="col-lg-7">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-bottom fw-semibold d-flex align-items-center gap-3">
-                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                     style="width:38px;height:38px;font-size:.9rem;background:var(--gradient-primary);">
-                    {{ strtoupper(substr($user->name, 0, 1)) }}
+    <x-ui.page-header :title="'Edit '.$user->name" description="Update the account details, role or sign-in status."
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Users' => route('admin.users.index'), $user->name => route('admin.users.show', $user), 'Edit' => null]">
+        <x-slot:actions>
+            <x-ui.button variant="secondary" icon="eye" :href="route('admin.users.show', $user)">View profile</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
+
+    @if ($errors->any())
+        <x-ui.alert variant="danger" title="Please fix the errors below">Check the highlighted fields and try again.</x-ui.alert>
+    @endif
+
+    <form method="POST" action="{{ route('admin.users.update', $user) }}">
+        @csrf
+        @method('PUT')
+        <x-ui.card>
+            <x-ui.section title="Account" description="The name staff will see, and the email used to sign in.">
+                <div class="row g-3">
+                    <x-ui.input wrapper-class="col-12" name="name" label="Full name" :value="$user->name" required autocomplete="off" />
+                    <x-ui.input wrapper-class="col-12" name="email" type="email" label="Email" :value="$user->email" required autocomplete="off" />
                 </div>
-                <div>
-                    <div class="fw-semibold">{{ $user->name }}</div>
-                    <div class="text-muted" style="font-size:.78rem;">{{ $user->email }}</div>
+            </x-ui.section>
+
+            <x-ui.section title="Password" description="Leave both fields empty to keep the current password. To give a one-time temporary password instead, use Reset password on the user's profile.">
+                <div class="row g-3">
+                    <x-ui.input wrapper-class="col-12 col-md-6" name="password" type="password" label="New password" optional autocomplete="new-password"
+                        help="At least 10 characters with upper and lowercase letters, a number and a symbol." />
+                    <x-ui.input wrapper-class="col-12 col-md-6" name="password_confirmation" type="password" label="Confirm new password" optional autocomplete="new-password" />
                 </div>
-            </div>
-            <div class="card-body p-4">
+            </x-ui.section>
 
-                <form method="POST" action="{{ route('admin.users.update', $user) }}">
-                    @csrf @method('PUT')
-
-                    {{-- Full Name --}}
-                    <div class="mb-3">
-                        <label for="name" class="form-label fw-semibold small">Full Name <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-person text-muted"></i></span>
-                            <input id="name" type="text" name="name"
-                                   value="{{ old('name', $user->name) }}"
-                                   class="form-control @error('name') is-invalid @enderror"
-                                   required autofocus>
-                            @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
+            <x-ui.section title="Role and access" description="The role decides which parts of the system this person can open.">
+                <div class="row g-3">
+                    <x-ui.select wrapper-class="col-12 col-md-7" name="role" id="role" label="Role" :options="$roleOptions" :selected="$currentRole" required
+                        :disabled="$isSelf" :help="$isSelf ? 'You cannot change your own role.' : null" />
+                    @if ($isSelf)
+                        <input type="hidden" name="role" value="{{ $currentRole }}">
+                    @endif
+                    <div class="col-12">
+                        @if ($isSelf)
+                            <x-ui.switch name="is_active" label="Active" description="You cannot deactivate your own account." :checked="true" disabled :unchecked-value="null" />
+                            <input type="hidden" name="is_active" value="1">
+                        @else
+                            <x-ui.switch name="is_active" label="Active" description="Inactive users cannot sign in. Turning this off signs them out right away." :checked="(bool) $user->is_active" />
+                        @endif
                     </div>
+                </div>
+            </x-ui.section>
 
-                    {{-- Email --}}
-                    <div class="mb-3">
-                        <label for="email" class="form-label fw-semibold small">Email Address <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-envelope text-muted"></i></span>
-                            <input id="email" type="email" name="email"
-                                   value="{{ old('email', $user->email) }}"
-                                   class="form-control @error('email') is-invalid @enderror"
-                                   required>
-                            @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-                    <p class="text-muted small mb-3">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Leave the password fields blank to keep the current password unchanged.
-                    </p>
-
-                    {{-- Password --}}
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label for="password" class="form-label fw-semibold small">New Password</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="bi bi-lock text-muted"></i></span>
-                                <input id="password" type="password" name="password"
-                                       class="form-control @error('password') is-invalid @enderror"
-                                       placeholder="Leave blank to keep">
-                                @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="password_confirmation" class="form-label fw-semibold small">Confirm New Password</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="bi bi-lock-fill text-muted"></i></span>
-                                <input id="password_confirmation" type="password" name="password_confirmation"
-                                       class="form-control"
-                                       placeholder="Leave blank to keep">
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    {{-- Role & Status --}}
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-7">
-                            <label for="role" class="form-label fw-semibold small">Role <span class="text-danger">*</span></label>
-                            <select id="role" name="role"
-                                    class="form-select @error('role') is-invalid @enderror"
-                                    required
-                                    @if($user->id === auth()->id()) disabled @endif>
-                                @foreach($roles as $r)
-                                <option value="{{ $r->name }}"
-                                    @selected(old('role', $user->roles->first()?->name) === $r->name)>
-                                    {{ ucfirst($r->name) }}
-                                </option>
-                                @endforeach
-                            </select>
-                            @if($user->id === auth()->id())
-                                <input type="hidden" name="role" value="{{ $user->roles->first()?->name }}">
-                                <div class="form-text text-warning">
-                                    <i class="bi bi-lock me-1"></i>You cannot change your own role.
-                                </div>
-                            @endif
-                            @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-5 d-flex flex-column">
-                            <label class="form-label fw-semibold small">Account Status</label>
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox"
-                                       id="is_active" name="is_active" value="1"
-                                       @checked(old('is_active', $user->is_active))
-                                       @if($user->id === auth()->id()) disabled @endif>
-                                <label class="form-check-label" for="is_active">Active (can sign in)</label>
-                            </div>
-                            @if($user->id === auth()->id())
-                                <input type="hidden" name="is_active" value="1">
-                                <div class="form-text text-warning small">
-                                    <i class="bi bi-lock me-1"></i>Cannot deactivate your own account.
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 justify-content-end">
-                        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
-                        <button type="submit" class="btn btn-primary px-5">
-                            <i class="bi bi-save me-1"></i> Save Changes
-                        </button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
+            <x-slot:footer>
+                <x-ui.button variant="secondary" :href="route('admin.users.index')">Cancel</x-ui.button>
+                <x-ui.button type="submit" icon="check-lg">Save changes</x-ui.button>
+            </x-slot:footer>
+        </x-ui.card>
+    </form>
 </div>
 @endsection

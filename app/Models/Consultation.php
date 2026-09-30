@@ -27,19 +27,23 @@ class Consultation extends Model
 
     // ─── Relationships ────────────────────────────────────────────────────────
 
+    /**
+     * Includes soft-deleted (archived) patients so clinical history never
+     * renders a null patient. Use $model->patient->trashed() to badge it.
+     */
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(Patient::class)->withTrashed();
     }
 
     public function appointment(): BelongsTo
     {
-        return $this->belongsTo(Appointment::class);
+        return $this->belongsTo(Appointment::class)->withTrashed();
     }
 
     public function nurse(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'nurse_id');
+        return $this->belongsTo(User::class, 'nurse_id')->withDefault(['name' => 'Deleted user']);
     }
 
     public function dispensingRecords(): HasMany

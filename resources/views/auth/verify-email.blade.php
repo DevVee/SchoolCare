@@ -1,46 +1,22 @@
 <x-guest-layout>
-<div class="auth-wrapper">
-    <div class="auth-card card p-4 p-sm-5">
+    <x-slot:title>Verify your email</x-slot:title>
 
-        {{-- Logo --}}
-        <div class="text-center mb-4">
-            <div class="auth-logo mb-3">
-                <i class="bi bi-envelope-check-fill"></i>
-            </div>
-            <h4 class="fw-bold mb-1" style="font-family:'Poppins',sans-serif;">Verify Email</h4>
-            <p class="text-muted small">Clinovia &mdash; Smart School Clinic</p>
-        </div>
+    <h1 class="auth-title">Verify your email</h1>
+    <p class="auth-lead">We sent a link to your email address. Open it to finish setting up your account. If it did not arrive, send a new one.</p>
 
-        <p class="text-muted small mb-4 text-center">
-            Before getting started, please verify your email address by clicking the link we sent you.
-            If you didn't receive the email, request another below.
-        </p>
+    @if (session('status') === 'verification-link-sent')
+        <x-ui.alert variant="success" class="mb-4">A new verification link has been sent to your email address.</x-ui.alert>
+    @endif
 
-        @if(session('status') === 'verification-link-sent')
-            <div class="alert alert-success py-2 small mb-4">
-                <i class="bi bi-check-circle me-2"></i>
-                A new verification link has been sent to your email address.
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('verification.send') }}" class="mb-3">
+    <div class="auth-form">
+        <form method="POST" action="{{ route('verification.send') }}">
             @csrf
-            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
-                <i class="bi bi-send me-2"></i>Resend Verification Email
-            </button>
+            <x-ui.button type="submit" size="lg" block>Send a new link</x-ui.button>
         </form>
 
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="btn btn-outline-secondary w-100 py-2 small">
-                <i class="bi bi-box-arrow-right me-2"></i>Log Out
-            </button>
+            <x-ui.button type="submit" variant="secondary" size="lg" block>Sign out</x-ui.button>
         </form>
-
-        <hr class="mt-4 mb-3">
-        <p class="text-center text-muted mb-0" style="font-size:.72rem;">
-            &copy; {{ date('Y') }} Clinovia. All rights reserved.
-        </p>
     </div>
-</div>
 </x-guest-layout>

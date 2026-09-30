@@ -31,27 +31,17 @@ class AiAssistantService
 
     private function model(): string
     {
-        // Cache DB lookup for 1 hour — changes rarely.
-        // Default: openai/gpt-oss-120b — the most powerful model on Groq
-        // (120B parameters, 131K context window, best reasoning & instruction-following)
-        return Cache::remember('setting.ai_model', 3600, fn () =>
-            Setting::get('ai_model', 'openai/gpt-oss-120b')
-        );
+        // Admin → Settings → Cobi AI (cached by SettingsService, busted on save).
+        return (string) (settings('ai_model') ?: 'llama-3.3-70b-versatile');
     }
 
     // ── System prompt ─────────────────────────────────────────────────────────
 
     private function systemPrompt(): string
     {
-        $clinic = Cache::remember('setting.clinic_name', 3600, fn () =>
-            Setting::get('clinic_name', 'ICCBI School Clinic')
-        );
-        $org = Cache::remember('setting.org_name', 3600, fn () =>
-            Setting::get('org_name', 'Immaculate Conception College of Balayan, Inc.')
-        );
-        $system = Cache::remember('setting.app_short_name', 3600, fn () =>
-            Setting::get('app_short_name', 'SSCMS')
-        );
+        $clinic = (string) settings('clinic_name');
+        $org    = (string) (settings('org_name') ?: $clinic);
+        $system = (string) (settings('app_name') ?: config('app.name'));
 
         return <<<PROMPT
 You are Cobi, the intelligent AI assistant for {$system} (Smart School Clinic Management System) at {$org}. You serve clinic staff at {$clinic}.
@@ -132,7 +122,7 @@ When given a technical or operational problem:
 - **Inventory** — stock-in, stock-out, dispensed ledger with full transaction history and audit trail
 - **Dispensing** — dispense medicines to patients linked to consultations; tracks quantity, lot numbers, prescriber
 - **Reports** — daily, monthly, annual, medicine usage, inventory snapshot; export as PDF or CSV
-- **SMS Notifications** — Semaphore API integration; customizable templates for appointment confirmations/reminders
+- **SMS Notifications** — Semaphore API integration; admin-editable templates for appointment booking, approval, reschedule, cancellation and reminders, plus guardian visit notices (sent only when SMS is enabled in Settings)
 - **Audit Logs** — full activity tracking with user, action, before/after values, IP address, timestamp
 - **User Management** — roles: administrator, nurse, staff, viewer; granular permission system
 - **Settings** — clinic name, organization, system preferences, SMS templates, AI model selection
@@ -205,7 +195,7 @@ PROMPT;
      */
     private function callApi(array $messages): array
     {
-        $client    = new Client(['timeout' => self::TIMEOUT]);
+        $client    = new Client(['timeout' => self::TIMEOUT, 'verify' => \Composer\CaBundle\CaBundle::getSystemCaRootBundlePath()]);
         $lastError = null;
 
         for ($attempt = 1; $attempt <= self::MAX_RETRIES; $attempt++) {

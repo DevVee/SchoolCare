@@ -15,10 +15,14 @@ class UpdateMedicineRequest extends FormRequest
     {
         return [
             'name'                => ['required', 'string', 'max:200'],
+            'generic_name'        => ['nullable', 'string', 'max:200'],
+            'barcode'             => ['nullable', 'string', 'max:100', \Illuminate\Validation\Rule::unique('medicines', 'barcode')->ignore($this->route('medicine'))],
+            'purchase_price'      => ['nullable', 'numeric', 'min:0', 'max:9999999'],
             'category_id'         => ['required', 'integer', 'exists:medicine_categories,id'],
             'description'         => ['nullable', 'string', 'max:1000'],
-            'quantity'            => ['required', 'integer', 'min:0'],
-            'unit'                => ['required', 'string', 'in:tablet,capsule,ml,vial,piece,box,bottle,sachet,other'],
+            // quantity is intentionally NOT editable here — stock changes go
+            // through Inventory stock-in / stock-out so the ledger reconciles.
+            'unit'                => ['required', 'string', 'max:50', \Illuminate\Validation\Rule::in([...settings()->list('medicine_units'), $this->route('medicine')?->unit])],
             'low_stock_threshold' => ['required', 'integer', 'min:0'],
             'expiration_date'     => ['nullable', 'date'],
             'batch_number'        => ['nullable', 'string', 'max:100'],
@@ -34,6 +38,8 @@ class UpdateMedicineRequest extends FormRequest
             'low_stock_threshold' => 'low stock threshold',
             'expiration_date'     => 'expiration date',
             'batch_number'        => 'batch number',
+            'generic_name'        => 'generic name',
+            'purchase_price'      => 'purchase price per unit',
         ];
     }
 }

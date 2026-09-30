@@ -18,7 +18,7 @@ return [
     |
     */
 
-    // Production: Render uses SESSION_DRIVER=database (sessions table exists in migration).
+    // Production: SESSION_DRIVER=database (sessions table exists in migration).
     // Local: SESSION_DRIVER=database in .env — same driver everywhere.
     'driver' => env('SESSION_DRIVER', 'database'),
 
@@ -49,9 +49,8 @@ return [
     |
     */
 
-    // Default false — encryption is opt-in via SESSION_ENCRYPT=true in render.yaml.
-    // Defaulting to true caused silent session failures when APP_KEY changed between
-    // container boots (Render's generateValue: true produced a new key each deploy).
+    // Default false — encryption is opt-in via SESSION_ENCRYPT=true in .env.
+    // Defaulting to true caused silent session failures whenever APP_KEY changed.
     'encrypt' => env('SESSION_ENCRYPT', false),
 
     /*
@@ -175,8 +174,7 @@ return [
     */
 
     // Default false so local HTTP dev works without extra config.
-    // start.sh forces SESSION_SECURE_COOKIE=true on Render (HTTPS only).
-    // render.yaml also sets SESSION_SECURE_COOKIE=true explicitly.
+    // Set SESSION_SECURE_COOKIE=true in production when served over HTTPS.
     'secure' => env('SESSION_SECURE_COOKIE', false),
 
     /*

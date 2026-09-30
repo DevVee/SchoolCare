@@ -3,98 +3,88 @@
 @section('title', 'Dispensing Records')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">Dispensing Records</h4>
-        <p class="text-muted small mb-0">All medicines dispensed to patients</p>
-    </div>
+@use('App\Support\DisplayFormat')
+@php
+    $medicineOptions = $medicines->pluck('name', 'id')->all();
+    $hasFilters = $filters['search'] || $filters['dateFrom'] || $filters['dateTo'] || $filters['medicineId'];
+@endphp
+
+<x-ui.page-header title="Dispensing records" description="Every medicine given to a patient, newest first.">
     @can('create-dispensing')
-    <a href="{{ route('dispensing.create') }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-capsule me-1"></i> Dispense Medicine
-    </a>
+    <x-slot:actions>
+        <x-ui.button :href="route('dispensing.create')" icon="plus-lg">Dispense medicine</x-ui.button>
+    </x-slot:actions>
     @endcan
-</div>
+</x-ui.page-header>
 
-{{-- Filters --}}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body py-3">
-        <form method="GET" action="{{ route('dispensing.index') }}" class="row g-2 align-items-end">
-            <div class="col-sm-4">
-                <input type="text" name="search" value="{{ $filters['search'] }}"
-                    class="form-control form-control-sm" placeholder="Search patient name…">
-            </div>
-            <div class="col-sm-3">
-                <input type="date" name="date_from" value="{{ $filters['dateFrom'] }}"
-                    class="form-control form-control-sm">
-            </div>
-            <div class="col-sm-3">
-                <input type="date" name="date_to" value="{{ $filters['dateTo'] }}"
-                    class="form-control form-control-sm">
-            </div>
-            <div class="col-sm-2 d-flex gap-2">
-                <button class="btn btn-primary btn-sm flex-fill">Filter</button>
-                <a href="{{ route('dispensing.index') }}" class="btn btn-outline-secondary btn-sm">✕</a>
-            </div>
-        </form>
-    </div>
-</div>
+<x-ui.filters class="mb-3" :action="route('dispensing.index')" search-placeholder="Patient, patient no. or medicine"
+    :reset-url="route('dispensing.index')"
+    :labels="['date_from' => 'From', 'date_to' => 'To', 'medicine_id' => 'Medicine']"
+    :options="[
+        'date_from' => [(string) $filters['dateFrom'] => $filters['dateFrom'] ? DisplayFormat::date($filters['dateFrom']) : ''],
+        'date_to' => [(string) $filters['dateTo'] => $filters['dateTo'] ? DisplayFormat::date($filters['dateTo']) : ''],
+        'medicine_id' => $medicineOptions,
+    ]">
+    <x-slot:inline>
+        <x-ui.date-range from-name="date_from" to-name="date_to" :from="$filters['dateFrom']" :to="$filters['dateTo']" label="Dates given" />
+    </x-slot:inline>
+    <x-ui.select name="medicine_id" label="Medicine" size="sm" :options="$medicineOptions" placeholder="All medicines" :selected="$filters['medicineId']" />
+</x-ui.filters>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Patient</th>
-                        <th>Medicine</th>
-                        <th class="text-center">Qty</th>
-                        <th>Dispensed At</th>
-                        <th>Dispensed By</th>
-                        <th>Remarks</th>
-                        <th class="text-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($records as $rec)
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">{{ $rec->patient->full_name ?? '—' }}</div>
-                            <small class="text-muted">{{ $rec->patient->patient_number ?? '' }}</small>
-                        </td>
-                        <td>
-                            <div class="fw-semibold">{{ $rec->medicine->name ?? '—' }}</div>
-                            <small class="text-muted">{{ ucfirst($rec->medicine->unit ?? '') }}</small>
-                        </td>
-                        <td class="text-center fw-bold">{{ $rec->quantity }}</td>
-                        <td class="text-nowrap">
-                            {{ \Carbon\Carbon::parse($rec->dispensed_at)->format('M d, Y') }}<br>
-                            <small class="text-muted">{{ \Carbon\Carbon::parse($rec->dispensed_at)->format('h:i A') }}</small>
-                        </td>
-                        <td>{{ $rec->dispensedBy->name ?? '—' }}</td>
-                        <td class="text-muted small" style="max-width:180px;">
-                            <span class="text-truncate d-inline-block" style="max-width:160px;"
-                                title="{{ $rec->remarks }}">{{ $rec->remarks ?? '—' }}</span>
-                        </td>
-                        <td class="text-center">
-                            <a href="{{ route('dispensing.show', $rec) }}" class="btn btn-xs btn-outline-primary">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
-                            <i class="bi bi-capsule fs-2 d-block mb-2 opacity-30"></i>
-                            No dispensing records found.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        @if($records->hasPages())
-        <div class="px-3 py-2 border-top">{{ $records->links() }}</div>
-        @endif
-    </div>
-</div>
+<x-ui.card flush>
+    <x-ui.table responsive="stack" :paginator="$records" noun="records" caption="Dispensing records">
+        <x-slot:head>
+            <x-ui.th>Patient</x-ui.th>
+            <x-ui.th>Medicine</x-ui.th>
+            <x-ui.th align="end">Quantity</x-ui.th>
+            <x-ui.th priority="md">Given on</x-ui.th>
+            <x-ui.th priority="lg">Given by</x-ui.th>
+            <x-ui.th priority="xl">Remarks</x-ui.th>
+            <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
+        </x-slot:head>
+
+        @foreach($records as $rec)
+        @php $name = $rec->patient?->full_name ?? 'Unknown patient'; @endphp
+        <tr>
+            <x-ui.td identity>
+                <div class="identity">
+                    <div class="identity-text">
+                        <a href="{{ route('dispensing.show', $rec) }}" class="identity-title" title="View record">{{ $name }}</a>
+                        <span class="identity-sub">{{ $rec->patient?->patient_number }}<x-archived-badge :patient="$rec->patient" /></span>
+                    </div>
+                </div>
+            </x-ui.td>
+            <x-ui.td label="Medicine" truncate>{{ $rec->medicine?->name ?? 'Removed medicine' }}</x-ui.td>
+            <x-ui.td label="Quantity" numeric>{{ $rec->quantity }} {{ $rec->medicine?->unit }}</x-ui.td>
+            <x-ui.td label="Given on" priority="md" class="tabular">{{ DisplayFormat::date($rec->dispensed_at) }}, {{ DisplayFormat::time($rec->dispensed_at) }}</x-ui.td>
+            <x-ui.td label="Given by" priority="lg" muted>{{ $rec->dispensedBy?->name ?? 'Deleted user' }}</x-ui.td>
+            <x-ui.td label="Remarks" priority="xl" muted truncate>{{ $rec->remarks ?: '-' }}</x-ui.td>
+            <x-ui.td actions>
+                <x-ui.action-menu :label="'Actions for dispensing record of '.$name">
+                    <x-ui.action-menu.item :href="route('dispensing.show', $rec)" icon="eye">View</x-ui.action-menu.item>
+                    @if($rec->patient)
+                    @can('view-patients')
+                    <x-ui.action-menu.item :href="route('patients.show', $rec->patient->id)" icon="person">Patient record</x-ui.action-menu.item>
+                    @endcan
+                    @endif
+                </x-ui.action-menu>
+            </x-ui.td>
+        </tr>
+        @endforeach
+
+        <x-slot:empty>
+            @if($hasFilters)
+                <x-ui.empty-state compact icon="search" title="No records match these filters" description="Try other dates or clear the filters.">
+                    <x-ui.button variant="secondary" size="sm" :href="route('dispensing.index')">Clear filters</x-ui.button>
+                </x-ui.empty-state>
+            @else
+                <x-ui.empty-state compact module="dispensing" title="No medicines dispensed yet" description="Medicines given to patients appear here.">
+                    @can('create-dispensing')
+                    <x-ui.button size="sm" icon="plus-lg" :href="route('dispensing.create')">Dispense medicine</x-ui.button>
+                    @endcan
+                </x-ui.empty-state>
+            @endif
+        </x-slot:empty>
+    </x-ui.table>
+</x-ui.card>
 @endsection

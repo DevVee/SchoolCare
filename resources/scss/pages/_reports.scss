@@ -1,0 +1,50 @@
+// =============================================================================
+// Reports (resources/views/reports/*): period picker in the page header, report
+// list icons, and print rules (charts print with their data tables, no controls).
+// =============================================================================
+
+.report-period {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin: 0;
+    .form-control, .form-select { width: auto; min-width: 0; }
+    .report-period-sep { font-size: .875rem; color: var(--c-muted); }
+    @include media-breakpoint-down(sm) {
+        width: 100%;
+        .form-control, .form-select { flex: 1 1 8rem; }
+    }
+}
+
+
+// Two numbers side by side inside a report card (e.g. medicines given during visits)
+.report-figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    .report-figure-value {
+        font-family: $font-display;
+        font-size: 1.375rem;
+        font-weight: 700;
+        color: var(--c-ink);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+    }
+    .report-figure-label { font-size: .8125rem; color: var(--c-ink-2); }
+}
+
+@media print {
+    .page-header .page-actions,
+    .page-header nav[aria-label="Breadcrumb"],
+    .c-chart-toggle,
+    .card-actions { display: none !important; }
+    .page-header { margin-bottom: .75rem; }
+    .stat-strip, .stat-tile, .card { break-inside: avoid; }
+    .card { border-color: #CBD5E1 !important; }
+    // Charts print together with their data table.
+    .c-chart .c-chart-canvas { display: block !important; }
+    .c-chart .c-chart-table:not(.visually-hidden) { display: block !important; margin-top: .5rem; }
+    .table-shell { overflow: visible !important; }
+    .cell-truncate { max-width: none !important; white-space: normal; }
+}

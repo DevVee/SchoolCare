@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Consultation;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateConsultationRequest extends FormRequest
 {
@@ -14,9 +15,12 @@ class UpdateConsultationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id'      => ['required', 'integer', 'exists:patients,id'],
-            'appointment_id'  => ['nullable', 'integer', 'exists:appointments,id'],
-            'visit_date'      => ['required', 'date'],
+            // The patient is locked after creation (see consultations/edit).
+            'patient_id'      => ['required', 'integer', Rule::in([(int) $this->route('consultation')?->patient_id])],
+            'appointment_id'  => ['nullable', 'integer', Rule::exists('appointments', 'id')
+                ->where('patient_id', (int) $this->route('consultation')?->patient_id)
+                ->whereNull('deleted_at')],
+            'visit_date'      => ['required', 'date', 'before_or_equal:today'],
             'visit_time'      => ['nullable', 'date_format:H:i'],
             'chief_complaint' => ['required', 'string', 'max:1000'],
             'assessment'      => ['nullable', 'string', 'max:2000'],

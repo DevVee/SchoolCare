@@ -21,6 +21,7 @@ class StockInRequest extends FormRequest
             // after:today ensures the expiry date is in the future.
             'expiration_date' => ['nullable', 'date', 'after:today'],
             'supplier'        => ['nullable', 'string', 'max:200'],
+            'unit_cost'       => ['nullable', 'numeric', 'min:0', 'max:9999999'],
             'notes'           => ['nullable', 'string', 'max:500'],
         ];
     }
@@ -38,6 +39,7 @@ class StockInRequest extends FormRequest
             'medicine_id'     => 'medicine',
             'expiration_date' => 'expiration date',
             'batch_number'    => 'batch / lot number',
+            'unit_cost'       => 'cost per unit',
         ];
     }
 }

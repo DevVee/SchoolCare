@@ -16,6 +16,7 @@ class StockOutRequest extends FormRequest
         return [
             'medicine_id' => ['required', 'integer', 'exists:medicines,id'],
             'quantity'    => ['required', 'integer', 'min:1'],
+            'batch_id'    => ['nullable', 'integer', 'exists:medicine_batches,id'],
             'notes'       => ['required', 'string', 'max:500'],
         ];
     }
@@ -24,6 +25,7 @@ class StockOutRequest extends FormRequest
     {
         return [
             'medicine_id' => 'medicine',
+            'batch_id'    => 'batch',
         ];
     }
 }

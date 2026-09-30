@@ -2,58 +2,32 @@
 
 namespace App\Models;
 
+use App\Services\SettingsService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 
+/**
+ * Settings row. Reading and writing should go through settings() /
+ * SettingsService; the static helpers below are kept as thin wrappers for
+ * backwards compatibility.
+ */
 class Setting extends Model
 {
     protected $fillable = ['key', 'value', 'type', 'group', 'description'];
 
-    private const CACHE_KEY = 'sscms_settings_all';
-    private const CACHE_TTL = 600; // 10 minutes
-
-    // ─── Cache Helpers ────────────────────────────────────────────────────────
-
-    /** Load all settings into a keyed collection, cached. */
-    private static function all_cached(): \Illuminate\Support\Collection
-    {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            return static::all()->keyBy('key');
-        });
-    }
-
-    /** Bust the settings cache — called on every write. */
+    /** Bust the settings cache. */
     public static function bustCache(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        app(SettingsService::class)->flush();
     }
-
-    // ─── Static API ───────────────────────────────────────────────────────────
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = static::all_cached()->get($key);
-
-        if (! $setting) {
-            return $default;
-        }
-
-        return match ($setting->type) {
-            'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
-            'integer' => (int) $setting->value,
-            'json'    => json_decode($setting->value, true),
-            default   => $setting->value,
-        };
+        return app(SettingsService::class)->get($key, $default);
     }
 
     public static function set(string $key, mixed $value): void
     {
-        static::updateOrCreate(
-            ['key' => $key],
-            ['value' => is_array($value) ? json_encode($value) : (string) $value]
-        );
-
-        static::bustCache();
+        app(SettingsService::class)->set($key, $value);
     }
 
     public static function group(string $group): \Illuminate\Database\Eloquent\Collection

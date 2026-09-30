@@ -1,0 +1,98 @@
+// =============================================================================
+// Dashboard hero (x-ui.hero). The ONLY gradient allowed (ui_principles.md
+// section 10): a subtle same-hue diagonal derived from the runtime brand colour,
+// plus one soft white circle at the right edge. 12px radius per the reference
+// kept at 10px. Stacks on phones.
+// =============================================================================
+
+.c-hero {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem 2rem;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+    border-radius: $radius-lg;
+    color: #fff;
+    background-color: var(--brand-600);
+    background-image: linear-gradient(
+        120deg,
+        color-mix(in srgb, var(--brand-600) 82%, #000) 0%,
+        var(--brand-600) 55%,
+        color-mix(in srgb, var(--brand-600) 78%, #fff) 100%
+    );
+
+    // One large soft circle at the right edge (white ~6%)
+    &::after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        width: 22rem;
+        height: 22rem;
+        right: -6rem;
+        top: 50%;
+        transform: translateY(-50%);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, .06);
+        pointer-events: none;
+    }
+
+    .c-hero-text { min-width: 0; flex: 1 1 22rem; }
+    .c-hero-clock {
+        margin: 0 0 .375rem;
+        font-family: $font-ui;
+        font-size: .875rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, .82);
+        font-variant-numeric: tabular-nums;
+    }
+    .c-hero-title {
+        margin: 0;
+        font-family: $font-display;
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: -.02em;
+        line-height: 1.2;
+        color: #fff;
+    }
+    .c-hero-subtitle { margin: .375rem 0 0; font-size: .9375rem; color: rgba(255, 255, 255, .88); }
+    .c-hero-actions { display: flex; flex-wrap: wrap; gap: .625rem; flex-shrink: 0; }
+
+    @include media-breakpoint-down(sm) {
+        padding: 1.25rem;
+        .c-hero-title { font-size: 1.375rem; }
+        .c-hero-actions { width: 100%; > .btn { flex: 1 1 auto; } }
+    }
+    @media (prefers-contrast: more) { background-image: none; &::after { display: none; } }
+}
+
+// Hero buttons (x-ui.button variant="hero" / "hero-outline")
+.btn-hero {
+    --bs-btn-color: var(--brand-700);
+    --bs-btn-bg: #fff;
+    --bs-btn-border-color: #fff;
+    --bs-btn-hover-color: var(--brand-800);
+    --bs-btn-hover-bg: var(--brand-50);
+    --bs-btn-hover-border-color: var(--brand-50);
+    --bs-btn-active-color: var(--brand-800);
+    --bs-btn-active-bg: var(--brand-100);
+    --bs-btn-active-border-color: var(--brand-100);
+    --bs-btn-focus-shadow-rgb: 255, 255, 255;
+}
+.btn-hero-outline {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: rgba(255, 255, 255, .4);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: rgba(255, 255, 255, .12);
+    --bs-btn-hover-border-color: rgba(255, 255, 255, .6);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: rgba(255, 255, 255, .2);
+    --bs-btn-active-border-color: rgba(255, 255, 255, .7);
+    --bs-btn-focus-shadow-rgb: 255, 255, 255;
+}
+.c-hero .btn:focus-visible { box-shadow: 0 0 0 3px rgba(255, 255, 255, .55); }

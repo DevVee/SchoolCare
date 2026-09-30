@@ -1,0 +1,175 @@
+// =============================================================================
+// Stat cards
+//   .stat-tile (x-ui.stat-card): label + tinted icon square, big Figtree value,
+//   delta line. White surface, 1px border; links press to .97.
+//   .stat-card (legacy dashboard markup): kept, flattened (solid icon squares,
+//   no glow, no lift). Removed when the dashboard is migrated.
+// =============================================================================
+
+.stat-tile {
+    --tile: var(--brand-600);
+    --tile-rgb: var(--brand-rgb);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0;
+    padding: 1.25rem;
+    border-radius: $radius-lg;
+    border: 1px solid #E5E9F0;
+    background: var(--c-surface);
+    box-shadow: var(--c-shadow-xs);
+    text-decoration: none;
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
+
+    &:is(a) {
+        &:hover { border-color: var(--c-border-strong); box-shadow: var(--c-shadow-elevated); color: inherit; text-decoration: none; }
+        &:active { transform: scale($press-scale); }
+    }
+
+    .stat-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .75rem;
+    }
+    .stat-label {
+        font-family: $font-ui;
+        font-size: .75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: $gray-500;
+        line-height: 1.35;
+        padding-top: .125rem;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .stat-icon {
+        width: 2.75rem;
+        height: 2.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-shrink: 0;
+        font-size: 1.5rem;
+        color: var(--tile);
+    }
+    .stat-value {
+        font-family: $font-display;
+        font-size: 1.875rem;
+        font-weight: 700;
+        letter-spacing: -.02em;
+        line-height: 1.1;
+        color: var(--tile);
+        font-variant-numeric: tabular-nums;
+        margin-top: -.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .stat-meta {
+        margin-top: auto;
+        padding-top: .625rem;
+        font-size: .8125rem;
+        color: $gray-600;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: .25rem .75rem;
+        line-height: 1.4;
+    }
+    // Meta markers: <span class="stat-mark mark-up">+3</span>, <span class="stat-dot tone-amber"></span>
+    .stat-mark { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .mark-up   { color: var(--brand-700); }
+    .mark-down { color: tone("danger", text); }
+    .mark-warn { color: var(--brand-700); }
+    .stat-dot  { display: inline-block; width: .5rem; height: .5rem; border-radius: 50%; background: currentColor; margin-right: .3125rem; vertical-align: .0625rem; }
+    .stat-meta-item { display: inline-flex; align-items: center; gap: .25rem; font-weight: 600; color: $gray-700; }
+    // Back-compat (delta/sub props)
+    .stat-delta { display: inline-flex; align-items: center; gap: .125rem; font-weight: 700; font-variant-numeric: tabular-nums;
+        &.trend-up { color: var(--brand-700); } &.trend-down { color: tone("danger", text); } &.trend-warn { color: var(--brand-700); } &.trend-flat { color: var(--c-muted); } }
+}
+@each $key, $c in $modules {
+    .stat-tile.tone-#{$key} { --tile: var(--m-#{$key}); --tile-rgb: var(--m-#{$key}-rgb); }
+}
+@each $name, $t in $tones {
+    .stat-tile.tone-#{$name} { --tile: var(--c-#{$name}-600); --tile-rgb: var(--c-#{$name}-rgb); }
+}
+// Neutral values read better dark
+.stat-tile.tone-neutral, .stat-tile.tone-slate, .stat-tile.tone-admin { .stat-value { color: var(--c-ink); } }
+
+// Responsive equal-height row (x-ui.stat-cards / x-ui.stat-strip)
+.stat-cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    @media (min-width: 480px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @include media-breakpoint-up(lg) { grid-template-columns: repeat(var(--stat-cols-lg, 4), minmax(0, 1fr)); }
+    @include media-breakpoint-up(xl) { grid-template-columns: repeat(var(--stat-cols, 4), minmax(0, 1fr)); }
+    > * { min-width: 0; }
+}
+
+// -- Legacy dashboard stat cards -----------------------------------------------------
+.stat-card {
+    background: var(--c-surface);
+    border-radius: $border-radius-lg;
+    border: 1px solid var(--c-border);
+    min-height: 118px;
+    transition: border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
+    text-decoration: none;
+    color: inherit;
+
+    &:hover { border-color: var(--c-border-strong); box-shadow: var(--c-shadow-elevated); color: inherit; }
+    &:is(a):active { transform: scale($press-scale); }
+
+    .card-body {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem;
+        height: 100%;
+    }
+
+    // One colour theme: every stat icon is a plain brand-blue glyph, no background
+    .stat-icon {
+        width: 48px; height: 48px; min-width: 48px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; flex-shrink: 0;
+        color: var(--brand-600);
+    }
+
+    .stat-content {
+        flex: 1; min-width: 0;
+        display: flex; flex-direction: column; justify-content: center;
+
+        .stat-label {
+            font-family: $font-ui;
+            font-size: .875rem; font-weight: 600;
+            color: var(--c-ink-2);
+            margin-bottom: .125rem;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .stat-value {
+            font-family: $font-display;
+            font-size: 1.875rem; font-weight: 700;
+            line-height: 1.15; color: var(--c-ink);
+            letter-spacing: -.02em;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .stat-trend {
+            font-size: .8125rem; font-weight: 500;
+            color: var(--c-muted); margin-top: .125rem;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            display: flex; align-items: center; gap: .3rem;
+
+            &.trend-up   { color: var(--brand-700); }
+            &.trend-down { color: tone("danger", 700); }
+            &.trend-warn { color: var(--brand-700); }
+        }
+    }
+}

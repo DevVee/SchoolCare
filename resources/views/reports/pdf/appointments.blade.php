@@ -1,41 +1,40 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-    body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1a1a2e; margin: 0; padding: 24px; }
-    h1   { font-size: 18px; margin: 0 0 4px; color: #0a3d62; }
-    p    { margin: 0 0 16px; color: #555; font-size: 10px; }
-    .header { border-bottom: 2px solid #0a3d62; padding-bottom: 8px; margin-bottom: 16px; }
-    .meta   { font-size: 10px; color: #777; text-align: right; margin-top: -36px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th    { background: #0a3d62; color: #fff; padding: 6px 8px; text-align: left; font-size: 10px; }
-    td    { padding: 5px 8px; border-bottom: 1px solid #e5e5e5; }
-    tr:nth-child(even) td { background: #f7f9fc; }
-</style>
-</head>
-<body>
-<div class="header">
-    <h1>Clinovia — Appointments Report</h1>
-    <p>{{ \Carbon\Carbon::parse($from)->format('M d, Y') }} — {{ \Carbon\Carbon::parse($to)->format('M d, Y') }}</p>
-</div>
-<div class="meta">Generated: {{ now()->format('M d, Y h:i A') }}</div>
-<p>Total: <strong>{{ $appointments->count() }}</strong></p>
-<table>
+@extends('reports.pdf._layout')
+
+@use('App\Support\DisplayFormat')
+
+@php
+    $reportTitle  = 'Appointments report';
+    $reportPeriod = DisplayFormat::date($from).' to '.DisplayFormat::date($to);
+    $statusLabels = \App\Models\Appointment::statusLabels();
+@endphp
+
+@section('content')
+<table class="summary">
+    <tr>
+        @foreach($statusLabels as $status => $label)
+        <td><div class="n">{{ number_format($byStatus[$status] ?? 0) }}</div><div class="l">{{ $label }}</div></td>
+        @endforeach
+        <td><div class="n">{{ number_format($appointments->count()) }}</div><div class="l">Total</div></td>
+    </tr>
+</table>
+
+<h2>Appointment list</h2>
+<table class="data">
     <thead>
         <tr><th>Date</th><th>Time</th><th>Patient</th><th>Purpose</th><th>Status</th></tr>
     </thead>
     <tbody>
-        @foreach($appointments as $a)
+        @forelse($appointments as $a)
         <tr>
-            <td>{{ $a->appointment_date->format('M d, Y') }}</td>
-            <td>{{ $a->appointment_time ? \Carbon\Carbon::parse($a->appointment_time)->format('h:i A') : '—' }}</td>
-            <td>{{ $a->patient->full_name ?? '—' }}</td>
-            <td>{{ $a->purpose }}</td>
-            <td>{{ ucfirst(str_replace('_', ' ', $a->status)) }}</td>
+            <td class="nowrap">{{ DisplayFormat::date($a->appointment_date, '-') }}</td>
+            <td class="nowrap">{{ DisplayFormat::time($a->appointment_time, '-') }}</td>
+            <td>{{ $a->patient?->full_name ?? $a->requester_name ?? 'Unknown patient' }}{{ $a->patient?->trashed() ? ' (archived)' : '' }}</td>
+            <td>{{ $a->purpose ?: '-' }}</td>
+            <td>{{ $statusLabels[$a->status] ?? ucfirst(str_replace('_', ' ', $a->status)) }}</td>
         </tr>
-        @endforeach
+        @empty
+        <tr><td colspan="5" class="empty">No appointments in this period.</td></tr>
+        @endforelse
     </tbody>
 </table>
-</body>
-</html>
+@endsection

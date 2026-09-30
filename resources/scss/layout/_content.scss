@@ -1,0 +1,66 @@
+// ═════════════════════════════════════════════════════════════════════════════
+// App column + content (layouts/app.blade.php). The document scrolls; the
+// topbar is sticky. `html.sidebar-collapsed` shrinks the rail to 72px.
+//
+//   <body class="app">
+//     <aside class="app-sidebar ...">...</aside>
+//     <div class="app-column">
+//       <header class="app-topbar">...</header>
+//       <main class="app-main" id="main"><div class="app-content">...</div></main>
+//     </div>
+//   </body>
+// No overflow (hidden/auto/clip) on .app-column, .app-main or .app-content:
+// they are ancestors of page content, and any overflow there breaks
+// position: sticky (settings section nav, save bars). The document scrolls.
+// ═════════════════════════════════════════════════════════════════════════════
+
+.app-column {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    @include media-breakpoint-up(lg) {
+        margin-left: var(--c-sidebar-w);
+        transition: margin-left .25s var(--c-ease);
+    }
+}
+@include media-breakpoint-up(lg) {
+    .sidebar-collapsed .app-column { margin-left: var(--c-sidebar-cw); }
+}
+.app-main { flex: 1; min-width: 0; &:focus { outline: 0; } }
+.app-content {
+    max-width: var(--c-content-max);
+    margin: 0 auto;
+    padding: 1rem;
+    animation: c-page-enter .2s ease-out;
+    @include media-breakpoint-up(sm) { padding: 1.5rem; }
+}
+.app-footer {
+    padding: .75rem 1.5rem 1.25rem;
+    font-size: .75rem;
+    color: var(--c-muted);
+    text-align: center;
+}
+
+// Skip link
+.skip-link {
+    position: absolute;
+    left: .75rem;
+    top: -3rem;
+    z-index: 2000;
+    padding: .5rem .875rem;
+    border-radius: $radius-sm;
+    background: var(--c-ink);
+    color: #fff;
+    font-weight: 600;
+    &:focus { top: .75rem; color: #fff; }
+}
+
+// Print: only the content
+@media print {
+    .app-sidebar, .app-topbar, .app-footer, .c-toasts, .skip-link { display: none !important; }
+    .app-column { margin: 0 !important; }
+    .app-content { max-width: none; padding: 0; animation: none; }
+    body { background: #fff; }
+    .card { box-shadow: none !important; }
+}

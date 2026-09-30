@@ -5,68 +5,41 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AdminUserSeeder extends Seeder
 {
+    /**
+     * Bootstrap the first administrator account.
+     *
+     * Idempotent: does nothing once any administrator exists, so it is safe to
+     * run on every boot. Credentials come from ADMIN_EMAIL / ADMIN_PASSWORD.
+     * When ADMIN_PASSWORD is not set, a random password is generated and
+     * printed once to the console/deploy log.
+     */
     public function run(): void
     {
-        // SECURITY FIX: Default credentials are now driven by .env so they are
-        // never committed to version control in plaintext.
-        // Set ADMIN_EMAIL / ADMIN_PASSWORD / NURSE_EMAIL / etc. before seeding.
-        // Falls back to safe placeholder values that MUST be changed before go-live.
+        if (User::role('administrator')->exists()) {
+            return;
+        }
 
-        // ── Administrator ─────────────────────────────────────────────────────
+        $email    = env('ADMIN_EMAIL') ?: 'admin@clinovia.local';
+        $password = env('ADMIN_PASSWORD') ?: Str::password(16, symbols: false);
+
         $admin = User::firstOrCreate(
-            ['email' => env('ADMIN_EMAIL', 'admin@clinovia.app')],
+            ['email' => $email],
             [
-                'name'               => env('ADMIN_NAME', 'System Administrator'),
-                'password'           => Hash::make(env('ADMIN_PASSWORD', 'ChangeMe@' . now()->year . '!')),
-                'is_active'          => true,
-                'email_verified_at'  => now(),
+                'name'              => env('ADMIN_NAME', 'System Administrator'),
+                'password'          => Hash::make($password),
+                'is_active'         => true,
+                'email_verified_at' => now(),
             ]
         );
         $admin->syncRoles('administrator');
 
-        // ── Demo Nurse ────────────────────────────────────────────────────────
-        $nurse = User::firstOrCreate(
-            ['email' => env('NURSE_EMAIL', 'nurse@clinovia.app')],
-            [
-                'name'               => env('NURSE_NAME', 'Demo Nurse'),
-                'password'           => Hash::make(env('NURSE_PASSWORD', 'ChangeMe@' . now()->year . '!')),
-                'is_active'          => true,
-                'email_verified_at'  => now(),
-            ]
-        );
-        $nurse->syncRoles('nurse');
-
-        // ── Demo Staff ────────────────────────────────────────────────────────
-        $staff = User::firstOrCreate(
-            ['email' => env('STAFF_EMAIL', 'staff@clinovia.app')],
-            [
-                'name'               => env('STAFF_NAME', 'Demo Staff'),
-                'password'           => Hash::make(env('STAFF_PASSWORD', 'ChangeMe@' . now()->year . '!')),
-                'is_active'          => true,
-                'email_verified_at'  => now(),
-            ]
-        );
-        $staff->syncRoles('staff');
-
-        // ── Portfolio Viewer (read-only demo account) ─────────────────────────
-        $viewer = User::firstOrCreate(
-            ['email' => env('VIEWER_EMAIL', 'viewer@clinovia.app')],
-            [
-                'name'               => env('VIEWER_NAME', 'Portfolio Viewer'),
-                'password'           => Hash::make(env('VIEWER_PASSWORD', 'Viewer@2026!')),
-                'is_active'          => true,
-                'email_verified_at'  => now(),
-            ]
-        );
-        $viewer->syncRoles('viewer');
-
-        $this->command->info('Seed users created. ⚠️  Change passwords immediately for production!');
-        $this->command->warn('  Admin  : ' . env('ADMIN_EMAIL',  'admin@clinovia.app'));
-        $this->command->warn('  Nurse  : ' . env('NURSE_EMAIL',  'nurse@clinovia.app'));
-        $this->command->warn('  Staff  : ' . env('STAFF_EMAIL',  'staff@clinovia.app'));
-        $this->command->warn('  Viewer : ' . env('VIEWER_EMAIL', 'viewer@clinovia.app'));
+        $this->command?->info("Administrator account created: {$email}");
+        if (! env('ADMIN_PASSWORD')) {
+            $this->command?->warn("Generated password (shown once — change it after first login): {$password}");
+        }
     }
 }

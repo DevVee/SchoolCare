@@ -1,0 +1,218 @@
+// =============================================================================
+// Filter toolbar (x-ui.filters): search + filter toggle + collapsible panel +
+// active-filter chips + reset link. Also filter pills and a generic toolbar row.
+// =============================================================================
+
+// Search + 1-2 inline primary filters; everything else lives in the "Filters"
+// dropdown panel (owner feedback). No overflow:hidden so the panel is not clipped.
+.filter-bar { margin-bottom: 1rem; }
+.filter-bar-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    padding: .625rem .75rem;
+    // Desktop: one row. Search grows; inline filters keep their width; end group right-aligned.
+    > .search-input { flex: 1 1 14rem; min-width: 12rem; }
+    @include media-breakpoint-down(md) {
+        > .search-input { flex: 1 1 100%; min-width: 0; }
+    }
+}
+.filter-inline {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: .5rem;
+    flex: 0 0 auto;
+    min-width: 0;
+    > .form-select, > .form-control { width: 10rem; flex: 0 0 10rem; min-width: 0; }
+    > .c-field { flex: 0 0 auto; flex-direction: row; align-items: center; gap: .5rem; > .form-label { margin: 0; white-space: nowrap; } }
+    > span, > .text-muted { white-space: nowrap; }
+    @include media-breakpoint-down(md) {
+        flex: 1 1 auto;
+        > .form-select, > .form-control { flex: 1 1 0; width: auto; }
+        > .date-range-field { flex: 1 1 auto; min-width: 0; }
+    }
+}
+.filter-bar-end {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-left: auto;
+    flex: 0 0 auto;
+}
+
+// Date range: "From [date] to [date]" (x-ui.date-range)
+.date-range-field { min-width: 0; .invalid-feedback { margin-top: .25rem; } }
+.date-range {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: .5rem;
+    min-width: 0;
+    .date-range-text { font-size: .875rem; color: var(--c-ink-2); white-space: nowrap; }
+    > .form-control { width: 10rem; flex: 0 0 10rem; min-width: 0; }
+    @include media-breakpoint-down(md) {
+        width: 100%;
+        > .form-control { flex: 1 1 0; width: auto; }
+        .date-range-from-text { display: none; }
+    }
+}
+.filter-panel {
+    width: 22rem;
+    .filter-panel-body {
+        display: flex;
+        flex-direction: column;
+        gap: .875rem;
+        padding: 1rem;
+        max-height: min(60vh, 28rem);
+        overflow-y: auto;
+    }
+    .panel-footer { display: flex; align-items: center; justify-content: space-between; gap: .5rem; background: $gray-50; }
+}
+.filter-label {
+    display: block;
+    font-family: $font-ui;
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--c-ink-2);
+    margin-bottom: .25rem;
+}
+.filter-count {
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 .375rem;
+    border-radius: $radius-xs;
+    background: var(--brand-100);
+    color: var(--brand-700);
+    font-size: .75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.filter-bar .btn.is-active {
+    --bs-btn-color: var(--brand-700);
+    --bs-btn-bg: var(--brand-50);
+    --bs-btn-border-color: var(--brand-200);
+    --bs-btn-hover-color: var(--brand-700);
+    --bs-btn-hover-bg: var(--brand-100);
+    --bs-btn-hover-border-color: var(--brand-300);
+}
+.filter-stats {
+    display: none;
+    align-items: center;
+    gap: .75rem;
+    padding-left: .75rem;
+    border-left: 1px solid var(--c-border);
+    font-size: .8125rem;
+    color: var(--c-muted);
+    @include media-breakpoint-up(md) { display: flex; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: .375rem; }
+}
+
+// Active filter chips row
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .375rem;
+    padding: .5rem .75rem .625rem;
+    border-top: 1px solid var(--c-border);
+    font-size: .8125rem;
+    .filter-chips-label { color: var(--c-muted); font-weight: 600; margin-right: .125rem; }
+}
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    min-height: 1.75rem;
+    padding: .125rem .25rem .125rem .5rem;
+    border-radius: $radius-xs;
+    background: var(--brand-50);
+    border: 1px solid var(--brand-200);
+    color: var(--brand-700);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color $dur-fast ease-out, border-color $dur-fast ease-out;
+    .filter-chip-key { font-weight: 500; color: var(--c-ink-2); }
+    .filter-chip-x {
+        width: 1.25rem;
+        height: 1.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .625rem;
+        border-radius: 3px;
+        background: rgba(var(--brand-rgb), .12);
+    }
+    &:hover { color: var(--brand-800); background: var(--brand-100); border-color: var(--brand-300); text-decoration: none; }
+    &:active { transform: scale($press-scale); }
+}
+.filter-clear {
+    font-size: .8125rem;
+    font-weight: 600;
+    color: tone("danger", 700);
+    text-decoration: none;
+    white-space: nowrap;
+    &:hover { color: tone("danger", 700); text-decoration: underline; }
+}
+
+// Filter pills (status quick filters)
+.filter-pills {
+    display: flex;
+    gap: .375rem;
+    overflow-x: auto;
+    max-width: 100%;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+}
+.filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    min-height: 2.25rem;
+    padding: .25rem .875rem;
+    border-radius: $radius-sm;
+    white-space: nowrap;
+    font-family: $font-ui;
+    font-size: .875rem;
+    font-weight: 500;
+    color: var(--c-ink-2);
+    background: #fff;
+    border: 1px solid var(--c-border-strong);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color $dur-fast ease-out, border-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
+    &:hover { border-color: var(--brand-300); color: var(--brand-700); background: var(--brand-50); text-decoration: none; }
+    &:active { transform: scale($press-scale); }
+    &.active { background: var(--brand-600); color: var(--brand-contrast); border-color: var(--brand-600); font-weight: 600; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .count {
+        font-size: .75rem;
+        font-weight: 700;
+        padding: 0 .375rem;
+        border-radius: $radius-xs;
+        background: var(--c-surface-2);
+        color: var(--c-ink-2);
+        line-height: 1.5;
+        font-variant-numeric: tabular-nums;
+    }
+    &.active .count { background: rgba(255, 255, 255, .22); color: var(--brand-contrast); }
+}
+
+// Generic page toolbar row (buttons + inputs above content)
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1rem;
+    .toolbar-spacer { flex: 1 1 auto; }
+}
+
+@media (pointer: coarse), (max-width: 767.98px) {
+    .filter-pill, .filter-chip { min-height: 2.75rem; }
+}

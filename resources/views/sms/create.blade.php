@@ -1,114 +1,90 @@
 @extends('layouts.app')
 
-@section('title', 'Send SMS')
+@section('title', 'Send a text')
+
+@php
+    $connected = filled(config('semaphore.api_key'));
+    $smsOn = (bool) settings('sms_enabled');
+    $sender = trim((string) settings('sms_sender_name', '')) ?: (string) config('semaphore.sender_name', '');
+@endphp
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">Send Manual SMS</h4>
-        <p class="text-muted small mb-0">Send a custom message to a patient or contact</p>
-    </div>
-    <a href="{{ route('sms.index') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i> Back to Logs
-    </a>
-</div>
+<div class="vstack gap-3">
 
-<div class="row g-4">
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
+    <x-ui.page-header title="Send a text" description="Send a one-off text message to a patient, parent or staff member."
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'SMS log' => route('sms.index'), 'Send a text' => null]" />
 
-                {{-- API Key Notice --}}
-                @if(!config('semaphore.api_key'))
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    <strong>No API key configured.</strong>
-                    Add <code>SEMAPHORE_API_KEY</code> to your <code>.env</code> file to enable SMS sending.
-                </div>
-                @endif
+    @unless ($connected)
+        <x-ui.alert variant="warning" title="Text messages cannot be sent yet">
+            The SMS provider is not connected. Ask the person who manages your server to connect it.
+        </x-ui.alert>
+    @endunless
 
-                @if($errors->any())
-                <div class="alert alert-danger">
-                    <ul class="mb-0 ps-3">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-                </div>
-                @endif
+    @unless ($smsOn)
+        <x-ui.alert variant="warning" title="SMS is off">
+            The message will not be sent. It will be listed in the SMS log as Skipped until an administrator turns SMS on.
+            @can('manage-settings')
+                <x-slot:actions><x-ui.button size="sm" variant="secondary" :href="route('admin.settings.edit', 'sms')">Open SMS settings</x-ui.button></x-slot:actions>
+            @endcan
+        </x-ui.alert>
+    @endunless
 
-                <form method="POST" action="{{ route('sms.send') }}">
-                    @csrf
+    @if ($errors->any())
+        <x-ui.alert variant="danger" title="Please fix the errors below">Check the highlighted fields and try again.</x-ui.alert>
+    @endif
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Recipient Phone Number <span class="text-danger">*</span></label>
-                        <input type="tel" name="recipient_number" value="{{ old('recipient_number') }}"
-                            class="form-control @error('recipient_number') is-invalid @enderror"
-                            placeholder="09XXXXXXXXX" maxlength="11" required>
-                        <div class="form-text">11-digit Philippine mobile number (e.g. 09171234567)</div>
-                        @error('recipient_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Recipient Name <span class="text-muted fw-normal">(Optional)</span></label>
-                        <input type="text" name="recipient_name" value="{{ old('recipient_name') }}"
-                            class="form-control @error('recipient_name') is-invalid @enderror"
-                            placeholder="e.g. Juan dela Cruz" maxlength="150">
-                        @error('recipient_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Message <span class="text-danger">*</span></label>
-                        <textarea name="message" id="msgInput" rows="4" maxlength="160"
-                            class="form-control @error('message') is-invalid @enderror"
-                            required placeholder="Type your message here…">{{ old('message') }}</textarea>
-                        <div class="d-flex justify-content-between mt-1">
-                            @error('message')
-                            <div class="text-danger small">{{ $message }}</div>
-                            @enderror
-                            <small class="text-muted ms-auto">
-                                <span id="charCount">0</span>/160 characters
-                            </small>
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <form method="POST" action="{{ route('sms.send') }}">
+                @csrf
+                <x-ui.card>
+                    <div class="row g-3">
+                        <x-ui.input wrapper-class="col-12 col-md-6" name="recipient_number" type="tel" label="Mobile number" required
+                            placeholder="09171234567" maxlength="16" inputmode="tel" autocomplete="off"
+                            help="A Philippine mobile number, for example 09171234567 or +639171234567." />
+                        <x-ui.input wrapper-class="col-12 col-md-6" name="recipient_name" label="Recipient name" optional
+                            placeholder="Juan Dela Cruz" maxlength="150" autocomplete="off" help="Helps you find the message in the SMS log." />
+                        <div class="col-12">
+                            <x-ui.textarea name="message" id="msgInput" label="Message" rows="4" maxlength="160" required
+                                placeholder="Type your message" />
+                            <p class="sms-counter mt-1 mb-0" id="charCount" aria-live="polite"></p>
                         </div>
                     </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a href="{{ route('sms.index') }}" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary px-4"
-                            @if(!config('semaphore.api_key')) disabled @endif>
-                            <i class="bi bi-send me-1"></i> Send SMS
-                        </button>
-                    </div>
-                </form>
-            </div>
+                    <x-slot:footer>
+                        <x-ui.button variant="secondary" :href="route('sms.index')">Cancel</x-ui.button>
+                        <x-ui.button type="submit" icon="send" :disabled="! $connected">Send text</x-ui.button>
+                    </x-slot:footer>
+                </x-ui.card>
+            </form>
         </div>
-    </div>
 
-    <div class="col-lg-4">
-        {{-- Sender info --}}
-        <div class="card border-0 shadow-sm">
-            <div class="card-header fw-semibold">
-                <i class="bi bi-info-circle me-1"></i> SMS Info
-            </div>
-            <div class="card-body">
-                <dl class="mb-0" style="font-size:.875rem;">
-                    <dt class="text-muted small">Sender Name</dt>
-                    <dd class="fw-semibold">{{ config('semaphore.sender_name', 'CLINOVIA') }}</dd>
-                    <dt class="text-muted small">Provider</dt>
-                    <dd class="fw-semibold">Semaphore.co</dd>
-                    <dt class="text-muted small">Max Length</dt>
-                    <dd class="fw-semibold">160 characters</dd>
-                    <dt class="text-muted small">Format</dt>
-                    <dd class="fw-semibold mb-0">11-digit PH number (09XXXXXXXXX)</dd>
-                </dl>
-            </div>
+        <div class="col-lg-4">
+            <x-ui.card title="Good to know">
+                <x-ui.description-list layout="stacked">
+                    <x-ui.description-item label="Sent as" empty="Not set">{{ $sender }}</x-ui.description-item>
+                    <x-ui.description-item label="Length">Up to 160 characters, which is 1 text message.</x-ui.description-item>
+                    <x-ui.description-item label="Cost">Each text message uses 1 SMS credit.</x-ui.description-item>
+                    <x-ui.description-item label="Numbers">Philippine mobile numbers only.</x-ui.description-item>
+                </x-ui.description-list>
+            </x-ui.card>
         </div>
     </div>
 </div>
+@endsection
 
 @push('scripts')
 <script>
-const msgInput  = document.getElementById('msgInput');
-const charCount = document.getElementById('charCount');
-function update() { charCount.textContent = msgInput.value.length; }
-msgInput.addEventListener('input', update);
-update();
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('msgInput');
+    var count = document.getElementById('charCount');
+    if (!input || !count) return;
+    function update() {
+        var len = input.value.length;
+        count.textContent = len + ' of 160 characters' + (len ? ', 1 text message' : '');
+        count.classList.toggle('is-warning', len > 150);
+    }
+    input.addEventListener('input', update);
+    update();
+});
 </script>
 @endpush
-@endsection

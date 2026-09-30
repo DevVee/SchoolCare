@@ -1,0 +1,185 @@
+// =============================================================================
+// CSS custom properties. Usable from page <style> blocks and JS.
+//   --brand-*        runtime-themable brand scale (x-ui.brand-style overrides)
+//   --c-*            design tokens (tones, surfaces, radii, shadows, motion)
+//   legacy aliases   keep old var() references in views resolving
+// =============================================================================
+
+:root {
+    // -- Brand scale: RUNTIME THEMABLE --------------------------------------------
+    // <x-ui.brand-style /> re-emits these from settings('brand_primary_color').
+    // Everything brand-coloured (incl. Bootstrap's --bs-primary*, links, focus
+    // rings) chains off them, so no rebuild is needed to rebrand.
+    --brand-50:  #{$brand-50};
+    --brand-100: #{$brand-100};
+    --brand-200: #{$brand-200};
+    --brand-300: #{$brand-300};
+    --brand-400: #{$brand-400};
+    --brand-500: #{$brand-500};
+    --brand-600: #{$brand-600};
+    --brand-700: #{$brand-700};
+    --brand-800: #{$brand-800};
+    --brand-900: #{$brand-900};
+    --brand-950: #{$brand-950};
+    --brand-rgb: #{red($brand-600)}, #{green($brand-600)}, #{blue($brand-600)};
+    --brand-700-rgb: #{red($brand-700)}, #{green($brand-700)}, #{blue($brand-700)};
+    --brand-contrast: #fff;   // text colour on --brand-600
+
+    // -- Bootstrap theme vars -> brand ---------------------------------------------
+    --bs-primary: var(--brand-600);
+    --bs-primary-rgb: var(--brand-rgb);
+    --bs-primary-text-emphasis: var(--brand-700);
+    --bs-primary-bg-subtle: var(--brand-100);
+    --bs-primary-border-subtle: var(--brand-200);
+    --bs-link-color: var(--brand-600);
+    --bs-link-color-rgb: var(--brand-rgb);
+    --bs-link-hover-color: var(--brand-700);
+    --bs-link-hover-color-rgb: var(--brand-700-rgb);
+    --bs-focus-ring-color: rgba(var(--brand-rgb), .25);
+
+    // One colour theme: Bootstrap success / info / warning follow the brand too
+    @each $name in ("success", "info", "warning") {
+        --bs-#{$name}: var(--brand-600);
+        --bs-#{$name}-rgb: var(--brand-rgb);
+        --bs-#{$name}-text-emphasis: var(--brand-700);
+        --bs-#{$name}-bg-subtle: var(--brand-100);
+        --bs-#{$name}-border-subtle: var(--brand-200);
+    }
+
+    // -- Surfaces & ink -------------------------------------------------------------
+    --c-canvas:     #{$body-bg};
+    --c-surface:    #FFFFFF;
+    --c-surface-2:  #{$gray-100};
+    --c-border:     #{$gray-200};
+    --c-border-strong: #{$gray-300};
+    --c-input-border:  #{$input-border-color};
+    --c-input-border-hover: #{$gray-400};
+    --c-ink:    #{$gray-900};
+    --c-ink-2:  #{$gray-600};
+    --c-muted:  #{$gray-500};
+    --c-faint:  #{$gray-400};   // icons / decoration only, never text
+
+    // -- Tones: --c-{tone}-{50|100|200|600|700|text|rgb}; brand-family tones
+    //    ($brand-tone-names: everything but danger and neutral) chain to --brand-*
+    @each $name, $t in $tones {
+        @if index($brand-tone-names, $name) {
+            --c-#{$name}-50:   var(--brand-50);
+            --c-#{$name}-100:  var(--brand-100);
+            --c-#{$name}-200:  var(--brand-200);
+            --c-#{$name}-600:  var(--brand-600);
+            --c-#{$name}-700:  var(--brand-700);
+            --c-#{$name}-text: var(--brand-700);
+            --c-#{$name}-rgb:  var(--brand-rgb);
+        } @else {
+            $c: map-get($t, 600);
+            --c-#{$name}-50:   #{map-get($t, 50)};
+            --c-#{$name}-100:  #{map-get($t, 100)};
+            --c-#{$name}-200:  #{map-get($t, 200)};
+            --c-#{$name}-600:  #{$c};
+            --c-#{$name}-700:  #{map-get($t, 700)};
+            --c-#{$name}-text: #{map-get($t, text)};
+            --c-#{$name}-rgb:  #{red($c)}, #{green($c)}, #{blue($c)};
+        }
+    }
+
+    // -- Brand shorthands ---------------------------------------------------------------
+    --c-brand:       var(--brand-600);
+    --c-brand-hover: var(--brand-700);
+    --c-online:      var(--brand-600);
+
+    // -- Radii (8 controls, 12 cards, 16 modals) ------------------------------------
+    --c-radius-sm: 6px;
+    --c-radius:    8px;
+    --c-radius-md: 12px;
+    --c-radius-lg: 16px;
+    --c-radius-full: 999px;
+
+    // -- Shadows (minimal) --------------------------------------------------------------
+    --c-shadow-xs:       0 1px 2px rgba(15, 23, 42, .05);
+    --c-shadow-card:     0 1px 2px rgba(15, 23, 42, .05);
+    --c-shadow-elevated: 0 1px 3px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
+    --c-shadow-lg:       0 10px 30px rgba(15, 23, 42, .10);
+    --c-shadow-modal:    0 20px 50px rgba(15, 23, 42, .18);
+    --c-shadow-dropdown: 0 10px 30px rgba(15, 23, 42, .12);
+    --c-glow:            0 0 0 3px rgba(var(--brand-rgb), .3);
+
+    // -- Spacing (4px base) ----------------------------------------------------------------
+    --c-space-1: .25rem;
+    --c-space-2: .5rem;
+    --c-space-3: .75rem;
+    --c-space-4: 1rem;
+    --c-space-5: 1.25rem;
+    --c-space-6: 1.5rem;
+    --c-space-8: 2rem;
+
+    // -- Typography ------------------------------------------------------------------------
+    --c-font-body:    #{$font-body};
+    --c-font-ui:      #{$font-ui};
+    --c-font-display: #{$font-display};
+
+    // -- Motion ----------------------------------------------------------------------------
+    --c-ease-out:  #{$ease-out};
+    --c-ease-in:   #{$ease-in};
+    --c-ease:      #{$ease};
+    --c-dur-press: #{$dur-press};
+    --c-dur-fast:  #{$dur-fast};
+    --c-dur-base:  #{$dur-base};
+    --c-dur-slow:  #{$dur-slow};
+    --c-press-scale: #{$press-scale};
+
+    // -- Layout ----------------------------------------------------------------------------
+    --c-sidebar-w:   #{$sidebar-width};
+    --c-sidebar-cw:  #{$sidebar-collapsed-width};
+    --c-topbar-h:    #{$topbar-height};
+    --topbar-h:      var(--c-topbar-h);                    // alias for page sticky offsets
+    --c-sticky-top:  calc(var(--c-topbar-h) + 1rem);      // sticky elements sit below the sticky topbar
+    --c-content-max: #{$content-max-width};
+
+    // -- Legacy aliases (old app.scss + page <style> blocks keep working) -------------
+    // The old --gradient-* tokens now resolve to SOLID colours (no gradients).
+    --primary:    var(--brand-600);
+    --secondary:  var(--brand-700);
+    --accent:     var(--c-online);
+    --bg:         var(--c-canvas);
+    --card-bg:    var(--c-surface);
+    --sidebar-bg: #ffffff;
+    --navbar-bg:  #ffffff;
+    --border:     var(--c-border);
+    --text:       var(--c-ink);
+    --text-muted: var(--c-muted);
+    --shadow-sm:  var(--c-shadow-card);
+    --shadow-md:  var(--c-shadow-elevated);
+    --shadow-glow: none;
+    --hover-shadow: var(--c-shadow-lg);
+    --tf: #{$dur-fast} ease-out;
+    --tm: #{$dur-slow} ease-out;
+
+    --gradient-primary: var(--brand-600);
+    --gradient-success: var(--c-success-600);
+    --gradient-danger:  var(--c-danger-600);
+    --gradient-info:    var(--c-info-600);
+    --gradient-warning: var(--c-warning-600);
+    --gradient-purple:  var(--brand-600);
+    --gradient-orange:  var(--c-orange-600);
+    --gradient-teal:    var(--c-teal-600);
+    --gradient-indigo:  var(--brand-700);
+    --gradient-slate:   var(--c-neutral-600);
+    --gradient-violet:  var(--brand-700);
+    --gradient-red:     var(--c-danger-600);
+
+    // Old shell dimension names, still read by page <style> blocks (e.g. the AI
+    // assistant height calc). They now describe the single 58px topbar.
+    --top-bar-height:  0px;
+    --header-height:   var(--c-topbar-h);
+    --sidebar-width:   #{$sidebar-width};
+    --sidebar-collapsed-width: #{$sidebar-collapsed-width};
+    --navbar-total: calc(var(--top-bar-height) + var(--header-height));
+
+    // Vars referenced by profile/edit.blade.php that were previously undefined
+    --surface:        var(--c-surface);
+    --radius-md:      var(--c-radius);
+    --radius-xl:      var(--c-radius-md);
+    --text-primary:   var(--c-ink);
+    --text-secondary: var(--c-ink-2);
+    --bg-tertiary:    var(--c-surface-2);
+}

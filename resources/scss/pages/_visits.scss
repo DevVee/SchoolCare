@@ -1,0 +1,132 @@
+// =============================================================================
+// Visit records pages (clinic logbook, logbook calendar, consultations,
+// dispensing). Only page-level pieces; components keep their own styles.
+// =============================================================================
+
+// Logbook heat shading follows the brand (one colour theme, runtime themable)
+
+// Previous / label / next header (logbook day header, calendar month header)
+.logbook-day {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    .logbook-day-label {
+        font-family: $font-ui;
+        font-weight: 600;
+        color: var(--c-ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 0 .25rem;
+    }
+}
+
+// -- Logbook calendar ----------------------------------------------------------
+// Shading by volume: level 1 to 4 relative to the busiest day of the month.
+@mixin visit-heat {
+    &.lvl-1 { background: rgba(var(--brand-rgb), .07); }
+    &.lvl-2 { background: rgba(var(--brand-rgb), .14); }
+    &.lvl-3 { background: rgba(var(--brand-rgb), .24); }
+    &.lvl-4 { background: rgba(var(--brand-rgb), .36); }
+}
+
+.visit-cal-legend {
+    align-items: center;
+    gap: .375rem;
+    font-size: .75rem;
+    color: var(--c-muted);
+}
+.visit-cal-swatch {
+    display: inline-block;
+    width: .875rem;
+    height: .875rem;
+    border-radius: $radius-xs;
+    border: 1px solid rgba(var(--brand-rgb), .25);
+    background: var(--c-surface);
+    flex-shrink: 0;
+    @include visit-heat;
+}
+
+.visit-cal-row {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.visit-cal-dow {
+    padding: .5rem .75rem;
+    font-family: $font-ui;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    border-bottom: 1px solid var(--c-border);
+}
+.visit-cal-day {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: .25rem;
+    min-height: 5.75rem;
+    padding: .5rem .625rem;
+    border-bottom: 1px solid var(--c-border);
+    border-left: 1px solid var(--c-border);
+    color: var(--c-ink);
+    text-decoration: none;
+    background: var(--c-surface);
+    transition: box-shadow $dur-fast ease-out;
+    &:first-child { border-left: 0; }
+    .visit-cal-row:last-child > & { border-bottom: 0; }
+    @include visit-heat;
+    &:hover { color: var(--c-ink); text-decoration: none; box-shadow: inset 0 0 0 1px rgba(var(--brand-rgb), .5); }
+    &:focus-visible { position: relative; z-index: 1; }
+
+    &.is-outside {
+        background: var(--c-canvas);
+        .visit-cal-num { color: var(--c-muted); font-weight: 400; }
+        .visit-cal-count { opacity: .75; }
+    }
+    &.is-today .visit-cal-num { background: var(--brand-600); color: #fff; }
+}
+.visit-cal-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 .25rem;
+    border-radius: 50%;
+    font-family: $font-ui;
+    font-size: .875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    align-self: flex-start;
+}
+.visit-cal-count {
+    font-size: .75rem;
+    color: var(--c-ink-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    strong { font-family: $font-ui; font-size: .9375rem; color: var(--brand-700); font-variant-numeric: tabular-nums; }
+}
+
+// Agenda list (phones)
+.visit-agenda {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    > li + li { border-top: 1px solid var(--c-border); }
+}
+.visit-agenda-row {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    min-height: 2.75rem;
+    padding: .5rem 1rem;
+    color: var(--c-ink);
+    text-decoration: none;
+    &:hover { background: var(--c-surface-2); color: var(--c-ink); text-decoration: none; }
+    &.is-today { background: var(--brand-50); }
+}

@@ -1,0 +1,55 @@
+// =============================================================================
+// Charts (x-ui.chart + resources/js/ui/charts.js): container, header, data
+// table toggle, and ApexCharts tooltip / legend restyled with our tokens.
+// =============================================================================
+
+.c-chart { position: relative; min-width: 0; }
+.c-chart-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .75rem;
+}
+.c-chart-title    { font-family: $font-ui; font-size: 1rem; font-weight: 700; letter-spacing: -.01em; color: var(--c-ink); margin: 0; }
+.c-chart-subtitle { font-size: .875rem; color: var(--c-muted); margin: .125rem 0 0; }
+.c-chart-toggle   { flex-shrink: 0; }
+.c-chart-canvas   { min-width: 0; }
+
+.c-chart-table:not(.visually-hidden) { display: none; }
+.c-chart.is-table {
+    .c-chart-canvas { display: none; }
+    .c-chart-table:not(.visually-hidden) {
+        display: block;
+        border: 1px solid var(--c-border);
+        border-radius: $radius-md;
+        overflow: hidden;
+        animation: c-fade-in $dur-fast ease-out;
+    }
+}
+
+// ApexCharts chrome
+.c-chart .apexcharts-canvas { font-family: $font-ui; }
+.c-chart .apexcharts-tooltip.apexcharts-theme-light {
+    background: #fff;
+    border: 1px solid var(--c-border);
+    border-radius: $radius-md;
+    box-shadow: var(--c-shadow-dropdown);
+    color: var(--c-ink);
+    .apexcharts-tooltip-title {
+        background: $gray-50;
+        border-bottom: 1px solid var(--c-border);
+        font-family: $font-ui !important;
+        font-weight: 600;
+        color: var(--c-ink);
+        padding: .375rem .75rem;
+        margin-bottom: .25rem;
+    }
+    .apexcharts-tooltip-series-group { padding: 0 .75rem; }
+    .apexcharts-tooltip-text-y-label { color: var(--c-ink-2); }
+    .apexcharts-tooltip-text-y-value { color: var(--c-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .apexcharts-tooltip-marker { border-radius: 2px; }
+}
+.c-chart .apexcharts-legend-text { color: var(--c-ink-2) !important; }
+.c-chart .apexcharts-legend-marker { border-radius: 2px !important; }
+.c-chart .apexcharts-datalabels-group text { font-variant-numeric: tabular-nums; }

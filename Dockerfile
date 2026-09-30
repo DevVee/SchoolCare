@@ -42,6 +42,14 @@ RUN { \
         echo 'opcache.save_comments=1'; \
     } > /usr/local/etc/php/conf.d/opcache.ini
 
+# ── Upload limits (school logo, sign-in photo, visit photos, patient imports) ─
+# Must stay below nginx client_max_body_size (20M).
+RUN { \
+        echo 'upload_max_filesize=10M'; \
+        echo 'post_max_size=16M'; \
+        echo 'memory_limit=256M'; \
+    } > /usr/local/etc/php/conf.d/uploads.ini
+
 # ── Composer ──────────────────────────────────────────────────────────────────
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -71,17 +79,8 @@ COPY --from=assets /app/public/build ./public/build
 RUN composer dump-autoload --no-dev --optimize \
     && php artisan package:discover --ansi
 
-# ── Pre-seed SQLite at build time ─────────────────────────────────────────────
-# The image ships with full demo data already in place.
-# → Zero cold-seed delay on first request after deploy.
-# → Data resets to a clean state on every new deploy (ephemeral container FS).
-# The temporary APP_KEY is overwritten at boot via Render env vars.
-RUN cp .env.example .env \
-    && php artisan key:generate --force \
-    && touch database/database.sqlite \
-    && php artisan migrate --force \
-    && php artisan db:seed --force \
-    && rm .env
+# The database is NOT created at build time. docker/start.sh creates/migrates
+# it on boot inside the persistent data directory so data survives deploys.
 
 # ── Runtime Docker config ─────────────────────────────────────────────────────
 COPY docker/nginx.conf.template /etc/nginx/nginx.conf.template

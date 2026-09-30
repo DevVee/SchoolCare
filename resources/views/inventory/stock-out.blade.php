@@ -1,102 +1,118 @@
 @extends('layouts.app')
 
-@section('title', 'Stock Out')
+@section('title', 'Stock out')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">Stock Out</h4>
-        <p class="text-muted small mb-0">Remove stock (damage, expiry, adjustment)</p>
-    </div>
-    <a href="{{ route('inventory.index') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i> Back to Inventory
-    </a>
-</div>
+<div class="vstack gap-4">
+    <x-ui.page-header :title="'Stock out'"
+        description="Remove stock that was damaged, lost or counted wrong. Expired batches are disposed of from the expiry page."
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Inventory' => route('inventory.index'), 'Stock out' => null]" />
 
-<div class="row justify-content-center">
-    <div class="col-lg-7">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
-                @if($errors->any())
-                <div class="alert alert-danger">
-                    <ul class="mb-0 ps-3">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-                </div>
-                @endif
+    @if ($errors->any())
+        <x-ui.alert variant="danger" title="Please fix the errors below">Check the highlighted fields and try again.</x-ui.alert>
+    @endif
 
-                <form method="POST" action="{{ route('inventory.stock-out') }}">
-                    @csrf
+    <div class="row">
+        <div class="col-xl-10">
+            <form method="POST" action="{{ route('inventory.stock-out') }}">
+                @csrf
+                <x-ui.card>
+                    <x-ui.section title="Medicine" description="Only medicines with stock on hand are listed.">
+                        <div class="vstack gap-3">
+                            <x-ui.field label="Medicine" for="medicineSelect" required>
+                                <x-ui.select name="medicine_id" id="medicineSelect" placeholder="Select a medicine" :selected="$selected" required>
+                                    @foreach ($medicines as $med)
+                                        @php
+                                            $usableQty = $med->batches->filter(fn ($b) => ! $b->is_expired)->sum('quantity');
+                                            $batchData = $med->batches->map(fn ($b) => [
+                                                'id' => $b->id, 'label' => $b->label, 'qty' => $b->quantity, 'expired' => $b->is_expired,
+                                            ])->values();
+                                        @endphp
+                                        <option value="{{ $med->id }}"
+                                            data-unit="{{ $med->unit }}"
+                                            data-qty="{{ $usableQty }}"
+                                            data-batches="{{ json_encode($batchData) }}"
+                                            @selected(old('medicine_id', $selected) == $med->id)>
+                                            {{ $med->name }}: {{ number_format($usableQty) }} usable{{ $med->is_active ? '' : ' (inactive)' }}
+                                        </option>
+                                    @endforeach
+                                </x-ui.select>
+                            </x-ui.field>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Medicine <span class="text-danger">*</span></label>
-                        <select name="medicine_id" id="medicineSelect"
-                            class="form-select @error('medicine_id') is-invalid @enderror" required>
-                            <option value="">— Select Medicine —</option>
-                            @foreach($medicines as $med)
-                            <option value="{{ $med->id }}"
-                                data-unit="{{ $med->unit }}"
-                                data-qty="{{ $med->quantity }}"
-                                @selected(old('medicine_id', $selected) == $med->id)>
-                                {{ $med->name }} ({{ number_format($med->quantity) }} {{ $med->unit }}s in stock)
-                            </option>
-                            @endforeach
-                        </select>
-                        @error('medicine_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-
-                    <div id="stockInfo" class="alert alert-warning d-none mb-3">
-                        <i class="bi bi-exclamation-triangle me-1"></i>
-                        Available: <strong id="currentStock">0</strong> <span id="unitLabel">units</span>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-sm-6">
-                            <label class="form-label fw-semibold">Quantity to Remove <span class="text-danger">*</span></label>
-                            <input type="number" name="quantity" value="{{ old('quantity') }}"
-                                class="form-control @error('quantity') is-invalid @enderror"
-                                min="1" id="qtyInput" required>
-                            @error('quantity')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <x-ui.field label="Batch" name="batch_id" for="batchSelect" optional help="Pick a batch if a specific lot was damaged or lost.">
+                                <select name="batch_id" id="batchSelect" @class(['form-select', 'is-invalid' => $errors->has('batch_id')]) data-old="{{ old('batch_id') }}"
+                                    aria-describedby="{{ $errors->has('batch_id') ? 'batchSelect-error' : 'batchSelect-help' }}">
+                                    <option value="">Earliest expiry first (automatic)</option>
+                                </select>
+                            </x-ui.field>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Reason / Notes <span class="text-danger">*</span></label>
-                            <textarea name="notes" rows="3"
-                                class="form-control @error('notes') is-invalid @enderror"
-                                required placeholder="e.g., Expired batch, damaged, annual adjustment…">{{ old('notes') }}</textarea>
-                            @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
+                    </x-ui.section>
 
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a href="{{ route('inventory.index') }}" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-warning px-4">
-                            <i class="bi bi-dash-circle me-1"></i> Remove Stock
-                        </button>
-                    </div>
-                </form>
-            </div>
+                    <x-ui.section title="What to remove">
+                        <div class="row g-3">
+                            <x-ui.field class="col-12 col-sm-6" label="Quantity to remove" name="quantity" for="qtyInput" required>
+                                <input type="number" name="quantity" id="qtyInput" value="{{ old('quantity') }}" min="1" required inputmode="numeric"
+                                    @class(['form-control', 'is-invalid' => $errors->has('quantity')]) aria-describedby="stockInfo{{ $errors->has('quantity') ? ' qtyInput-error' : '' }}">
+                                <div class="form-text d-none" id="stockInfo">Available: <strong id="currentStock" class="tabular">0</strong> <span id="unitLabel">units</span></div>
+                            </x-ui.field>
+                            <x-ui.textarea wrapper-class="col-12" name="notes" id="notes" label="Reason" rows="3" required
+                                placeholder="For example: damaged packaging, count correction" />
+                        </div>
+                    </x-ui.section>
+
+                    <x-slot:footer>
+                        <x-ui.button variant="secondary" :href="route('inventory.index')">Cancel</x-ui.button>
+                        <x-ui.button type="submit" icon="dash-lg">Remove stock</x-ui.button>
+                    </x-slot:footer>
+                </x-ui.card>
+            </form>
         </div>
     </div>
 </div>
+@endsection
 
 @push('scripts')
 <script>
-const medSel    = document.getElementById('medicineSelect');
-const stockInfo = document.getElementById('stockInfo');
-const qtyInput  = document.getElementById('qtyInput');
+document.addEventListener('DOMContentLoaded', function () {
+    const medSel    = document.getElementById('medicineSelect');
+    const batchSel  = document.getElementById('batchSelect');
+    const stockInfo = document.getElementById('stockInfo');
+    const qtyInput  = document.getElementById('qtyInput');
+    if (!medSel || !batchSel) return;
+    let batches = [];
 
-medSel.addEventListener('change', function () {
-    const opt = this.selectedOptions[0];
-    if (this.value) {
-        const qty = parseInt(opt.dataset.qty);
+    function setMax(qty, unit) {
         document.getElementById('currentStock').textContent = qty;
-        document.getElementById('unitLabel').textContent    = opt.dataset.unit + 's';
+        document.getElementById('unitLabel').textContent = unit + '(s)';
         qtyInput.max = qty;
         stockInfo.classList.remove('d-none');
-    } else {
-        stockInfo.classList.add('d-none');
-        qtyInput.removeAttribute('max');
     }
+
+    function onMedicine() {
+        const opt = medSel.selectedOptions[0];
+        batchSel.querySelectorAll('option:not(:first-child)').forEach(o => o.remove());
+        if (!medSel.value) { stockInfo.classList.add('d-none'); qtyInput.removeAttribute('max'); return; }
+        batches = JSON.parse(opt.dataset.batches || '[]');
+        batches.forEach(b => {
+            const o = document.createElement('option');
+            o.value = b.id;
+            o.textContent = b.label + ': ' + b.qty + (b.expired ? ' (expired, use Dispose)' : '');
+            o.disabled = b.expired;
+            batchSel.appendChild(o);
+        });
+        if (batchSel.dataset.old) { batchSel.value = batchSel.dataset.old; batchSel.dataset.old = ''; }
+        onBatch();
+    }
+
+    function onBatch() {
+        const opt = medSel.selectedOptions[0];
+        const b = batches.find(x => String(x.id) === batchSel.value);
+        setMax(b ? b.qty : parseInt(opt.dataset.qty, 10), opt.dataset.unit);
+    }
+
+    medSel.addEventListener('change', onMedicine);
+    batchSel.addEventListener('change', onBatch);
+    if (medSel.value) onMedicine();
 });
-if (medSel.value) medSel.dispatchEvent(new Event('change'));
 </script>
 @endpush
-@endsection

@@ -1,0 +1,110 @@
+// =============================================================================
+// Dashboard welcome banner (legacy markup). Solid brand surface, no gradient,
+// no decorative shapes (ui_principles.md). Used by dashboard/index.blade.php.
+// =============================================================================
+
+.welcome-banner {
+    background: var(--brand-600);
+    border-radius: $border-radius-lg;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.5rem;
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem;
+    color: var(--brand-contrast);
+
+    .welcome-left {
+        position: relative; z-index: 1;
+
+        .welcome-greeting {
+            font-family: $font-display;
+            font-size: 1.5rem; letter-spacing: -.02em; font-weight: 700;
+            color: #fff; margin: 0 0 .25rem;
+        }
+        .welcome-subtitle {
+            color: rgba(255,255,255,.92);
+            font-size: .9375rem; margin: 0;
+        }
+    }
+
+    .welcome-date-badge {
+        display: inline-flex; align-items: center; gap: .5rem;
+        background: rgba(255,255,255,.14);
+        border: 1px solid rgba(255,255,255,.28);
+        border-radius: $radius-sm;
+        padding: .4rem 1rem;
+        color: #fff; font-size: .875rem; font-weight: 500;
+        white-space: nowrap; flex-shrink: 0;
+        position: relative; z-index: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .welcome-banner { padding: 1.25rem; }
+    .welcome-greeting { font-size: 1.15rem !important; }
+    .welcome-date-badge { display: none; }
+}
+
+// -----------------------------------------------------------------------------
+// Dashboard lists (today's appointments, inventory alerts, recent activity,
+// "Currently in clinic"). One line per row: title + one muted line, meta right.
+// -----------------------------------------------------------------------------
+.dash-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    > li + li { border-top: 1px solid var(--c-border); }
+}
+.dash-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-height: 3.25rem;
+    padding: .5rem 1.25rem;
+    color: inherit;
+    text-decoration: none;
+    @include media-breakpoint-down(sm) { padding: .5rem 1rem; }
+}
+.dash-row-link {
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color $dur-fast ease-out;
+    &:hover { background: $gray-50; color: inherit; text-decoration: none; }
+    &:active { background: $gray-100; }
+    &:focus-visible { outline: 3px solid rgba(var(--brand-rgb), .35); outline-offset: -3px; }
+}
+.dash-row-time {
+    flex: 0 0 4.75rem;
+    font-family: $font-ui;
+    font-size: .875rem;
+    font-weight: 600;
+    color: var(--c-ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.dash-row-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.dash-row-title {
+    font-family: $font-ui;
+    font-size: .9375rem;
+    font-weight: 600;
+    color: var(--c-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    a { color: inherit; text-decoration: none; &:hover { color: var(--brand-700); text-decoration: underline; } }
+}
+.dash-row-sub {
+    font-size: .8125rem;
+    color: var(--c-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dash-row > .badge, .dash-row > .btn { flex-shrink: 0; }
+
+// "Currently in clinic" collapsed to one quiet line when nobody is in.
+.in-clinic-quiet .empty-state-quiet { padding: .75rem 0; }

@@ -1,0 +1,220 @@
+// =============================================================================
+// Patients + appointments pages
+//   .bulk-bar        sticky selection bar on the patient list (patients.index)
+//   .cell-check      checkbox column of selectable tables
+//   .month-cal*      server-rendered month calendar (partials/month-calendar)
+// =============================================================================
+
+// ── Selection column + bulk action bar ──────────────────────────────────────
+.table-c td.cell-check,
+.table-c th:first-child:has(> #selectAll) {
+    width: 44px;
+    padding-right: 0;
+}
+
+.bulk-bar {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 1020;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem .75rem;
+    padding: .625rem .75rem .625rem 1rem;
+    border: 1px solid var(--c-border-strong);
+    border-radius: $border-radius-lg;
+    background: var(--c-surface);
+    box-shadow: var(--c-shadow-lg);
+    animation: bulk-bar-in var(--c-dur-base) ease-out;
+
+    &[hidden] { display: none; }
+
+    .bulk-bar-count {
+        font-family: $font-ui;
+        font-size: .875rem;
+        color: var(--brand-700);
+        white-space: nowrap;
+    }
+    .bulk-bar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .375rem;
+    }
+    .bulk-bar-clear { margin-left: auto; }
+
+    @include media-breakpoint-down(sm) {
+        bottom: .5rem;
+        .bulk-bar-actions { width: 100%; }
+        .bulk-bar-actions > .btn,
+        .bulk-bar-actions > .dropdown { flex: 1 1 45%; }
+        .bulk-bar-actions > .dropdown > .btn { width: 100%; }
+    }
+}
+
+@keyframes bulk-bar-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bulk-bar { animation: none; }
+}
+
+// ── Month calendar ──────────────────────────────────────────────────────────
+.month-cal-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+
+    .month-cal-title {
+        margin: 0 .25rem;
+        font-family: $font-display;
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: -.01em;
+        color: var(--c-ink);
+        min-width: 9.5rem;
+        text-align: center;
+    }
+}
+
+.month-cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .375rem 1rem;
+    font-size: .8125rem;
+    color: var(--c-ink-2);
+
+    > span { display: inline-flex; align-items: center; gap: .375rem; }
+}
+
+.month-cal-dot {
+    display: inline-block;
+    flex-shrink: 0;
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.month-cal {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+
+    th {
+        padding: .5rem;
+        font-family: $font-ui;
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--c-muted);
+        text-align: left;
+        background: var(--c-surface-2);
+        border-bottom: 1px solid var(--c-border);
+    }
+    td + td, th + th { border-left: 1px solid var(--c-border); }
+    tr + tr td { border-top: 1px solid var(--c-border); }
+}
+
+.month-cal-day {
+    height: 7.25rem;
+    padding: .375rem;
+    vertical-align: top;
+    background: var(--c-surface);
+
+    &.is-outside { background: var(--c-canvas); }
+    &.is-outside .month-cal-num { color: var(--c-muted); font-weight: 500; }
+    &.is-closed { background: var(--c-canvas); }
+    &.is-busy { background: rgba(var(--m-appointments-rgb), .04); }
+    &.is-today { background: rgba(var(--m-appointments-rgb), .05); }
+    &.is-today .month-cal-num { background: var(--m-appointments); color: #fff; }
+}
+
+.month-cal-daytop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .25rem;
+    margin-bottom: .25rem;
+    font-size: .75rem;
+    color: var(--c-muted);
+}
+
+.month-cal-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 .25rem;
+    border-radius: 50%;
+    font-family: $font-ui;
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--c-ink);
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+    transition: background-color var(--c-dur-fast) ease-out, color var(--c-dur-fast) ease-out;
+}
+a.month-cal-num:hover,
+a.month-cal-num:focus-visible { background: rgba(var(--m-appointments-rgb), .1); color: var(--m-appointments); }
+
+.month-cal-item {
+    display: flex;
+    align-items: center;
+    gap: .3125rem;
+    margin-bottom: 2px;
+    padding: .125rem .375rem;
+    border-radius: $border-radius-sm;
+    font-size: .75rem;
+    line-height: 1.35;
+    color: var(--c-ink-2);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color var(--c-dur-fast) ease-out;
+
+    strong { font-family: $font-ui; font-weight: 700; color: var(--c-ink); font-variant-numeric: tabular-nums; }
+    > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+    .c-icon, .bi { font-size: .75rem; color: var(--m-appointments); }
+}
+a.month-cal-item:hover,
+a.month-cal-item:focus-visible { background: var(--c-surface-2); color: var(--c-ink); }
+a.month-cal-item:active { transform: scale(var(--c-press-scale)); }
+
+// Phones: agenda list of the days that have items
+.month-agenda {
+    .month-agenda-day {
+        display: flex;
+        gap: .75rem;
+        padding: .75rem 1rem;
+        & + .month-agenda-day { border-top: 1px solid var(--c-border); }
+        &.is-today { background: rgba(var(--m-appointments-rgb), .05); }
+    }
+    .month-agenda-date {
+        flex-shrink: 0;
+        width: 2.75rem;
+        text-align: center;
+        font-family: $font-ui;
+        line-height: 1.1;
+        color: var(--c-ink);
+        text-decoration: none;
+
+        .dow { display: block; font-size: .6875rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--c-muted); }
+        .num { display: block; font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    }
+    .is-today .month-agenda-date .num { color: var(--m-appointments); }
+    .month-agenda-items {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: .25rem;
+        min-width: 0;
+        .month-cal-item { margin: 0; min-height: 2rem; padding: .25rem .5rem; border: 1px solid var(--c-border); }
+    }
+}

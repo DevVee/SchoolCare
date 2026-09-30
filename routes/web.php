@@ -20,7 +20,7 @@ use App\Http\Controllers\SmsController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Keep-alive ping (no session/auth/DB overhead) ──────────────────────────
-// Hit by: Render cron job, UptimeRobot, GitHub Actions heartbeat.
+// Lightweight liveness probe for load balancers / uptime monitors.
 // Returns plain text 'pong' — no middleware stack, no session creation.
 Route::get('/ping', fn () => response('pong', 200)->header('Content-Type', 'text/plain'));
 
@@ -37,7 +37,7 @@ Route::middleware(['auth'])->get('/session/token', function () {
 // ─── Rich health check endpoint ───────────────────────────────────────────────
 // Checks DB connectivity, cache, and storage writability.
 // Excluded from session middleware to avoid creating ghost sessions.
-// Use this URL in Render's healthCheckPath and as UptimeRobot alert monitor.
+// Use this URL for container health checks and uptime monitoring.
 Route::get('/health', function () {
     $checks   = ['status' => 'ok'];
     $httpCode = 200;
@@ -47,8 +47,9 @@ Route::get('/health', function () {
         \Illuminate\Support\Facades\DB::connection()->getPdo();
         $checks['database'] = 'ok';
     } catch (\Exception $e) {
-        $checks['database']       = 'error';
-        $checks['database_error'] = $e->getMessage();
+        // Never expose raw driver/DSN messages publicly — log them instead.
+        \Illuminate\Support\Facades\Log::error('Health check: database unavailable', ['error' => $e->getMessage()]);
+        $checks['database'] = 'error';
         $httpCode = 503;
     }
 
@@ -57,6 +58,7 @@ Route::get('/health', function () {
         \Illuminate\Support\Facades\Cache::put('_health_check', 1, 10);
         $checks['cache'] = \Illuminate\Support\Facades\Cache::get('_health_check') ? 'ok' : 'miss';
     } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Health check: cache unavailable', ['error' => $e->getMessage()]);
         $checks['cache'] = 'error';
         $httpCode = 503;
     }
@@ -81,17 +83,39 @@ Route::get('/health', function () {
     return response()->json($checks, $httpCode);
 })->withoutMiddleware([\Illuminate\Session\Middleware\StartSession::class]);
 
-// ─── Public: redirect to login ────────────────────────────────────────────────
-// Landing page for guests; authenticated users go straight to dashboard
-Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-    return view('welcome');
-});
+// ─── Public website ───────────────────────────────────────────────────────────
+// Landing page for guests (signed-in staff go straight to the dashboard) and the
+// privacy notice. Content: Administration → Website.
+Route::get('/', [\App\Http\Controllers\LandingController::class, 'show'])->name('home');
+Route::get('/privacy', [\App\Http\Controllers\LandingController::class, 'privacy'])->name('privacy');
+
+// ─── Public: online appointment requests + clinic schedule board ─────────────
+// 404 unless Settings → Appointments → "Accept online appointment requests".
+Route::get('/request-appointment', [\App\Http\Controllers\PublicAppointmentController::class, 'create'])
+     ->name('public.appointments.create');
+Route::post('/request-appointment', [\App\Http\Controllers\PublicAppointmentController::class, 'store'])
+     ->name('public.appointments.store')
+     ->middleware('throttle:5,60,public-appointment');
+Route::get('/request-appointment/thanks', [\App\Http\Controllers\PublicAppointmentController::class, 'thanks'])
+     ->name('public.appointments.thanks');
+Route::get('/request-appointment/slots', [\App\Http\Controllers\PublicAppointmentController::class, 'slots'])
+     ->name('public.appointments.slots')
+     ->middleware('throttle:60,1');
+Route::get('/clinic-schedule', [\App\Http\Controllers\PublicAppointmentController::class, 'schedule'])
+     ->name('public.schedule');
+
+// ─── Public: Student Health Information Form ──────────────────────────────────
+// 404 unless Settings → Online Health Form is on. Stored for staff review only.
+Route::get('/health-form', [\App\Http\Controllers\PublicHealthFormController::class, 'create'])
+     ->name('public.health-form.create');
+Route::post('/health-form', [\App\Http\Controllers\PublicHealthFormController::class, 'store'])
+     ->name('public.health-form.store')
+     ->middleware('throttle:5,60,public-health-form');
+Route::get('/health-form/thanks', [\App\Http\Controllers\PublicHealthFormController::class, 'thanks'])
+     ->name('public.health-form.thanks');
 
 // ─── Authenticated Routes ─────────────────────────────────────────────────────
-Route::middleware(['auth', 'check.active'])->group(function () {
+Route::middleware(['auth', 'check.active', 'password.changed'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -105,30 +129,105 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     Route::delete('/profile',           [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // ─── Patient Log (Clinic Logbook) ─────────────────────────────────────────
+    // Clinic visits calendar (SSCMS calendar/calendar.php); before the resource.
+    Route::get('patient-logs/calendar', [\App\Http\Controllers\PatientLogCalendarController::class, 'month'])
+         ->name('patient-logs.calendar');
+
     Route::resource('patient-logs', PatientLogController::class)
          ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
+    // Discharge ("Out" button): permission checked in the controller.
+    Route::patch('patient-logs/{patient_log}/discharge', [PatientLogController::class, 'discharge'])
+         ->name('patient-logs.discharge');
+
+    // Visit photos: private disk, served only through this authorized route.
+    Route::post('patient-logs/{patient_log}/attachments', [\App\Http\Controllers\PatientLogAttachmentController::class, 'store'])
+         ->name('patient-logs.attachments.store')
+         ->middleware('throttle:30,1');
+    Route::get('patient-logs/{patient_log}/attachments/{attachment}', [\App\Http\Controllers\PatientLogAttachmentController::class, 'show'])
+         ->name('patient-logs.attachments.show')
+         ->scopeBindings();
+    Route::delete('patient-logs/{patient_log}/attachments/{attachment}', [\App\Http\Controllers\PatientLogAttachmentController::class, 'destroy'])
+         ->name('patient-logs.attachments.destroy')
+         ->scopeBindings();
+
     // ─── Patients ─────────────────────────────────────────────────────────────
-    Route::resource('patients', PatientController::class);
+    // Static patient routes are declared BEFORE the resource so they are not
+    // captured by patients/{patient}. Permissions are checked in the controllers.
+    Route::prefix('patients')->name('patients.')->group(function () {
+        // Import (.xlsx / .csv): upload -> preview -> confirm
+        Route::get('import',           [\App\Http\Controllers\PatientImportController::class, 'create'])->name('import.create');
+        Route::get('import/template',  [\App\Http\Controllers\PatientImportController::class, 'template'])->name('import.template');
+        Route::post('import/preview',  [\App\Http\Controllers\PatientImportController::class, 'preview'])->name('import.preview')
+             ->middleware('throttle:20,1');
+        Route::post('import',          [\App\Http\Controllers\PatientImportController::class, 'store'])->name('import.store')
+             ->middleware('throttle:10,1');
+        Route::delete('import',        [\App\Http\Controllers\PatientImportController::class, 'destroy'])->name('import.destroy');
+
+        // Export with the list filters, and bulk actions on selected rows
+        Route::get('export', [\App\Http\Controllers\PatientBulkController::class, 'export'])->name('export')
+             ->middleware('throttle:20,1');
+        Route::post('bulk',  [\App\Http\Controllers\PatientBulkController::class, 'bulk'])->name('bulk')
+             ->middleware('throttle:30,1');
+
+        // Year-end promotion wizard
+        Route::get('promote',          [\App\Http\Controllers\PatientBulkController::class, 'promoteForm'])->name('promote.form');
+        Route::post('promote/preview', [\App\Http\Controllers\PatientBulkController::class, 'promotePreview'])->name('promote.preview');
+        Route::post('promote',         [\App\Http\Controllers\PatientBulkController::class, 'promote'])->name('promote');
+
+        // Online health information form review queue
+        Route::get('intake',                         [\App\Http\Controllers\PatientIntakeController::class, 'index'])->name('intake.index');
+        Route::get('intake/{submission}',            [\App\Http\Controllers\PatientIntakeController::class, 'show'])->name('intake.show');
+        Route::post('intake/{submission}/approve',   [\App\Http\Controllers\PatientIntakeController::class, 'approve'])->name('intake.approve');
+        Route::post('intake/{submission}/merge',     [\App\Http\Controllers\PatientIntakeController::class, 'merge'])->name('intake.merge');
+        Route::post('intake/{submission}/reject',    [\App\Http\Controllers\PatientIntakeController::class, 'reject'])->name('intake.reject');
+    });
+
+    // show resolves archived (soft-deleted) patients so clinical history links keep working
+    Route::resource('patients', PatientController::class)->withTrashed(['show']);
 
     Route::get('patients/{patient}/history', [PatientController::class, 'history'])
-         ->name('patients.history');
+         ->name('patients.history')
+         ->withTrashed();
 
-    // MED-7 FIX: Restore soft-deleted patient (admin-only, withTrashed binding)
+    // Health Report Card (SSCMS patient_health_report.php): page + PDF
+    Route::get('patients/{patient}/health-report', [\App\Http\Controllers\PatientHealthReportController::class, 'show'])
+         ->name('patients.health-report')
+         ->withTrashed();
+    Route::get('patients/{patient}/health-report/pdf', [\App\Http\Controllers\PatientHealthReportController::class, 'pdf'])
+         ->name('patients.health-report.pdf')
+         ->middleware('throttle:20,1')
+         ->withTrashed();
+
+    // MED-7 FIX: Restore soft-deleted patient (withTrashed binding)
     Route::patch('patients/{patient}/restore', [PatientController::class, 'restore'])
          ->name('patients.restore')
+         ->middleware('can:restore-patients')
          ->withTrashed();
 
     // ─── Appointments ─────────────────────────────────────────────────────────
+    // Static routes before the resource (appointments/{appointment}).
+    Route::get('appointments/calendar',     [\App\Http\Controllers\AppointmentCalendarController::class, 'month'])->name('appointments.calendar');
+    Route::get('appointments/today',        [\App\Http\Controllers\AppointmentCalendarController::class, 'today'])->name('appointments.today');
+    Route::get('appointments/availability', [AppointmentController::class, 'availability'])->name('appointments.availability')
+         ->middleware('throttle:120,1');
+
     Route::resource('appointments', AppointmentController::class);
+    Route::patch('appointments/{appointment}/link-patient', [AppointmentController::class, 'linkPatient'])
+         ->name('appointments.link-patient');
     Route::patch('appointments/{appointment}/approve',  [AppointmentController::class, 'approve'])
          ->name('appointments.approve');
     Route::patch('appointments/{appointment}/cancel',   [AppointmentController::class, 'cancel'])
          ->name('appointments.cancel');
     Route::patch('appointments/{appointment}/no-show',  [AppointmentController::class, 'noShow'])
-         ->name('appointments.no-show');
+         ->name('appointments.no-show')
+         ->middleware('can:complete-appointments');
     Route::patch('appointments/{appointment}/complete', [AppointmentController::class, 'complete'])
-         ->name('appointments.complete');
+         ->name('appointments.complete')
+         ->middleware('can:complete-appointments');
+
+    // ─── Specialist visits (doctor / dentist clinic days) ─────────────────────
+    Route::resource('specialist-visits', \App\Http\Controllers\SpecialistVisitController::class);
 
     // ─── Consultations ────────────────────────────────────────────────────────
     Route::resource('consultations', ConsultationController::class);
@@ -137,7 +236,31 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     // Named routes BEFORE resource() to avoid route collision with {medicine} param
     Route::get('medicines/low-stock', [MedicineController::class, 'lowStock'])->name('medicines.low-stock');
     Route::get('medicines/expiring',  [MedicineController::class, 'expiring'])->name('medicines.expiring');
+    Route::get('medicines/lookup',    [MedicineController::class, 'lookup'])
+         ->name('medicines.lookup')
+         ->middleware(['can:view-medicines', 'throttle:120,1']);
     Route::resource('medicines', MedicineController::class);
+    Route::patch('medicines/{medicine}/batches/{batch}', [MedicineController::class, 'updateBatch'])
+         ->name('medicines.batches.update')
+         ->middleware('can:update-medicines')
+         ->scopeBindings();
+
+    // ─── Expired batch disposal ───────────────────────────────────────────────
+    Route::post('inventory/batches/{batch}/dispose', [\App\Http\Controllers\MedicineDisposalController::class, 'store'])
+         ->name('disposals.store')
+         ->middleware('can:dispose-medicines');
+    Route::get('inventory/disposals', [\App\Http\Controllers\MedicineDisposalController::class, 'index'])
+         ->name('disposals.index')
+         ->middleware('can:view-inventory');
+    Route::get('inventory/disposals/export', [\App\Http\Controllers\MedicineDisposalController::class, 'export'])
+         ->name('disposals.export')
+         ->middleware(['can:export-reports', 'throttle:20,1']);
+
+    // ─── Assets & equipment ───────────────────────────────────────────────────
+    Route::get('assets/export', [\App\Http\Controllers\AssetController::class, 'export'])
+         ->name('assets.export')
+         ->middleware(['can:view-assets', 'throttle:20,1']);
+    Route::resource('assets', \App\Http\Controllers\AssetController::class);
 
     // ─── Medicine Categories ──────────────────────────────────────────────────
     Route::resource('medicine-categories', MedicineCategoryController::class)
@@ -197,15 +320,85 @@ Route::middleware(['auth', 'check.active'])->group(function () {
     });
 
     // ─── Admin ────────────────────────────────────────────────────────────────
-    Route::middleware('role:administrator')->prefix('admin')->name('admin.')->group(function () {
-        Route::resource('users', UserController::class);
-        Route::resource('roles', RoleController::class);
+    // Access is per permission (not per role) so custom roles can be granted
+    // individual admin areas. Mutating user actions additionally require
+    // manage-users (checked in UserController / FormRequests).
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::middleware('can:view-users')->group(function () {
+            Route::resource('users', UserController::class);
+            Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])
+                 ->name('users.toggle-active');
+            Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])
+                 ->name('users.reset-password')
+                 ->middleware('throttle:10,1');
+        });
 
-        Route::get('settings',  [SettingsController::class, 'index'])->name('settings.index');
-        Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
+        Route::resource('roles', RoleController::class)
+             ->except('show')
+             ->middleware('can:manage-roles');
 
-        Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::middleware('can:manage-settings')->group(function () {
+            Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+            Route::post('settings/test-sms', [SettingsController::class, 'testSms'])
+                 ->name('settings.test-sms')
+                 ->middleware('throttle:5,1');
+            Route::post('settings/test-email', [SettingsController::class, 'testEmail'])
+                 ->name('settings.test-email')
+                 ->middleware('throttle:5,1');
+            Route::get('settings/{group}', [SettingsController::class, 'edit'])
+                 ->where('group', '[a-z_]+')
+                 ->name('settings.edit');
+            Route::put('settings/{group}', [SettingsController::class, 'update'])
+                 ->where('group', '[a-z_]+')
+                 ->name('settings.update');
+        });
+
+        // Appointment time slots (label, times, capacity, weekdays)
+        Route::middleware('can:manage-appointment-slots')->group(function () {
+            Route::resource('appointment-slots', \App\Http\Controllers\Admin\AppointmentSlotController::class)->except('show');
+            Route::patch('appointment-slots/{appointment_slot}/toggle', [\App\Http\Controllers\Admin\AppointmentSlotController::class, 'toggle'])
+                 ->name('appointment-slots.toggle');
+        });
+
+        Route::middleware('can:view-audit-logs')->group(function () {
+            Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+            Route::get('audit-logs/export', [AuditLogController::class, 'export'])
+                 ->name('audit-logs.export')
+                 ->middleware('throttle:10,1');
+        });
+
+        // Public website content: page text, services, FAQs, team, advisories.
+        Route::middleware('can:manage-landing')->prefix('website')->name('website.')->group(function () {
+            $items = \App\Http\Controllers\Admin\LandingItemController::class;
+            $ads   = \App\Http\Controllers\Admin\AnnouncementController::class;
+
+            Route::get('/', [\App\Http\Controllers\Admin\WebsiteController::class, 'edit'])->name('edit');
+            Route::put('/', [\App\Http\Controllers\Admin\WebsiteController::class, 'update'])->name('update');
+
+            Route::get('advisories',                   [$ads, 'index'])->name('advisories.index');
+            Route::get('advisories/create',            [$ads, 'create'])->name('advisories.create');
+            Route::post('advisories',                  [$ads, 'store'])->name('advisories.store');
+            Route::get('advisories/{advisory}/edit',   [$ads, 'edit'])->name('advisories.edit');
+            Route::put('advisories/{advisory}',        [$ads, 'update'])->name('advisories.update');
+            Route::patch('advisories/{advisory}/toggle', [$ads, 'toggle'])->name('advisories.toggle');
+            Route::patch('advisories/{advisory}/move', [$ads, 'move'])->name('advisories.move');
+            Route::delete('advisories/{advisory}',     [$ads, 'destroy'])->name('advisories.destroy');
+
+            Route::whereIn('segment', ['services', 'faqs', 'team'])->group(function () use ($items) {
+                Route::get('{segment}',                 [$items, 'index'])->name('items.index');
+                Route::get('{segment}/create',          [$items, 'create'])->name('items.create');
+                Route::post('{segment}',                [$items, 'store'])->name('items.store');
+                Route::get('{segment}/{item}/edit',     [$items, 'edit'])->name('items.edit');
+                Route::put('{segment}/{item}',          [$items, 'update'])->name('items.update');
+                Route::patch('{segment}/{item}/toggle', [$items, 'toggle'])->name('items.toggle');
+                Route::patch('{segment}/{item}/move',   [$items, 'move'])->name('items.move');
+                Route::delete('{segment}/{item}',       [$items, 'destroy'])->name('items.destroy');
+            });
+        });
     });
+
+    // ─── UI kit (living style guide for x-ui.* components) ────────────────────
+    Route::view('/ui-kit', 'ui-kit')->middleware('can:manage-settings')->name('ui.kit');
 });
 
 require __DIR__.'/auth.php';

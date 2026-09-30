@@ -8,10 +8,13 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class SmsLog extends Model
 {
+    public const STATUSES = ['pending', 'sent', 'failed', 'skipped'];
+
     protected $fillable = [
-        'recipient_number', 'recipient_name', 'message', 'status',
+        'recipient_number', 'recipient_name', 'message', 'event', 'status',
         'reference_id', 'reference_type',
-        'api_response', 'sent_at', 'error_message', 'created_by',
+        'api_response', 'provider_message_id', 'attempts',
+        'sent_at', 'error_message', 'created_by',
     ];
 
     protected function casts(): array
@@ -19,6 +22,7 @@ class SmsLog extends Model
         return [
             'api_response' => 'array',
             'sent_at'      => 'datetime',
+            'attempts'     => 'integer',
         ];
     }
 
@@ -38,7 +42,18 @@ class SmsLog extends Model
             'sent'    => 'success',
             'failed'  => 'danger',
             'pending' => 'warning',
+            'skipped' => 'secondary',
             default   => 'secondary',
         };
+    }
+
+    public function getEventLabelAttribute(): string
+    {
+        if (! $this->event) {
+            return 'Manual';
+        }
+
+        return config("settings.sms_events.{$this->event}.label")
+            ?? ucwords(str_replace('_', ' ', $this->event));
     }
 }

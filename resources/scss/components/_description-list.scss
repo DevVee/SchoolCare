@@ -1,0 +1,34 @@
+// ═════════════════════════════════════════════════════════════════════════════
+// Description list (x-ui.description-list): key/value rows for show pages
+// ═════════════════════════════════════════════════════════════════════════════
+
+.c-dl {
+    display: grid;
+    grid-template-columns: minmax(110px, 35%) 1fr;
+    column-gap: 1rem;
+    margin: 0;
+    font-size: .9375rem;
+
+    > dt, > dd {
+        padding: .5625rem 0;
+        border-bottom: 1px solid var(--c-border);
+        margin: 0;
+    }
+    > dt { color: var(--c-ink-2); font-weight: 500; }
+    > dd { color: var(--c-ink); font-weight: 400; min-width: 0; overflow-wrap: anywhere; }
+    > dt:nth-last-of-type(1), > dd:nth-last-of-type(1) { border-bottom: 0; }
+
+    .dl-empty { color: var(--c-muted); font-style: italic; }
+
+    &.c-dl-compact { > dt, > dd { padding: .375rem 0; border-bottom: 0; } }
+    &.c-dl-stacked {
+        grid-template-columns: 1fr;
+        > dt { border-bottom: 0; padding-bottom: 0; font-size: .8125rem; }
+        > dd { padding-top: .125rem; }
+    }
+    @include media-breakpoint-down(sm) {
+        grid-template-columns: 1fr;
+        > dt { border-bottom: 0; padding-bottom: 0; font-size: .8125rem; }
+        > dd { padding-top: .125rem; }
+    }
+}

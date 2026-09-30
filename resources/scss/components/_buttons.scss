@@ -1,0 +1,150 @@
+// =============================================================================
+// Buttons: radius 6, 40px (44px on touch), semibold Figtree, solid colours.
+// Press feedback: :active scale(.97) over 100ms ease-out. No gradients, no glow.
+// Primary / outline / link colours are wired to --brand-* in _brand-runtime.
+// =============================================================================
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    white-space: nowrap;
+    min-height: 2.5rem;
+    letter-spacing: -.005em;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+
+    .c-icon, > .bi { font-size: 1rem; line-height: 1; }
+    &:active:not(:disabled):not(.disabled) { transform: scale($press-scale); }
+
+    // Legacy views put `me-1 / me-2` on the icon; the flex gap already spaces it
+    > .bi.me-1, > .bi.me-2 { margin-right: 0 !important; }
+}
+.btn.d-block, .btn.w-100 { justify-content: center; }
+
+.btn-sm {
+    min-height: 2rem;
+    gap: .375rem;
+    .c-icon, > .bi { font-size: .875rem; }
+}
+.btn-lg { min-height: 3rem; }
+
+// Legacy: `btn-xs` is used by several index views but was never defined.
+.btn-xs {
+    --bs-btn-padding-y: .1875rem;
+    --bs-btn-padding-x: .5rem;
+    --bs-btn-font-size: .8125rem;
+    --bs-btn-border-radius: #{$border-radius};
+    min-height: 1.75rem;
+    gap: .25rem;
+    .c-icon, > .bi { font-size: .8125rem; }
+}
+
+// Square icon-only button (x-ui.button icon-only)
+.btn-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0;
+    &.btn-sm { width: 2rem; height: 2rem; min-height: 2rem; }
+    &.btn-lg { width: 3rem; height: 3rem; }
+}
+
+// Secondary: white with a slate border. Legacy btn-outline-secondary matches.
+.btn-secondary, .btn-outline-secondary {
+    --bs-btn-color: #{$gray-800};
+    --bs-btn-bg: #fff;
+    --bs-btn-border-color: #{$gray-300};
+    --bs-btn-hover-color: #{$gray-900};
+    --bs-btn-hover-bg: #{$gray-50};
+    --bs-btn-hover-border-color: #{$gray-400};
+    --bs-btn-focus-shadow-rgb: var(--brand-rgb);
+    --bs-btn-active-color: #{$gray-900};
+    --bs-btn-active-bg: #{$gray-100};
+    --bs-btn-active-border-color: #{$gray-400};
+    --bs-btn-disabled-color: #{$gray-500};
+    --bs-btn-disabled-bg: #fff;
+    --bs-btn-disabled-border-color: #{$gray-200};
+}
+
+// Ghost: no chrome until hovered
+.btn-ghost {
+    --bs-btn-color: #{$gray-700};
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: #{$gray-900};
+    --bs-btn-hover-bg: #{$gray-100};
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-focus-shadow-rgb: var(--brand-rgb);
+    --bs-btn-active-color: #{$gray-900};
+    --bs-btn-active-bg: #{$gray-200};
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-disabled-color: #{$gray-500};
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: transparent;
+}
+
+// Legacy tinted outline buttons keep a white fill
+.btn-outline-danger, .btn-outline-success, .btn-outline-warning, .btn-outline-info {
+    --bs-btn-bg: #fff;
+}
+// Warning / info solid buttons use dark text (AA)
+.btn-warning, .btn-info {
+    --bs-btn-color: #{$gray-900};
+    --bs-btn-hover-color: #{$gray-900};
+    --bs-btn-active-color: #{$gray-900};
+}
+
+.btn-link {
+    --bs-btn-padding-x: .25rem;
+    font-weight: 600;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+}
+
+// -- Row action icon buttons: tinted square, solid on hover ------------------------
+.btn-action {
+    width: 2.125rem;
+    height: 2.125rem;
+    border-radius: $border-radius;
+    border: 0;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    line-height: 1;
+    flex-shrink: 0;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
+    &:hover:not(:disabled) { text-decoration: none; }
+    &:active:not(:disabled) { transform: scale($press-scale); }
+    &:disabled, &.disabled { opacity: .45; pointer-events: none; }
+    &.btn-action-sm { width: 1.875rem; height: 1.875rem; font-size: .875rem; border-radius: $border-radius; }
+}
+$action-tones: (
+    "view": "brand", "edit": "info", "delete": "danger", "approve": "success",
+    "neutral": "neutral", "warn": "warning", "cobi": "cobi",
+);
+// Plain coloured glyph, no tinted square; a quiet neutral hover keeps the target visible
+@each $name, $tone in $action-tones {
+    .btn-action-#{$name} {
+        background: transparent;
+        color: tone($tone, 600);
+        &:hover:not(:disabled), &:focus-visible {
+            background: var(--c-surface-2);
+            color: tone($tone, 700);
+        }
+    }
+}
+
+// -- Touch: 44px minimum targets --------------------------------------------------
+@media (pointer: coarse), (max-width: 767.98px) {
+    .btn, .btn-sm, .btn-lg { min-height: 2.75rem; }
+    .btn-xs { min-height: 2.25rem; }
+    .btn-icon, .btn-icon.btn-sm { width: 2.75rem; height: 2.75rem; min-height: 2.75rem; }
+    .btn-action, .btn-action.btn-action-sm { width: 2.75rem; height: 2.75rem; }
+}

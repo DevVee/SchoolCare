@@ -1,151 +1,80 @@
 @extends('layouts.app')
 
-@section('title', 'Add User')
+@section('title', 'Add user')
+
+@php
+    $roleOptions = $roles->mapWithKeys(fn ($r) => [$r->name => \Illuminate\Support\Str::headline($r->name)])->all();
+@endphp
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">Add New User</h4>
-        <p class="text-muted small mb-0">Create a Clinovia account and assign a role</p>
-    </div>
-    <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i> Back to Users
-    </a>
+<div class="vstack gap-3">
+
+    <x-ui.page-header title="Add user" :description="'Create a sign-in account for a staff member and choose what they can do in '.settings('app_name').'.'"
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Users' => route('admin.users.index'), 'Add user' => null]" />
+
+    @if ($errors->any())
+        <x-ui.alert variant="danger" title="Please fix the errors below">Check the highlighted fields and try again.</x-ui.alert>
+    @endif
+
+    <form method="POST" action="{{ route('admin.users.store') }}">
+        @csrf
+        <x-ui.card>
+            <x-ui.section title="Account" description="The name staff will see, and the email used to sign in.">
+                <div class="row g-3">
+                    <x-ui.input wrapper-class="col-12" name="name" label="Full name" required autofocus autocomplete="off" placeholder="Juan Dela Cruz" />
+                    <x-ui.input wrapper-class="col-12" name="email" type="email" label="Email" required autocomplete="off" placeholder="name@school.edu" />
+                </div>
+            </x-ui.section>
+
+            <x-ui.section title="Password" description="Give this password to the user. They can change it after signing in.">
+                <div class="row g-3">
+                    <x-ui.input wrapper-class="col-12 col-md-6" name="password" type="password" label="Password" required autocomplete="new-password"
+                        help="At least 10 characters with upper and lowercase letters, a number and a symbol." />
+                    <x-ui.input wrapper-class="col-12 col-md-6" name="password_confirmation" type="password" label="Confirm password" required autocomplete="new-password" />
+                </div>
+            </x-ui.section>
+
+            <x-ui.section title="Role and access" description="The role decides which parts of the system this person can open.">
+                <div class="row g-3">
+                    <x-ui.select wrapper-class="col-12 col-md-7" name="role" id="role" label="Role" :options="$roleOptions" placeholder="Choose a role" required />
+                    <div class="col-12" id="roleInfoPanel" hidden>
+                        <x-ui.alert variant="info"><span id="roleInfoText"></span></x-ui.alert>
+                    </div>
+                    <div class="col-12 vstack gap-2">
+                        <x-ui.switch name="is_active" label="Active" description="Active users can sign in." :checked="true" />
+                        <x-ui.switch name="must_change_password" label="Ask for a new password at first sign in" description="Recommended. The user picks their own password the first time they sign in." :checked="true" />
+                    </div>
+                </div>
+            </x-ui.section>
+
+            <x-slot:footer>
+                <x-ui.button variant="secondary" :href="route('admin.users.index')">Cancel</x-ui.button>
+                <x-ui.button type="submit" icon="person-plus">Create user</x-ui.button>
+            </x-slot:footer>
+        </x-ui.card>
+    </form>
 </div>
-
-<div class="row justify-content-center">
-    <div class="col-lg-7">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-bottom fw-semibold">
-                <i class="bi bi-person-plus text-primary me-2"></i> User Details
-            </div>
-            <div class="card-body p-4">
-
-                <form method="POST" action="{{ route('admin.users.store') }}">
-                    @csrf
-
-                    {{-- Full Name --}}
-                    <div class="mb-3">
-                        <label for="name" class="form-label fw-semibold small">Full Name <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-person text-muted"></i></span>
-                            <input id="name" type="text" name="name"
-                                   value="{{ old('name') }}"
-                                   class="form-control @error('name') is-invalid @enderror"
-                                   placeholder="e.g. Juan Dela Cruz"
-                                   required autofocus>
-                            @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
-
-                    {{-- Email --}}
-                    <div class="mb-3">
-                        <label for="email" class="form-label fw-semibold small">Email Address <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-envelope text-muted"></i></span>
-                            <input id="email" type="email" name="email"
-                                   value="{{ old('email') }}"
-                                   class="form-control @error('email') is-invalid @enderror"
-                                   placeholder="user@email.com"
-                                   required>
-                            @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    {{-- Password --}}
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label for="password" class="form-label fw-semibold small">Password <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="bi bi-lock text-muted"></i></span>
-                                <input id="password" type="password" name="password"
-                                       class="form-control @error('password') is-invalid @enderror"
-                                       placeholder="Min 8 characters"
-                                       required>
-                                @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="password_confirmation" class="form-label fw-semibold small">Confirm Password <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="bi bi-lock-fill text-muted"></i></span>
-                                <input id="password_confirmation" type="password" name="password_confirmation"
-                                       class="form-control"
-                                       placeholder="Re-enter password"
-                                       required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    {{-- Role & Status --}}
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-7">
-                            <label for="role" class="form-label fw-semibold small">Role <span class="text-danger">*</span></label>
-                            <select id="role" name="role"
-                                    class="form-select @error('role') is-invalid @enderror"
-                                    required>
-                                <option value="">— Select a role —</option>
-                                @foreach($roles as $r)
-                                <option value="{{ $r->name }}" @selected(old('role') === $r->name)>
-                                    {{ ucfirst($r->name) }}
-                                </option>
-                                @endforeach
-                            </select>
-                            @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-5 d-flex flex-column">
-                            <label class="form-label fw-semibold small">Account Status</label>
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox"
-                                       id="is_active" name="is_active" value="1"
-                                       @checked(old('is_active', '1') == '1')>
-                                <label class="form-check-label" for="is_active">Active (can sign in)</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Role description panel --}}
-                    <div id="roleInfoPanel" class="alert alert-info py-2 small mb-4 d-none">
-                        <i class="bi bi-info-circle me-1"></i>
-                        <span id="roleInfoText"></span>
-                    </div>
-
-                    <div class="d-flex gap-2 justify-content-end">
-                        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
-                        <button type="submit" class="btn btn-primary px-5">
-                            <i class="bi bi-person-plus me-1"></i> Create User
-                        </button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
-</div>
+@endsection
 
 @push('scripts')
 <script>
-const roleDescriptions = {
-    administrator: 'Full system access — can manage users, roles, settings, and all clinical modules.',
-    nurse: 'Clinical access — can manage patients, consultations, medicines, dispensing, and reports.',
-    staff: 'Limited access — can view patients and create appointments only.',
-};
-
-document.getElementById('role').addEventListener('change', function () {
-    const panel = document.getElementById('roleInfoPanel');
-    const text  = document.getElementById('roleInfoText');
-    const desc  = roleDescriptions[this.value];
-    if (desc) {
-        text.textContent = desc;
-        panel.classList.remove('d-none');
-    } else {
-        panel.classList.add('d-none');
+document.addEventListener('DOMContentLoaded', function () {
+    var roleDescriptions = {
+        administrator: 'Full access. Can manage users, roles, settings and every clinic module.',
+        nurse: 'Clinic work. Can manage patients, visits, consultations, medicines, dispensing and reports.',
+        staff: 'Front desk. Can view patients and book appointments.'
+    };
+    var select = document.getElementById('role');
+    var panel = document.getElementById('roleInfoPanel');
+    var text = document.getElementById('roleInfoText');
+    if (!select || !panel) return;
+    function update() {
+        var desc = roleDescriptions[select.value];
+        text.textContent = desc || '';
+        panel.hidden = !desc;
     }
+    select.addEventListener('change', update);
+    update();
 });
 </script>
 @endpush
-@endsection

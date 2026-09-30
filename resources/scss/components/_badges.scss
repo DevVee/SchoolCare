@@ -1,0 +1,95 @@
+// =============================================================================
+// Badges & pills
+//   .badge (Bootstrap): counts / tiny labels, restyled via variables.
+//   .pill (x-ui.badge / x-ui.status-badge): 4px-radius tag with a 6px status dot.
+//     Soft (default): tone-50 bg + AA text. `.pill-solid`: tone-700 + white.
+//     Bootstrap colour names are aliased (pill-primary -> brand, etc.).
+// =============================================================================
+
+.badge {
+    letter-spacing: .01em;
+    line-height: 1.2;
+    vertical-align: middle;
+    // Legacy `badge rounded-pill` / `btn rounded-pill`: owner wants 4px tags and
+    // 6px buttons, never pills (fully round is for avatars and dots only).
+    &.rounded-pill { border-radius: $radius-xs !important; }
+}
+.btn.rounded-pill { border-radius: $radius-sm !important; }
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .125rem .5rem;
+    border-radius: $radius-xs;
+    font-family: $font-ui;
+    font-size: .8125rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    white-space: nowrap;
+    vertical-align: middle;
+    border: 1px solid transparent;
+
+    &::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        flex-shrink: 0;
+    }
+    &.pill-nodot::before { display: none; }
+    .c-icon { font-size: .75rem; }
+
+    &.pill-sm { padding: 0 .5rem; font-size: .75rem; line-height: 1.125rem; gap: .3125rem; &::before { width: 5px; height: 5px; } }
+    &.pill-lg { padding: .25rem .75rem; font-size: .875rem; }
+}
+
+@mixin pill-tone($name) {
+    background: tone($name, 50);
+    color: tone($name, text);
+    &.pill-outline { background: #fff; border-color: tone($name, 200); }
+    &.pill-solid   { background: tone($name, 700); color: #fff; border-color: tone($name, 700); }
+}
+@each $name, $t in $tones {
+    .pill-#{$name} { @include pill-tone($name); }
+}
+// Bootstrap colour-name aliases (model accessors return these)
+$pill-bs-aliases: ("primary": "brand", "secondary": "neutral", "light": "neutral", "dark": "neutral");
+@each $alias, $tone in $pill-bs-aliases {
+    .pill-#{$alias} { @include pill-tone($tone); }
+}
+// Module keys and colour names (rose, amber, teal, cyan, indigo, ...): ~10% tint, text
+// darkened from the tone for AA, solid = tone with white text.
+@each $key, $c in $modules {
+    .pill-#{$key} {
+        background: rgba(var(--m-#{$key}-rgb), .1);
+        color: color-mix(in srgb, var(--m-#{$key}) 72%, #000);
+        &.pill-outline { background: #fff; border-color: rgba(var(--m-#{$key}-rgb), .35); }
+        &.pill-solid   { background: var(--m-#{$key}); color: #fff; border-color: var(--m-#{$key}); }
+    }
+}
+.pill-dark.pill-solid { background: $gray-800; border-color: $gray-800; }
+.pill-brand.pill-solid, .pill-primary.pill-solid { color: var(--brand-contrast); }
+
+// Count (x-ui.count): small NEUTRAL number (owner feedback: plain counts are
+// never pink/red). `.count-chip-urgent` only for urgent, actionable counts.
+.count-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 .3125rem;
+    border-radius: $radius-xs;
+    background: $gray-100;
+    color: $gray-600;
+    font-family: $font-ui;
+    font-size: .75rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    &.count-chip-urgent { background: tone("danger", 600); color: #fff; }
+    &.count-chip-brand  { background: var(--brand-100); color: var(--brand-700); }
+}

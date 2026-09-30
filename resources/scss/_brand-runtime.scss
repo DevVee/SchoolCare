@@ -1,0 +1,94 @@
+// =============================================================================
+// Runtime brand wiring for Bootstrap components whose compiled CSS contains
+// literal $primary values. Each rule re-points them at --brand-* so a colour
+// set in Admin > Settings (x-ui.brand-style) recolours them without a rebuild.
+// (Utilities such as .text-primary / .bg-primary / .border-primary / alerts /
+// subtle classes already read --bs-primary-rgb etc., rewired in _root.scss.)
+// =============================================================================
+
+// Buttons: solid primary and brand outline. Success / info / warning share the
+// brand (one colour theme); only .btn-danger keeps its own red.
+.btn-primary, .btn-success, .btn-info, .btn-warning {
+    --bs-btn-color: var(--brand-contrast);
+    --bs-btn-bg: var(--brand-600);
+    --bs-btn-border-color: var(--brand-600);
+    --bs-btn-hover-color: var(--brand-contrast);
+    --bs-btn-hover-bg: var(--brand-700);
+    --bs-btn-hover-border-color: var(--brand-700);
+    --bs-btn-focus-shadow-rgb: var(--brand-rgb);
+    --bs-btn-active-color: var(--brand-contrast);
+    --bs-btn-active-bg: var(--brand-800);
+    --bs-btn-active-border-color: var(--brand-800);
+    --bs-btn-disabled-color: var(--brand-contrast);
+    --bs-btn-disabled-bg: var(--brand-600);
+    --bs-btn-disabled-border-color: var(--brand-600);
+}
+.btn-outline, .btn-outline-primary, .btn-outline-success, .btn-outline-info, .btn-outline-warning {
+    --bs-btn-color: var(--brand-700);
+    --bs-btn-bg: #fff;
+    --bs-btn-border-color: var(--brand-200);
+    --bs-btn-hover-color: var(--brand-700);
+    --bs-btn-hover-bg: var(--brand-50);
+    --bs-btn-hover-border-color: var(--brand-300);
+    --bs-btn-focus-shadow-rgb: var(--brand-rgb);
+    --bs-btn-active-color: var(--brand-800);
+    --bs-btn-active-bg: var(--brand-100);
+    --bs-btn-active-border-color: var(--brand-300);
+    --bs-btn-disabled-color: var(--brand-700);
+    --bs-btn-disabled-bg: #fff;
+    --bs-btn-disabled-border-color: var(--brand-200);
+}
+.btn-link {
+    --bs-btn-color: var(--brand-600);
+    --bs-btn-hover-color: var(--brand-700);
+    --bs-btn-active-color: var(--brand-800);
+    --bs-btn-focus-shadow-rgb: var(--brand-rgb);
+}
+
+// Form controls: focus ring + checked state
+.form-control:focus, .form-select:focus {
+    border-color: var(--brand-600);
+    box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .25);
+}
+.form-check-input {
+    &:focus { border-color: var(--brand-400); box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .25); }
+    &:checked, &[type="checkbox"]:indeterminate { background-color: var(--brand-600); border-color: var(--brand-600); }
+}
+.form-range {
+    &::-webkit-slider-thumb { background-color: var(--brand-600); }
+    &::-moz-range-thumb { background-color: var(--brand-600); }
+    &:focus::-webkit-slider-thumb { box-shadow: 0 0 0 1px #fff, 0 0 0 4px rgba(var(--brand-rgb), .25); }
+}
+.btn-check:focus-visible + .btn { box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .25); }
+
+// Navigation
+.nav-pills { --bs-nav-pills-link-active-bg: var(--brand-600); --bs-nav-pills-link-active-color: var(--brand-contrast); }
+.nav-tabs { --bs-nav-tabs-link-active-color: var(--brand-700); }
+.nav-underline { --bs-nav-underline-link-active-color: var(--brand-700); }
+.nav-link:focus-visible { box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .25); }
+
+// Pagination (legacy Bootstrap markup)
+.pagination {
+    --bs-pagination-active-bg: var(--brand-600);
+    --bs-pagination-active-border-color: var(--brand-600);
+    --bs-pagination-focus-box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .25);
+}
+
+// Dropdowns, list groups, progress, tables
+.dropdown-menu {
+    --bs-dropdown-link-active-bg: var(--brand-50);
+    --bs-dropdown-link-active-color: var(--brand-700);
+}
+.list-group {
+    --bs-list-group-active-bg: var(--brand-600);
+    --bs-list-group-active-border-color: var(--brand-600);
+}
+.progress, .progress-stacked { --bs-progress-bar-bg: var(--brand-600); }
+.table { --bs-table-hover-bg: rgba(var(--brand-rgb), .04); }
+.accordion {
+    --bs-accordion-active-color: var(--brand-700);
+    --bs-accordion-active-bg: var(--brand-50);
+    --bs-accordion-btn-focus-box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .25);
+}
+.page-link:focus { box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .25); }
+.text-bg-primary, .text-bg-success, .text-bg-info, .text-bg-warning { color: var(--brand-contrast) !important; }

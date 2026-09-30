@@ -1,0 +1,29 @@
+// ═════════════════════════════════════════════════════════════════════════════
+// Skeleton loaders (x-ui.skeleton): async UI only (Cobi, charts, pickers)
+// ═════════════════════════════════════════════════════════════════════════════
+
+.skeleton {
+    display: block;
+    background: linear-gradient(90deg, $gray-100 25%, $gray-200 50%, $gray-100 75%);
+    background-size: 200% 100%;
+    animation: c-shimmer 1.4s infinite;
+    border-radius: $radius-xs;
+    height: .875rem;
+    width: 100%;
+    &.skeleton-circle { border-radius: 50%; }
+    &.skeleton-text + &.skeleton-text { margin-top: .5rem; }
+    &.skeleton-text:last-child:not(:first-child) { width: 60%; }
+}
+.skeleton-stack { display: flex; flex-direction: column; gap: .5rem; }
+.skeleton-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .75rem 1.25rem;
+    border-bottom: 1px solid var(--c-border);
+    &:last-child { border-bottom: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton { animation: none; background: $gray-100; }
+}

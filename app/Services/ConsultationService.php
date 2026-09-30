@@ -4,36 +4,55 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\Consultation;
+use Illuminate\Support\Facades\DB;
 
 class ConsultationService
 {
+    public function __construct(private readonly AppointmentService $appointments) {}
+
     /**
-     * Create a consultation and optionally auto-complete its linked appointment.
+     * Create a consultation and auto-complete its linked appointment
+     * (the appointment is validated to belong to the same patient).
      */
     public function create(array $data): Consultation
     {
-        $consultation = Consultation::create($data);
+        return DB::transaction(function () use ($data) {
+            $consultation = Consultation::create($data);
 
-        if (!empty($data['appointment_id'])) {
-            $appt = Appointment::find($data['appointment_id']);
-            if ($appt && in_array($appt->status, ['pending', 'approved'])) {
-                $appt->update([
-                    'status'      => 'completed',
-                    'approved_by' => $data['nurse_id'],
-                    'approved_at' => now(),
-                ]);
-            }
-        }
+            $this->completeLinkedAppointment($data['appointment_id'] ?? null, $data['nurse_id'] ?? null);
 
-        return $consultation;
+            return $consultation;
+        });
     }
 
     /**
-     * Update a consultation record.
+     * Update a consultation record. Newly linking an open appointment
+     * completes it, mirroring create().
      */
     public function update(Consultation $consultation, array $data): Consultation
     {
-        $consultation->update($data);
-        return $consultation;
+        return DB::transaction(function () use ($consultation, $data) {
+            $previousAppointment = $consultation->appointment_id;
+
+            $consultation->update($data);
+
+            if (! empty($data['appointment_id']) && (int) $data['appointment_id'] !== (int) $previousAppointment) {
+                $this->completeLinkedAppointment($data['appointment_id'], auth()->id());
+            }
+
+            return $consultation;
+        });
+    }
+
+    private function completeLinkedAppointment(mixed $appointmentId, ?int $nurseId): void
+    {
+        if (empty($appointmentId)) {
+            return;
+        }
+
+        $appointment = Appointment::find($appointmentId);
+        if ($appointment) {
+            $this->appointments->completeFromConsultation($appointment, $nurseId);
+        }
     }
 }

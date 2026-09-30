@@ -1,244 +1,226 @@
 @extends('layouts.app')
+@use('App\Support\DisplayFormat')
 
 @section('title', 'Appointment #' . $appointment->id)
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('appointments.index') }}">Appointments</a></li>
-    <li class="breadcrumb-item active">#{{ $appointment->id }}</li>
-@endsection
+@php
+    $patient = $appointment->patient;
+    $statusLabel = \App\Models\Appointment::statusLabels()[$appointment->status] ?? null;
+    $canAct = ! $appointment->isCompleted() && ! $appointment->isCancelled();
+    $who = $patient?->full_name ?? $appointment->requester_name;
+@endphp
 
 @section('content')
-<div class="page-header d-flex align-items-center justify-content-between mb-4">
-    <div>
-        <h4 class="mb-0">
-            <i class="bi bi-calendar-event me-2 text-primary"></i>Appointment #{{ $appointment->id }}
-        </h4>
-        <p class="text-muted mb-0 small">
-            Booked {{ $appointment->created_at->diffForHumans() }}
-            @if ($appointment->createdBy) by {{ $appointment->createdBy->name }} @endif
-        </p>
-    </div>
-    <div class="d-flex gap-2 align-items-center">
-        <span class="badge bg-{{ $appointment->status_badge }}-subtle text-{{ $appointment->status_badge }}-emphasis rounded-pill fs-6 px-3 py-2">
-            {{ \App\Models\Appointment::statusLabels()[$appointment->status] ?? $appointment->status }}
-        </span>
-        @can('update', $appointment)
-        <a href="{{ route('appointments.edit', $appointment) }}" class="btn btn-outline-secondary">
-            <i class="bi bi-pencil me-1"></i>Edit
-        </a>
-        @endcan
-    </div>
-</div>
+<div class="vstack gap-3">
 
-<div class="row g-4">
+    <x-ui.page-header :title="'Appointment #'.$appointment->id"
+        :description="($appointment->isOnlineRequest() ? 'Requested ' : 'Booked ').$appointment->created_at->diffForHumans().($appointment->createdBy ? ' by '.$appointment->createdBy->name : ($appointment->isOnlineRequest() ? ' by '.$appointment->requester_name : '')).'.'"
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Appointments' => route('appointments.index'), '#'.$appointment->id => null]">
+        <x-ui.status-badge :status="$appointment->status" type="appointment" :label="$statusLabel" />
+        @if ($appointment->isOnlineRequest())
+            <x-ui.badge color="info" icon="globe2" :dot="false">Online request</x-ui.badge>
+        @endif
+        <x-slot:actions>
+            @if ($canAct)
+                @canany(['update', 'complete', 'markNoShow', 'cancel'], $appointment)
+                    <x-ui.dropdown label="More" variant="secondary">
+                        @can('update', $appointment)
+                            <x-ui.dropdown-item :href="route('appointments.edit', $appointment)" icon="pencil">Edit</x-ui.dropdown-item>
+                        @endcan
+                        @can('complete', $appointment)
+                            @can('approve', $appointment)
+                                {{-- Approve is the primary action, so completing lives here. --}}
+                                <x-ui.dropdown-item :action="route('appointments.complete', $appointment)" method="PATCH" icon="check2-all">Mark completed</x-ui.dropdown-item>
+                            @endcan
+                        @endcan
+                        @can('markNoShow', $appointment)
+                            <x-ui.dropdown-item :action="route('appointments.no-show', $appointment)" method="PATCH" icon="person-slash"
+                                confirm="The appointment is closed as a no-show." :confirm-title="'Mark '.$who.' as no-show?'" confirm-button="Mark no-show" confirm-variant="warning">Mark no-show</x-ui.dropdown-item>
+                        @endcan
+                        @can('cancel', $appointment)
+                            <x-ui.dropdown-divider />
+                            <x-ui.dropdown-item icon="x-circle" tone="danger" class="btn-cancel" :data-action="route('appointments.cancel', $appointment)">
+                                {{ $appointment->isOnlineRequest() && $appointment->isPending() ? 'Decline request' : 'Cancel appointment' }}
+                            </x-ui.dropdown-item>
+                        @endcan
+                    </x-ui.dropdown>
+                @endcanany
+            @else
+                @can('update', $appointment)
+                    <x-ui.button variant="secondary" icon="pencil" :href="route('appointments.edit', $appointment)">Edit</x-ui.button>
+                @endcan
+            @endif
 
-    {{-- Left: Appointment Details --}}
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold py-3">
-                <i class="bi bi-calendar3 me-2 text-primary"></i>Appointment Details
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-5 text-muted">Date</dt>
-                    <dd class="col-7 fw-semibold">
-                        {{ $appointment->appointment_date->format('F d, Y') }}
-                        <span class="text-muted fw-normal small">
-                            ({{ $appointment->appointment_date->diffForHumans() }})
-                        </span>
-                    </dd>
+            {{-- One primary action for the current step --}}
+            @can('approve', $appointment)
+                <form method="POST" action="{{ route('appointments.approve', $appointment) }}" class="d-inline">
+                    @csrf @method('PATCH')
+                    <x-ui.button type="submit" icon="check-circle">Approve</x-ui.button>
+                </form>
+            @else
+                @can('complete', $appointment)
+                    <form method="POST" action="{{ route('appointments.complete', $appointment) }}" class="d-inline">
+                        @csrf @method('PATCH')
+                        <x-ui.button type="submit" icon="check2-all">Mark completed</x-ui.button>
+                    </form>
+                @endcan
+            @endcan
+            @can('create-consultations')
+                @if ($appointment->isApproved() && ! $appointment->consultation && $patient && ! $patient->trashed())
+                    <x-ui.button variant="secondary" icon="clipboard-plus"
+                        :href="route('consultations.create', ['appointment_id' => $appointment->id, 'patient_id' => $appointment->patient_id])">Start consultation</x-ui.button>
+                @endif
+            @endcan
+        </x-slot:actions>
+    </x-ui.page-header>
 
-                    <dt class="col-5 text-muted">Time</dt>
-                    <dd class="col-7 fw-semibold">
-                        {{ \Carbon\Carbon::parse($appointment->appointment_time)->format('h:i A') }}
-                    </dd>
+    @if ($appointment->needsPatientLink() && ! $appointment->isTerminal())
+        <x-ui.alert variant="warning" title="Not linked to a patient record yet.">
+            Link this online request to an existing patient or create a new patient before approving it.
+        </x-ui.alert>
+    @elseif ($canAct && $appointment->isPending() && $appointment->needsPatientLink())
+        <p class="small text-muted mb-0">Approve becomes available after the request is linked to a patient.</p>
+    @endif
 
-                    <dt class="col-5 text-muted">Purpose</dt>
-                    <dd class="col-7">{{ $appointment->purpose }}</dd>
-
+    <div class="row g-3">
+        {{-- Left: Appointment details --}}
+        <div class="col-lg-6">
+            <x-ui.card title="Appointment details" module="appointments" class="h-100">
+                <x-ui.description-list>
+                    <x-ui.description-item label="Date">
+                        <span class="fw-semibold">{{ DisplayFormat::date($appointment->appointment_date) }}</span>
+                        <span class="text-muted small">({{ $appointment->appointment_date->diffForHumans() }})</span>
+                    </x-ui.description-item>
+                    <x-ui.description-item label="Time"><span class="fw-semibold">{{ DisplayFormat::time($appointment->appointment_time) }}</span></x-ui.description-item>
+                    <x-ui.description-item label="Purpose">{{ $appointment->purpose }}</x-ui.description-item>
+                    @if ($appointment->provider)
+                        <x-ui.description-item label="With">{{ $appointment->provider }}</x-ui.description-item>
+                    @endif
+                    @if ($appointment->specialistVisit)
+                        <x-ui.description-item label="Specialist visit">
+                            @can('view-specialist-visits')
+                                <a href="{{ route('specialist-visits.show', $appointment->specialistVisit) }}">{{ $appointment->specialistVisit->type }}: {{ $appointment->specialistVisit->specialist_name }}</a>
+                            @else
+                                {{ $appointment->specialistVisit->type }}: {{ $appointment->specialistVisit->specialist_name }}
+                            @endcan
+                            <div class="small text-muted">{{ $appointment->specialistVisit->time_range }}</div>
+                        </x-ui.description-item>
+                    @endif
                     @if ($appointment->notes)
-                    <dt class="col-5 text-muted">Notes</dt>
-                    <dd class="col-7">{{ $appointment->notes }}</dd>
+                        <x-ui.description-item label="Notes">{{ $appointment->notes }}</x-ui.description-item>
                     @endif
-
                     @if ($appointment->isApproved() || $appointment->isCompleted())
-                    <dt class="col-5 text-muted mt-3">Approved By</dt>
-                    <dd class="col-7 mt-3">{{ $appointment->approvedBy->name ?? '—' }}</dd>
-
-                    <dt class="col-5 text-muted">Approved At</dt>
-                    <dd class="col-7">{{ $appointment->approved_at?->format('M d, Y h:i A') ?? '—' }}</dd>
+                        <x-ui.description-item label="Approved by">{{ $appointment->approvedBy?->name ?? ($appointment->approved_at ? 'Deleted user' : '') }}</x-ui.description-item>
+                        <x-ui.description-item label="Approved at">{{ $appointment->approved_at ? DisplayFormat::date($appointment->approved_at).' '.DisplayFormat::time($appointment->approved_at) : '' }}</x-ui.description-item>
                     @endif
-
                     @if ($appointment->isCancelled())
-                    <dt class="col-5 text-muted mt-3">Cancellation Reason</dt>
-                    <dd class="col-7 mt-3">
-                        <div class="alert alert-danger py-2 px-3 mb-0 small">
-                            {{ $appointment->cancelled_reason }}
+                        <x-ui.description-item label="Cancellation reason" class="text-danger">{{ $appointment->cancelled_reason ?: 'No reason given' }}</x-ui.description-item>
+                    @endif
+                </x-ui.description-list>
+            </x-ui.card>
+        </div>
+
+        {{-- Right: Patient / requester --}}
+        <div class="col-lg-6 vstack gap-3">
+            @if ($appointment->isOnlineRequest())
+                <x-ui.card title="Requested by" icon="globe2" icon-tone="info">
+                    <x-ui.description-list layout="compact">
+                        <x-ui.description-item label="Name"><span class="fw-semibold">{{ $appointment->requester_name }}</span></x-ui.description-item>
+                        <x-ui.description-item label="Mobile">{{ $appointment->requester_contact }}</x-ui.description-item>
+                        @if ($appointment->requester_email)
+                            <x-ui.description-item label="Email" class="text-break">{{ $appointment->requester_email }}</x-ui.description-item>
+                        @endif
+                        @if ($appointment->requester_student_id)
+                            <x-ui.description-item label="Student or employee ID"><span class="tabular">{{ $appointment->requester_student_id }}</span></x-ui.description-item>
+                        @endif
+                    </x-ui.description-list>
+                </x-ui.card>
+            @endif
+
+            @if ($patient)
+                <x-ui.card title="Patient" module="patients">
+                    <x-slot:actions>
+                        <x-ui.button size="sm" variant="ghost" :href="route('patients.show', $patient->id)">View profile</x-ui.button>
+                    </x-slot:actions>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <x-ui.avatar :name="$patient->full_name" size="md" />
+                        <div class="min-w-0">
+                            <div class="fw-semibold">{{ $patient->full_name }}
+                                @if ($patient->trashed())<x-ui.badge color="neutral" icon="archive" :dot="false" size="sm">Archived</x-ui.badge>@endif
+                            </div>
+                            <div class="small text-muted tabular">{{ $patient->patient_number }}</div>
                         </div>
-                    </dd>
-                    @endif
-                </dl>
-            </div>
-        </div>
-    </div>
-
-    {{-- Right: Patient Info --}}
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white fw-semibold py-3">
-                <i class="bi bi-person-circle me-2 text-primary"></i>Patient
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
-                         style="width:44px;height:44px;flex-shrink:0;font-size:1.2rem">
-                        {{ strtoupper(substr($appointment->patient->first_name, 0, 1)) }}
                     </div>
-                    <div>
-                        <div class="fw-semibold">{{ $appointment->patient->full_name }}</div>
-                        <div class="small text-muted font-monospace">{{ $appointment->patient->patient_number }}</div>
-                    </div>
-                </div>
-                <dl class="row mb-0 small">
-                    <dt class="col-5 text-muted">Category</dt>
-                    <dd class="col-7">
-                        {{ \App\Models\Patient::categoryLabels()[$appointment->patient->category] ?? $appointment->patient->category }}
-                    </dd>
+                    <x-ui.description-list layout="compact">
+                        <x-ui.description-item label="Category">{{ \App\Models\Patient::categoryLabels()[$patient->category] ?? $patient->category }}</x-ui.description-item>
+                        <x-ui.description-item label="Age and sex">{{ $patient->age_label }}, {{ $patient->sex_label }}</x-ui.description-item>
+                        <x-ui.description-item label="Contact">{{ $patient->contact_number ?? $patient->guardian_contact }}</x-ui.description-item>
+                        @if ($patient->allergies)
+                            <x-ui.description-item label="Allergies" class="text-danger">
+                                <x-ui.icon name="exclamation-triangle-fill" class="me-1" />{{ $patient->allergies }}
+                            </x-ui.description-item>
+                        @endif
+                    </x-ui.description-list>
+                </x-ui.card>
+            @elseif (! $appointment->isTerminal())
+                {{-- Link an online request to a patient --}}
+                <x-ui.card title="Link to a patient" icon="link-45deg" icon-tone="warning">
+                    @can('update-appointments')
+                        @if ($matches->isNotEmpty())
+                            <p class="small text-muted mb-2">Patients that look like the requester (same student ID, mobile number or name):</p>
+                            <ul class="list-unstyled vstack gap-2 mb-3">
+                                @foreach ($matches as $m)
+                                    <li class="d-flex flex-wrap align-items-center justify-content-between gap-2 border rounded-2 px-3 py-2">
+                                        <div class="small min-w-0">
+                                            <div class="fw-semibold">{{ $m->full_name }}</div>
+                                            <div class="text-muted">{{ $m->patient_number }}@if ($m->student_id), ID {{ $m->student_id }}@endif @if ($m->contact_number), {{ $m->contact_number }}@endif</div>
+                                        </div>
+                                        <form method="POST" action="{{ route('appointments.link-patient', $appointment) }}">
+                                            @csrf @method('PATCH')
+                                            <input type="hidden" name="patient_id" value="{{ $m->id }}">
+                                            <x-ui.button type="submit" size="sm" variant="secondary" icon="link-45deg">Link</x-ui.button>
+                                        </form>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="small text-muted">No existing patient matches the requester's student ID, mobile number or name.</p>
+                        @endif
 
-                    <dt class="col-5 text-muted">Age / Sex</dt>
-                    <dd class="col-7">
-                        {{ $appointment->patient->age }} yrs — {{ ucfirst($appointment->patient->sex) }}
-                    </dd>
+                        <form method="POST" action="{{ route('appointments.link-patient', $appointment) }}" class="d-flex flex-wrap align-items-end gap-2 mb-3">
+                            @csrf @method('PATCH')
+                            <x-ui.field label="Or pick any patient" name="patient_id" for="linkPatientId" class="flex-grow-1">
+                                <select name="patient_id" id="linkPatientId" class="form-select @error('patient_id') is-invalid @enderror" required>
+                                    <option value="">Select a patient</option>
+                                    @foreach (\App\Models\Patient::active()->orderBy('last_name')->orderBy('first_name')->limit(2000)->get(['id', 'first_name', 'middle_name', 'last_name', 'suffix', 'patient_number']) as $opt)
+                                        <option value="{{ $opt->id }}">{{ $opt->last_name }}, {{ $opt->first_name }} ({{ $opt->patient_number }})</option>
+                                    @endforeach
+                                </select>
+                            </x-ui.field>
+                            <x-ui.button type="submit">Link</x-ui.button>
+                        </form>
 
-                    <dt class="col-5 text-muted">Contact</dt>
-                    <dd class="col-7">{{ $appointment->patient->contact_number ?? '—' }}</dd>
+                        @can('create-patients')
+                            <x-ui.button size="sm" variant="secondary" icon="person-plus" :href="route('patients.create', ['from_appointment' => $appointment->id])">Create a new patient from this request</x-ui.button>
+                        @endcan
+                    @else
+                        <p class="small text-muted mb-0">A staff member who can edit appointments needs to link this request to a patient.</p>
+                    @endcan
+                </x-ui.card>
+            @endif
 
-                    @if ($appointment->patient->allergies)
-                    <dt class="col-5 text-muted">Allergies</dt>
-                    <dd class="col-7">
-                        <span class="text-danger">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                            {{ $appointment->patient->allergies }}
-                        </span>
-                    </dd>
-                    @endif
-                </dl>
-                <a href="{{ route('patients.show', $appointment->patient) }}"
-                   class="btn btn-sm btn-outline-primary mt-3">
-                    <i class="bi bi-person me-1"></i>View Full Profile
-                </a>
-            </div>
-        </div>
-
-        {{-- Linked Consultation --}}
-        @if ($appointment->consultation)
-        <div class="card border-0 shadow-sm border-start border-4 border-info">
-            <div class="card-body small">
-                <div class="fw-semibold mb-1">
-                    <i class="bi bi-clipboard-pulse me-1 text-info"></i>Linked Consultation
-                </div>
-                <div>{{ \Illuminate\Support\Str::limit($appointment->consultation->chief_complaint, 80) }}</div>
-                <a href="{{ route('consultations.show', $appointment->consultation) }}"
-                   class="btn btn-sm btn-outline-info mt-2">View Consultation</a>
-            </div>
-        </div>
-        @endif
-    </div>
-
-</div>
-
-{{-- Action Buttons --}}
-@php $canAct = !$appointment->isCompleted() && !$appointment->isCancelled(); @endphp
-@if ($canAct)
-<div class="card border-0 shadow-sm mt-4">
-    <div class="card-header bg-white fw-semibold py-3">
-        <i class="bi bi-sliders me-2 text-primary"></i>Actions
-    </div>
-    <div class="card-body d-flex flex-wrap gap-2">
-
-        @can('approve', $appointment)
-        <form method="POST" action="{{ route('appointments.approve', $appointment) }}">
-            @csrf @method('PATCH')
-            <button type="submit" class="btn btn-success">
-                <i class="bi bi-check-circle me-1"></i>Approve
-            </button>
-        </form>
-        @endcan
-
-        @can('complete', $appointment)
-        <form method="POST" action="{{ route('appointments.complete', $appointment) }}">
-            @csrf @method('PATCH')
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-check2-all me-1"></i>Mark Completed
-            </button>
-        </form>
-        @endcan
-
-        @can('markNoShow', $appointment)
-        <form method="POST" action="{{ route('appointments.no-show', $appointment) }}">
-            @csrf @method('PATCH')
-            <button type="submit" class="btn btn-secondary">
-                <i class="bi bi-person-slash me-1"></i>Mark No Show
-            </button>
-        </form>
-        @endcan
-
-        @can('cancel', $appointment)
-        <button type="button" class="btn btn-danger btn-cancel"
-                data-action="{{ route('appointments.cancel', $appointment) }}">
-            <i class="bi bi-x-circle me-1"></i>Cancel
-        </button>
-        @endcan
-
-        @can('create-consultations')
-        @if ($appointment->isApproved() && !$appointment->consultation)
-        <a href="{{ route('consultations.create', ['appointment_id' => $appointment->id, 'patient_id' => $appointment->patient_id]) }}"
-           class="btn btn-outline-info">
-            <i class="bi bi-clipboard-plus me-1"></i>Start Consultation
-        </a>
-        @endif
-        @endcan
-
-    </div>
-</div>
-@endif
-
-{{-- Cancel Modal --}}
-<div class="modal fade" id="cancelModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title text-danger">
-                    <i class="bi bi-x-circle-fill me-2"></i>Cancel Appointment
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="cancelForm" method="POST">
-                @csrf @method('PATCH')
-                <div class="modal-body">
-                    <label class="form-label fw-semibold">Reason for Cancellation <span class="text-danger">*</span></label>
-                    <textarea name="cancelled_reason" class="form-control" rows="3"
-                              placeholder="Provide a reason…" required></textarea>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-x-circle me-1"></i>Cancel Appointment
-                    </button>
-                </div>
-            </form>
+            {{-- Linked consultation --}}
+            @if ($appointment->consultation)
+                <x-ui.card title="Linked consultation" module="consultations">
+                    <x-slot:actions>
+                        <x-ui.button size="sm" variant="ghost" :href="route('consultations.show', $appointment->consultation)">View</x-ui.button>
+                    </x-slot:actions>
+                    <p class="mb-0 small">{{ \Illuminate\Support\Str::limit($appointment->consultation->chief_complaint, 120) }}</p>
+                </x-ui.card>
+            @endif
         </div>
     </div>
 </div>
+
+@include('appointments.partials.cancel-modal')
 @endsection
-
-@push('scripts')
-<script>
-document.querySelectorAll('.btn-cancel').forEach(btn => {
-    btn.addEventListener('click', function () {
-        document.getElementById('cancelForm').action = this.dataset.action;
-        new bootstrap.Modal(document.getElementById('cancelModal')).show();
-    });
-});
-</script>
-@endpush

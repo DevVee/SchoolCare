@@ -1,175 +1,91 @@
 @extends('layouts.app')
 
-@section('title', 'Medicine Categories')
+@section('title', 'Medicine categories')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0"><i class="bi bi-tags-fill me-2 text-primary"></i>Medicine Categories</h4>
-        <p class="text-muted small mb-0">Organise medicines into categories for easier management</p>
-    </div>
-    <a href="{{ route('medicines.index') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i>Medicines
-    </a>
-</div>
+<div class="vstack gap-4">
+    <x-ui.page-header :title="'Medicine categories'"
+        :description="$categories->count().' '.\Illuminate\Support\Str::plural('category', $categories->count()).'. Group medicines to find them faster.'"
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Medicines' => route('medicines.index'), 'Categories' => null]" />
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show py-2 small" role="alert">
-    <i class="bi bi-check-circle me-1"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
+    @include('medicines.partials.module-tabs', ['active' => 'categories'])
 
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show py-2 small" role="alert">
-    <i class="bi bi-exclamation-circle me-1"></i>{{ session('error') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <x-ui.card flush>
+                <x-ui.table responsive="stack" caption="Medicine categories">
+                    <x-slot:head>
+                        <x-ui.th>Category</x-ui.th>
+                        <x-ui.th priority="md">Description</x-ui.th>
+                        <x-ui.th align="end">Medicines</x-ui.th>
+                        <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
+                    </x-slot:head>
 
-<div class="row g-4">
+                    @foreach ($categories as $cat)
+                        <tr>
+                            <x-ui.td identity><span class="cell-title">{{ $cat->name }}</span></x-ui.td>
+                            <x-ui.td priority="md" label="Description" muted truncate>{{ $cat->description ?: '-' }}</x-ui.td>
+                            <x-ui.td numeric label="Medicines">
+                                <a href="{{ route('medicines.index', ['category' => $cat->id]) }}" class="fw-semibold"
+                                   aria-label="{{ $cat->medicines_count }} medicines in {{ $cat->name }}">{{ number_format($cat->medicines_count) }}</a>
+                            </x-ui.td>
+                            <x-ui.td actions>
+                                <x-ui.action-menu :for="$cat->name">
+                                    <x-ui.action-menu.item :href="route('medicines.index', ['category' => $cat->id])" icon="capsule">View medicines</x-ui.action-menu.item>
+                                    @can('update-medicines')
+                                        <x-ui.action-menu.item :href="route('medicine-categories.edit', $cat)" icon="pencil">Edit</x-ui.action-menu.item>
+                                    @endcan
+                                    @can('delete-medicines')
+                                        <x-ui.action-menu.divider />
+                                        @if ($cat->medicines_count > 0)
+                                            <x-ui.action-menu.item icon="trash" danger
+                                                data-blocked-message="{{ $cat->name }} has {{ $cat->medicines_count }} {{ \Illuminate\Support\Str::plural('medicine', $cat->medicines_count) }}. Move them to another category before deleting it.">Delete</x-ui.action-menu.item>
+                                        @else
+                                            <x-ui.action-menu.item :action="route('medicine-categories.destroy', $cat)" method="DELETE" icon="trash" danger
+                                                confirm="This cannot be undone." :confirm-title="'Delete '.$cat->name.'?'" confirm-button="Delete category">Delete</x-ui.action-menu.item>
+                                        @endif
+                                    @endcan
+                                </x-ui.action-menu>
+                            </x-ui.td>
+                        </tr>
+                    @endforeach
 
-    {{-- ── Left: Category List ──────────────────────────────────────── --}}
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-bottom fw-semibold d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-list-ul me-2"></i>All Categories</span>
-                <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ $categories->count() }}</span>
-            </div>
-            <div class="card-body p-0">
-                @if($categories->isEmpty())
-                <div class="text-center py-5 text-muted">
-                    <i class="bi bi-tags" style="font-size:2.5rem;opacity:.3;display:block;margin-bottom:.75rem;"></i>
-                    No categories yet. Create one using the form.
-                </div>
-                @else
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Category</th>
-                                <th>Description</th>
-                                <th class="text-center">Medicines</th>
-                                <th class="text-end pe-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($categories as $cat)
-                            <tr>
-                                <td class="ps-4 fw-semibold">{{ $cat->name }}</td>
-                                <td class="text-muted small">{{ $cat->description ?: '—' }}</td>
-                                <td class="text-center">
-                                    <a href="{{ route('medicines.index', ['category' => $cat->id]) }}"
-                                       class="badge bg-primary-subtle text-primary-emphasis text-decoration-none">
-                                        {{ $cat->medicines_count }}
-                                    </a>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <div class="btn-group btn-group-sm">
-                                        @can('update-medicines')
-                                        <a href="{{ route('medicine-categories.edit', $cat) }}"
-                                           class="btn btn-outline-secondary" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        @endcan
-                                        @can('delete-medicines')
-                                        <button type="button"
-                                                class="btn btn-outline-danger btn-delete"
-                                                data-action="{{ route('medicine-categories.destroy', $cat) }}"
-                                                data-label="{{ $cat->name }}"
-                                                data-count="{{ $cat->medicines_count }}"
-                                                title="Delete">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @endif
-            </div>
+                    <x-slot:empty>
+                        <x-ui.empty-state icon="tags" title="No categories yet" description="Create one with the form." compact />
+                    </x-slot:empty>
+                </x-ui.table>
+            </x-ui.card>
         </div>
-    </div>
 
-    {{-- ── Right: Add New Category ──────────────────────────────────── --}}
-    @can('create-medicines')
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-bottom fw-semibold">
-                <i class="bi bi-plus-circle me-2 text-primary"></i>New Category
-            </div>
-            <div class="card-body">
+        @can('create-medicines')
+            <div class="col-lg-4">
                 <form method="POST" action="{{ route('medicine-categories.store') }}">
                     @csrf
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Category Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
-                               value="{{ old('name') }}" placeholder="e.g. Analgesic" required>
-                        @error('name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small fw-semibold">Description</label>
-                        <textarea name="description" class="form-control @error('description') is-invalid @enderror"
-                                  rows="3" placeholder="Optional description…">{{ old('description') }}</textarea>
-                        @error('description')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-plus-circle-fill me-1"></i>Add Category
-                    </button>
+                    <x-ui.card title="New category">
+                        <div class="vstack gap-3">
+                            <x-ui.input name="name" label="Category name" required placeholder="For example: Analgesic" />
+                            <x-ui.textarea name="description" label="Description" rows="3" optional />
+                        </div>
+                        <x-slot:footer>
+                            <x-ui.button type="submit" icon="plus-lg">Add category</x-ui.button>
+                        </x-slot:footer>
+                    </x-ui.card>
                 </form>
             </div>
-        </div>
-    </div>
-    @endcan
-
-</div>
-
-{{-- Delete Confirmation Modal --}}
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title text-danger">
-                    <i class="bi bi-trash-fill me-2"></i>Delete Category?
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-muted small" id="deleteModalBody">
-                This action cannot be undone.
-            </div>
-            <form id="deleteForm" method="POST">
-                @csrf @method('DELETE')
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </div>
-            </form>
-        </div>
+        @endcan
     </div>
 </div>
+@endsection
 
 @push('scripts')
 <script>
-document.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.addEventListener('click', function () {
-        const count = parseInt(this.dataset.count);
-        if (count > 0) {
-            alert('Cannot delete "' + this.dataset.label + '" — it has ' + count + ' medicine(s) assigned. Reassign them first.');
-            return;
-        }
-        document.getElementById('deleteForm').action = this.dataset.action;
-        document.getElementById('deleteModalBody').textContent =
-            'Delete category "' + this.dataset.label + '"? This cannot be undone.';
-        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('click', function (e) {
+        var item = e.target.closest('[data-blocked-message]');
+        if (!item) return;
+        e.preventDefault();
+        if (window.toast) window.toast(item.dataset.blockedMessage, 'warning');
     });
 });
 </script>
 @endpush
-@endsection

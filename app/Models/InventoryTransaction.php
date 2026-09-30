@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class InventoryTransaction extends Model
 {
     protected $fillable = [
-        'medicine_id', 'transaction_type', 'quantity',
+        'medicine_id', 'batch_id', 'transaction_type', 'quantity',
         'before_quantity', 'after_quantity',
         'reference_id', 'reference_type',
         'batch_number', 'expiration_date', 'supplier',
@@ -28,7 +28,13 @@ class InventoryTransaction extends Model
 
     public function medicine(): BelongsTo
     {
-        return $this->belongsTo(Medicine::class);
+        // Keep the ledger readable after a medicine is removed.
+        return $this->belongsTo(Medicine::class)->withTrashed();
+    }
+
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(MedicineBatch::class, 'batch_id');
     }
 
     public function performedBy(): BelongsTo
@@ -48,6 +54,7 @@ class InventoryTransaction extends Model
             'stock_out'  => 'danger',
             'dispensed'  => 'warning',
             'adjustment' => 'info',
+            'disposed'   => 'dark',
             default      => 'secondary',
         };
     }
@@ -59,6 +66,7 @@ class InventoryTransaction extends Model
             'stock_out'  => 'Stock Out',
             'dispensed'  => 'Dispensed',
             'adjustment' => 'Adjustment',
+            'disposed'   => 'Disposed',
             default      => ucfirst($this->transaction_type),
         };
     }

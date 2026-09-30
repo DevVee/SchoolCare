@@ -6,6 +6,7 @@
         "dev": "vite"
     },
     "devDependencies": {
+        "apexcharts": "^7.6.0",
         "autoprefixer": "^10.5.0",
         "axios": "^1.8.2",
         "bootstrap": "^5.3.3",

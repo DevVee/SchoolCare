@@ -14,8 +14,6 @@ class DatabaseSeeder extends Seeder
             MedicineCategorySeeder::class,
             AppointmentTimeSlotSeeder::class,
             SettingsSeeder::class,
-            DemoDataSeeder::class,
-            PatientLogSeeder::class,
         ]);
     }
 }

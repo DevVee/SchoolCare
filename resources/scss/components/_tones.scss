@@ -1,0 +1,68 @@
+// =============================================================================
+// Module tones: icon glyph colour + a ~10% tint chip. One colour theme, so
+// every module is the brand blue (runtime themable). Plain colour names that
+// older markup passes (tone="teal", tone="amber") resolve to the brand too;
+// only "slate" (neutral) differs. Red is reserved for the danger tone. Keys match
+// config/ui.php `module_meta`. Imported BEFORE component partials so contextual
+// component rules (.stat-tile, .alert-c.tone-*, .empty-icon.tone-*) keep precedence.
+//
+//   .tone-{key}        icon / glyph colour            (modules and tones)
+//   .tone-chip-{key}   glyph colour only; icons never sit on a tinted square
+//   .icon-chip         icon box (x-ui.icon-chip); sizes -sm 28 / -md 32 / -lg 36
+// =============================================================================
+
+// key => source tone from $tones
+$modules: (
+  "overview": "brand", "dashboard": "brand", "logbook": "brand", "patients": "brand",
+  "appointments": "brand", "consultations": "brand", "medicines": "brand", "inventory": "brand",
+  "dispensing": "brand", "reports": "brand", "sms": "brand", "ai": "brand", "admin": "brand",
+  "amber": "brand", "cyan": "brand", "indigo": "brand", "sky": "brand", "green": "brand",
+  "emerald": "brand", "violet": "brand", "purple": "brand", "rose": "brand",
+  "slate": "neutral",
+);
+
+:root {
+    @each $key, $src in $modules {
+        --m-#{$key}: var(--c-#{$src}-600);
+        --m-#{$key}-rgb: var(--c-#{$src}-rgb);
+    }
+}
+
+@each $key, $c in $modules {
+    .tone-#{$key}, .tone-chip-#{$key} { color: var(--m-#{$key}); }
+}
+@each $name, $t in $tones {
+    .tone-#{$name}, .tone-chip-#{$name} { color: var(--c-#{$name}-600); }
+}
+
+.icon-chip {
+    --chip-size: 2rem;
+    width: var(--chip-size);
+    height: var(--chip-size);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: calc(var(--chip-size) * .625);
+    line-height: 1;
+    &.icon-chip-sm { --chip-size: 1.75rem; }
+    &.icon-chip-md { --chip-size: 2rem; }
+    &.icon-chip-lg { --chip-size: 2.25rem; }
+}
+
+// Dashboard welcome band: solid brand-50, 8px radius (no gradient, no shapes)
+.welcome-band {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem 1.5rem;
+    padding: 1.125rem 1.25rem;
+    margin-bottom: 1.5rem;
+    background: var(--brand-50);
+    border: 1px solid var(--brand-100);
+    border-radius: $radius-md;
+    .welcome-band-title { font-family: $font-display; font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; color: var(--c-ink); margin: 0; }
+    .welcome-band-sub   { font-size: .9375rem; color: var(--c-ink-2); margin: .125rem 0 0; }
+    .welcome-band-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+}

@@ -1,52 +1,32 @@
+{{-- Only reachable when config('auth.allow_registration') is true (routes/auth.php). --}}
 <x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
+    <x-slot:title>Create an account</x-slot:title>
+
+    <h1 class="auth-title">Create an account</h1>
+    <p class="auth-lead">For clinic staff. An administrator assigns your role after you register.</p>
+
+    <form method="POST" action="{{ route('register') }}" class="auth-form">
         @csrf
 
-        <!-- Name -->
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
-        </div>
+        <x-ui.input name="name" id="name" label="Full name" required autofocus autocomplete="name" />
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+        <x-ui.input name="email" id="email" type="email" label="Email address" icon="envelope"
+                    required autocomplete="username" inputmode="email" />
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+        @include('auth.partials.password', [
+            'name' => 'password',
+            'label' => 'Password',
+            'autocomplete' => 'new-password',
+        ])
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
+        @include('auth.partials.password', [
+            'name' => 'password_confirmation',
+            'label' => 'Confirm password',
+            'autocomplete' => 'new-password',
+        ])
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+        <x-ui.button type="submit" size="lg" block>Create account</x-ui.button>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
-
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
-        </div>
+        <a href="{{ route('login') }}" class="auth-link auth-back">Already have an account? Sign in</a>
     </form>
 </x-guest-layout>

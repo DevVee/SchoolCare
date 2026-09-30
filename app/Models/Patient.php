@@ -14,13 +14,14 @@ class Patient extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'patient_number', 'category',
+        'patient_number', 'student_id', 'category',
         'first_name', 'middle_name', 'last_name', 'suffix',
-        'sex', 'birthdate', 'contact_number', 'email', 'address',
+        'sex', 'birthdate', 'contact_number', 'other_contact', 'email', 'address',
         'emergency_contact_name', 'emergency_contact_number',
         'year_level', 'program_strand', 'section',
-        'guardian_name', 'guardian_relationship', 'guardian_contact', 'guardian_address',
-        'blood_type', 'allergies', 'medical_conditions', 'notes',
+        'guardian_name', 'guardian_relationship', 'guardian_contact', 'guardian_facebook', 'guardian_address',
+        'blood_type', 'pediatrician_name', 'pediatrician_contact',
+        'allergies', 'medical_conditions', 'current_medications', 'notes',
         'is_active', 'created_by', 'updated_by',
     ];
 
@@ -48,6 +49,17 @@ class Patient extends Model
     public function getAgeAttribute(): ?int
     {
         return $this->birthdate?->age;
+    }
+
+    /** "12 yrs", or "Age not recorded" when the birthdate is missing (imported records). */
+    public function getAgeLabelAttribute(): string
+    {
+        return $this->age === null ? 'Age not recorded' : $this->age.' yrs';
+    }
+
+    public function getSexLabelAttribute(): string
+    {
+        return self::sexLabels()[$this->sex] ?? ucfirst((string) $this->sex);
     }
 
     public function getCategoryLabelAttribute(): string
@@ -111,32 +123,27 @@ class Patient extends Model
 
     // ─── Static Helpers ───────────────────────────────────────────────────────
 
+    // Choice lists are editable in Admin → Settings → Clinic.
+
     public static function categories(): array
     {
-        return [
-            'college', 'senior_high', 'junior_high', 'elementary',
-            'kinder', 'daycare', 'teacher', 'employee', 'visitor', 'other',
-        ];
+        return array_keys(static::categoryLabels());
     }
 
+    /** [value => label] */
     public static function categoryLabels(): array
     {
-        return [
-            'college'     => 'College',
-            'senior_high' => 'Senior High School',
-            'junior_high' => 'Junior High School',
-            'elementary'  => 'Elementary',
-            'kinder'      => 'Kinder',
-            'daycare'     => 'Daycare',
-            'teacher'     => 'Teacher',
-            'employee'    => 'Employee',
-            'visitor'     => 'Visitor',
-            'other'       => 'Other',
-        ];
+        return settings()->options('patient_categories');
+    }
+
+    /** [value => label] */
+    public static function sexLabels(): array
+    {
+        return settings()->options('patient_genders');
     }
 
     public static function bloodTypes(): array
     {
-        return ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'];
+        return settings()->list('blood_types');
     }
 }

@@ -1,0 +1,117 @@
+// =============================================================================
+// Dropdowns, panels and the row action menu.
+// Menus scale in from their trigger edge (transform-origin set per Popper
+// placement). The keyframe animates `scale`, not `transform`, so Popper's
+// positioning transform is never overwritten.
+// =============================================================================
+
+.dropdown-menu {
+    box-shadow: var(--bs-dropdown-box-shadow);
+    transform-origin: top left;
+    &.show { animation: c-pop-in $dur-fast $ease-out; }
+    &.dropdown-menu-end, &[data-popper-placement$="-end"] { transform-origin: top right; }
+    &[data-popper-placement^="top"] { transform-origin: bottom left; }
+    &[data-popper-placement="top-end"] { transform-origin: bottom right; }
+}
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    font-weight: 500;
+    border-radius: $border-radius;
+    transition: background-color $dur-fast ease-out, color $dur-fast ease-out;
+    .c-icon, > .bi { font-size: 1rem; color: var(--c-muted); width: 1rem; text-align: center; }
+    &:active .c-icon, &.active .c-icon { color: inherit; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dropdown-item-meta { margin-left: auto; font-size: .8125rem; color: var(--c-muted); }
+}
+button.dropdown-item { cursor: pointer; }
+.dropdown-item-danger, .dropdown-item.text-danger {
+    color: tone("danger", 700) !important;
+    .c-icon, > .bi { color: inherit; }
+    &:hover, &:focus { background: tone("danger", 50); color: tone("danger", 700); }
+}
+.dropdown-header {
+    font-family: $font-ui;
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.dropdown-divider { margin: .375rem -.375rem; }
+.dropdown-menu form { display: contents; }
+
+@media (pointer: coarse) {
+    .dropdown-item { min-height: 2.75rem; }
+}
+
+// Large panel (user menu / notifications)
+.dropdown-panel {
+    --bs-dropdown-border-radius: #{$border-radius-lg};
+    --bs-dropdown-padding-y: 0;
+    --bs-dropdown-padding-x: 0;
+    --bs-dropdown-item-padding-x: 1rem;
+    --bs-dropdown-item-padding-y: .625rem;
+    width: 20rem;
+    max-width: calc(100vw - 1.5rem);
+    overflow: hidden;
+    box-shadow: var(--c-shadow-modal);
+    .dropdown-item { border-radius: 0; }
+    .panel-header { padding: .875rem 1rem; border-bottom: 1px solid var(--c-border); }
+    .panel-title  { font-family: $font-ui; font-size: 1rem; font-weight: 700; letter-spacing: -.01em; color: var(--c-ink); margin: 0; line-height: 1.3; }
+    .panel-sub    { font-size: .8125rem; color: var(--c-muted); margin: .125rem 0 0; }
+    .panel-footer { border-top: 1px solid var(--c-border); padding: .625rem 1rem; }
+    .dropdown-divider { margin: 0; }
+}
+.dropdown-panel-wide { width: 22.5rem; }
+
+.notif-item {
+    display: flex;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--c-border);
+    text-decoration: none;
+    color: inherit;
+    &:hover { background: var(--c-surface-2); color: inherit; text-decoration: none; }
+    .notif-icon  { width: 2.25rem; height: 2.25rem; border-radius: $border-radius; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .notif-title { font-size: .9375rem; font-weight: 600; color: var(--c-ink); line-height: 1.3; }
+    .notif-body  { font-size: .8125rem; color: var(--c-muted); margin-top: 2px; }
+}
+
+// Tone helpers for icons (card icons, notifications, stat tiles): glyph colour only, no background
+@each $name, $t in $tones {
+    .tone-bg-#{$name} { color: tone($name, 600); }
+}
+
+// -- Row action menu (x-ui.action-menu) ---------------------------------------------
+// ONE ghost "more" button per row that opens a menu of TEXT items with small
+// muted icons (owner feedback: never a row of coloured icon buttons).
+.action-menu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    .dropdown-menu { min-width: 12rem; }
+    .dropdown-item .c-icon { font-size: .875rem; }
+}
+.btn-more {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    border-radius: $radius-sm;
+    background: transparent;
+    color: var(--c-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
+    &:hover, &[aria-expanded="true"] { background: $gray-100; color: var(--c-ink); }
+    &:active { transform: scale($press-scale); }
+}
+@media (pointer: coarse), (max-width: 767.98px) {
+    .btn-more { width: 2.75rem; height: 2.75rem; }
+}

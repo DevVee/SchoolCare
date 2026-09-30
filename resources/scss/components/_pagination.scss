@@ -1,0 +1,59 @@
+// =============================================================================
+// Pagination (resources/views/vendor/pagination/clinovia*.blade.php)
+// "Showing 1 to 20 of 134 results" + page squares; phones get
+// previous / "Page X of Y" / next with 44px targets.
+// =============================================================================
+
+.c-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem 1rem;
+    width: 100%;
+    font-size: .875rem;
+    color: var(--c-ink-2);
+
+    .c-pagination-info {
+        margin: 0;
+        strong { color: var(--c-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+    }
+    .c-pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: .25rem;
+        margin-left: auto;
+    }
+    .pagination {
+        --bs-pagination-padding-x: 0;
+        --bs-pagination-padding-y: 0;
+        gap: 2px;
+        margin: 0;
+        flex-wrap: nowrap;
+    }
+    .page-link {
+        min-width: 2rem;
+        height: 2rem;
+        padding: 0 .5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: $border-radius !important;
+        font-family: $font-ui;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        transition: background-color $dur-fast ease-out, color $dur-fast ease-out;
+    }
+    .page-item.active .page-link { font-weight: 700; }
+    .page-item.disabled .page-link { background: transparent; }
+    .page-status {
+        padding: 0 .5rem;
+        white-space: nowrap;
+        strong { color: var(--c-ink); }
+    }
+}
+@include media-breakpoint-down(sm) {
+    .c-pagination { justify-content: center; }
+    .c-pagination .c-pagination-info { width: 100%; text-align: center; }
+    .c-pagination .c-pagination-controls { margin: 0 auto; }
+}

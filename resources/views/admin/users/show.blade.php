@@ -2,171 +2,188 @@
 
 @section('title', $user->name)
 
+@php
+    $isSelf = $user->id === auth()->id();
+    $canTouch = auth()->user()->can('manage-users') && (! $isSuperAdmin || auth()->user()->isAdmin());
+    $role = $user->roles->first();
+    $loginAt = $user->last_login_at ?? $lastLogin?->created_at;
+    $loginIp = $user->last_login_ip ?? $lastLogin?->ip_address;
+
+    // Permissions grouped by module, in plain words ("Patients: View, Create, Edit").
+    $granted = $user->getAllPermissions()->pluck('name')->flip();
+    $columns = \App\Support\PermissionCatalog::columns();
+    $access = [];
+    foreach (\App\Support\PermissionCatalog::modules() as $module) {
+        $can = [];
+        foreach ($module['actions'] ?? [] as $col => $perm) {
+            if ($granted->has($perm)) {
+                $can[] = $columns[$col] ?? ucfirst($col);
+            }
+        }
+        foreach ($module['other'] ?? [] as $perm => $label) {
+            if ($granted->has($perm)) {
+                $can[] = $label;
+            }
+        }
+        if ($can) {
+            $access[] = ['label' => $module['label'], 'icon' => $module['icon'] ?? 'grid', 'can' => $can];
+        }
+    }
+@endphp
+
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">User Profile</h4>
-        <p class="text-muted small mb-0">Account details and permissions</p>
-    </div>
-    <div class="d-flex gap-2">
-        @can('manage-users')
-        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-primary btn-sm px-3">
-            <i class="bi bi-pencil me-1"></i> Edit
-        </a>
-        @endcan
-        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i> Back
-        </a>
-    </div>
-</div>
+<div class="vstack gap-3">
 
-<div class="row g-4">
+    <x-ui.page-header :title="$user->name" :description="$user->email"
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Users' => route('admin.users.index'), $user->name => null]">
+        @if ($canTouch)
+            <x-slot:actions>
+                @unless ($isSelf)
+                    <x-ui.dropdown label="More" variant="secondary" align="end">
+                        @if ($user->is_active)
+                            <x-ui.dropdown-item :action="route('admin.users.toggle-active', $user)" method="PATCH" icon="person-dash"
+                                confirm="They will be signed out right away and cannot sign in until the account is activated again."
+                                :confirm-title="'Deactivate '.$user->name.'?'" confirm-button="Deactivate">Deactivate</x-ui.dropdown-item>
+                        @else
+                            <x-ui.dropdown-item :action="route('admin.users.toggle-active', $user)" method="PATCH" icon="person-check"
+                                confirm="They will be able to sign in again." :confirm-title="'Activate '.$user->name.'?'" confirm-button="Activate">Activate</x-ui.dropdown-item>
+                        @endif
+                        <x-ui.dropdown-item :action="route('admin.users.reset-password', $user)" icon="key"
+                            confirm="A temporary password will be shown to you once. Their current password stops working and they are signed out."
+                            :confirm-title="'Reset password for '.$user->name.'?'" confirm-button="Reset password">Reset password</x-ui.dropdown-item>
+                        @if ($clinicalRecords === 0)
+                            <x-ui.dropdown-divider />
+                            <x-ui.dropdown-item :action="route('admin.users.destroy', $user)" method="DELETE" icon="trash" tone="danger"
+                                confirm="This permanently removes the account. It cannot be undone."
+                                :confirm-title="'Delete '.$user->name.'?'" confirm-button="Delete user">Delete</x-ui.dropdown-item>
+                        @endif
+                    </x-ui.dropdown>
+                @endunless
+                <x-ui.button icon="pencil" :href="route('admin.users.edit', $user)">Edit</x-ui.button>
+            </x-slot:actions>
+        @endif
+    </x-ui.page-header>
 
-    {{-- ── Left: Profile card ──────────────────────────────────────────────── --}}
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm text-center">
-            <div class="card-body p-4">
-                {{-- Avatar --}}
-                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold mx-auto mb-3"
-                     style="width:80px;height:80px;font-size:2rem;background:var(--gradient-primary);">
-                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                </div>
-                <h5 class="fw-bold mb-0">{{ $user->name }}</h5>
-                <p class="text-muted small mb-3">{{ $user->email }}</p>
-
-                @php $role = $user->roles->first(); @endphp
-                @if($role)
-                @php $roleColor = match($role->name) {
-                    'administrator' => 'danger',
-                    'nurse'         => 'success',
-                    'staff'         => 'info',
-                    default         => 'secondary'
-                }; @endphp
-                <span class="badge text-bg-{{ $roleColor }} px-3 py-2 mb-3">
-                    <i class="bi bi-shield-fill me-1"></i>{{ ucfirst($role->name) }}
-                </span>
-                @endif
-
-                <div class="text-center mb-3">
-                    @if($user->is_active)
-                        <span class="badge bg-success-subtle text-success-emphasis">
-                            <i class="bi bi-circle-fill me-1" style="font-size:.45rem;"></i>Active Account
-                        </span>
-                    @else
-                        <span class="badge bg-danger-subtle text-danger-emphasis">
-                            <i class="bi bi-circle-fill me-1" style="font-size:.45rem;"></i>Inactive Account
-                        </span>
-                    @endif
-                </div>
-
-                <hr>
-
-                <div class="text-start small">
-                    <div class="d-flex justify-content-between py-1">
-                        <span class="text-muted">Last Login</span>
-                        <span class="fw-semibold">
-                            {{ $user->last_login_at ? $user->last_login_at->diffForHumans() : 'Never' }}
-                        </span>
-                    </div>
-                    <div class="d-flex justify-content-between py-1">
-                        <span class="text-muted">Member Since</span>
-                        <span class="fw-semibold">{{ $user->created_at->format('M d, Y') }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between py-1">
-                        <span class="text-muted">Permissions</span>
-                        <span class="fw-semibold">{{ $user->getAllPermissions()->count() }}</span>
-                    </div>
-                </div>
+    @if (session('temp_password'))
+        <x-ui.alert variant="warning" :title="'Temporary password for '.$user->name">
+            <div class="d-flex align-items-center gap-2 flex-wrap my-2">
+                <code class="fs-5 px-2 py-1 bg-body border rounded-1 user-select-all text-ink" id="tempPassword">{{ session('temp_password') }}</code>
+                <x-ui.button variant="secondary" size="sm" icon="clipboard" id="copyTempPassword">Copy</x-ui.button>
             </div>
-        </div>
-    </div>
+            Give it to the user in person or through a private message. It is shown only once, and they must choose a new password when they next sign in.
+        </x-ui.alert>
+    @endif
 
-    {{-- ── Right: Permissions + recent activity ──────────────────────────── --}}
-    <div class="col-lg-8">
+    @if ($user->must_change_password)
+        <x-ui.alert variant="info">This user must choose a new password the next time they sign in.</x-ui.alert>
+    @endif
 
-        {{-- Permissions --}}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-bottom fw-semibold">
-                <i class="bi bi-key text-warning me-2"></i> Permissions via
-                <span class="text-primary">{{ $role?->name ?? 'No Role' }}</span>
-            </div>
-            <div class="card-body">
-                @php
-                    $allPerms = $user->getAllPermissions()->pluck('name');
-                    $grouped  = $allPerms->groupBy(function($p) {
-                        $parts = explode('-', $p);
-                        array_shift($parts);
-                        return ucfirst(implode(' ', $parts));
-                    })->sortKeys();
-                @endphp
+    @if ($clinicalRecords > 0)
+        <x-ui.alert variant="neutral" icon="link-45deg">
+            Linked to {{ number_format($clinicalRecords) }} clinic {{ \Illuminate\Support\Str::plural('record', $clinicalRecords) }}.
+            This account cannot be deleted. Deactivate it to stop access while keeping the records.
+        </x-ui.alert>
+    @endif
 
-                @if($allPerms->isEmpty())
-                    <p class="text-muted small mb-0">No permissions assigned.</p>
-                @else
-                <div class="row g-2">
-                    @foreach($grouped as $group => $perms)
-                    <div class="col-sm-6 col-md-4">
-                        <div class="border rounded p-2" style="font-size:.78rem;">
-                            <div class="fw-semibold text-muted text-uppercase mb-1"
-                                 style="font-size:.68rem; letter-spacing:.05em;">
-                                {{ $group }}
-                            </div>
-                            @foreach($perms as $perm)
-                            @php $verb = explode('-', $perm)[0]; @endphp
-                            <span class="badge bg-primary-subtle text-primary-emphasis me-1 mb-1">
-                                {{ $verb }}
-                            </span>
-                            @endforeach
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <x-ui.card>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <x-ui.avatar :name="$user->name" :src="$user->avatar ? $user->avatarUrl() : null" size="lg" />
+                    <div class="min-w-0">
+                        <p class="fw-semibold text-ink mb-1 text-truncate">{{ $user->name }}</p>
+                        <div class="d-flex flex-wrap gap-1">
+                            @if ($role)
+                                <x-ui.badge color="neutral" :dot="false">{{ \Illuminate\Support\Str::headline($role->name) }}</x-ui.badge>
+                            @endif
+                            <x-ui.status-badge :status="(bool) $user->is_active" type="patient" />
                         </div>
                     </div>
-                    @endforeach
                 </div>
-                @endif
-            </div>
+                <x-ui.description-list layout="stacked">
+                    <x-ui.description-item label="Email">{{ $user->email }}</x-ui.description-item>
+                    <x-ui.description-item label="Last sign in">
+                        @if ($loginAt)
+                            <time datetime="{{ $loginAt->toIso8601String() }}" title="{{ $loginAt->format('M j, Y, g:i A') }}">{{ $loginAt->diffForHumans() }}</time>
+                            <span class="text-muted">({{ $loginAt->format('M j, Y, g:i A') }})</span>
+                        @else
+                            Never
+                        @endif
+                    </x-ui.description-item>
+                    <x-ui.description-item label="Signed in from" empty="Not recorded">{{ $loginIp }}</x-ui.description-item>
+                    <x-ui.description-item label="Added">{{ $user->created_at->format('M j, Y') }}</x-ui.description-item>
+                </x-ui.description-list>
+            </x-ui.card>
         </div>
 
-        {{-- Recent Activity --}}
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-bottom fw-semibold">
-                <i class="bi bi-clock-history text-info me-2"></i> Recent Activity
-                <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">Last 10</span>
-            </div>
-            <div class="card-body p-0">
-                @if($recentLogs->isEmpty())
-                    <div class="text-center py-4 text-muted small">
-                        <i class="bi bi-journal-x d-block fs-3 opacity-30 mb-2"></i>
-                        No activity recorded yet.
-                    </div>
+        <div class="col-lg-8 vstack gap-3">
+            <x-ui.card title="What this user can do" :subtitle="$role ? 'From the '.\Illuminate\Support\Str::headline($role->name).' role.' : 'No role assigned.'">
+                @if ($isSuperAdmin)
+                    <p class="mb-0"><x-ui.badge color="brand" :dot="false" icon="shield-check">Full access</x-ui.badge>
+                        <span class="ms-1">Administrators can open and change everything in the system.</span></p>
+                @elseif (empty($access))
+                    <x-ui.empty-state quiet icon="lock" title="No access yet. Give this user a role with permissions." />
                 @else
-                <ul class="list-group list-group-flush small">
-                    @foreach($recentLogs as $log)
-                    @php
-                        $actionColor = match($log->action) {
-                            'created'   => 'success',
-                            'updated'   => 'warning',
-                            'deleted'   => 'danger',
-                            'approved'  => 'primary',
-                            'cancelled' => 'danger',
-                            'logged_in','logged_out' => 'info',
-                            default     => 'secondary',
-                        };
-                    @endphp
-                    <li class="list-group-item d-flex align-items-start gap-2 py-2">
-                        <span class="badge text-bg-{{ $actionColor }} mt-1">{{ $log->action }}</span>
-                        <div class="flex-grow-1">
-                            <div>{{ $log->description }}</div>
-                            <div class="text-muted" style="font-size:.73rem;">
-                                {{ $log->created_at->format('M d, Y h:i A') }}
-                                &nbsp;&bull;&nbsp; {{ $log->module }}
-                            </div>
-                        </div>
-                    </li>
-                    @endforeach
-                </ul>
+                    <ul class="list-unstyled mb-0 vstack gap-2">
+                        @foreach ($access as $row)
+                            <li class="d-flex gap-2">
+                                <x-ui.icon :name="$row['icon']" class="text-muted mt-1" />
+                                <div>
+                                    <span class="fw-semibold text-ink">{{ $row['label'] }}:</span>
+                                    <span class="text-ink-2">{{ implode(', ', $row['can']) }}</span>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
                 @endif
-            </div>
-        </div>
+            </x-ui.card>
 
+            <x-ui.card flush title="Recent activity" subtitle="The last 10 things this user did.">
+                @can('view-audit-logs')
+                    <x-slot:actions>
+                        <x-ui.button variant="secondary" size="sm" :href="route('admin.audit-logs.index', ['user_id' => $user->id])">View all activity</x-ui.button>
+                    </x-slot:actions>
+                @endcan
+                <x-ui.table dense responsive="stack" caption="Recent activity">
+                    <x-slot:head>
+                        <x-ui.th>When</x-ui.th>
+                        <x-ui.th>Action</x-ui.th>
+                        <x-ui.th>Details</x-ui.th>
+                    </x-slot:head>
+                    @foreach ($recentLogs as $log)
+                        <tr>
+                            <x-ui.td label="When" muted>
+                                <time datetime="{{ $log->created_at->toIso8601String() }}" title="{{ $log->created_at->format('M j, Y, g:i A') }}">{{ $log->created_at->format('M j, g:i A') }}</time>
+                            </x-ui.td>
+                            <x-ui.td label="Action"><x-ui.status-badge :status="$log->action" type="audit" /></x-ui.td>
+                            <x-ui.td label="Details" truncate>{{ $log->description }}</x-ui.td>
+                        </tr>
+                    @endforeach
+                    <x-slot:empty>
+                        <x-ui.empty-state quiet icon="clock-history" title="No activity recorded yet." />
+                    </x-slot:empty>
+                </x-ui.table>
+            </x-ui.card>
+        </div>
     </div>
 </div>
 @endsection
+
+@if (session('temp_password'))
+    @push('scripts')
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var btn = document.getElementById('copyTempPassword');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            var text = document.getElementById('tempPassword').textContent.trim();
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(function () {
+                    if (window.toast) window.toast('Temporary password copied.');
+                });
+            }
+        });
+    });
+    </script>
+    @endpush
+@endif

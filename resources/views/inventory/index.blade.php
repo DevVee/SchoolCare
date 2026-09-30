@@ -2,139 +2,101 @@
 
 @section('title', 'Inventory')
 
+@php
+    $statusOptions = ['active' => 'Active medicines', 'inactive' => 'Inactive medicines', 'all' => 'All medicines'];
+    $categoryOptions = $categories->pluck('name', 'id')->all();
+    $hasFilters = $search !== '' || $category || $status !== 'active';
+@endphp
+
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">Inventory</h4>
-        <p class="text-muted small mb-0">Current medicine stock levels</p>
-    </div>
-    <div class="d-flex gap-2">
-        @can('manage-inventory')
-        <a href="{{ route('inventory.stock-in.form') }}" class="btn btn-success btn-sm">
-            <i class="bi bi-plus-circle me-1"></i> Stock In
-        </a>
-        <a href="{{ route('inventory.stock-out.form') }}" class="btn btn-warning btn-sm">
-            <i class="bi bi-dash-circle me-1"></i> Stock Out
-        </a>
-        @endcan
-        <a href="{{ route('inventory.transactions') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-clock-history me-1"></i> Ledger
-        </a>
-    </div>
-</div>
+<div class="vstack gap-4">
+    <x-ui.page-header :title="'Inventory'" description="Current stock for each medicine. Every change is recorded in the stock ledger."
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Inventory' => null]">
+        <x-slot:actions>
+            @can('manage-inventory')
+                <x-ui.button variant="secondary" icon="box-arrow-up" :href="route('inventory.stock-out.form')">Stock out</x-ui.button>
+            @endcan
+            @can('manage-inventory')
+                <x-ui.button :href="route('inventory.stock-in.form')" icon="box-arrow-in-down">Stock in</x-ui.button>
+            @endcan
+        </x-slot:actions>
+    </x-ui.page-header>
 
-{{-- Filters --}}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body py-3">
-        <form method="GET" action="{{ route('inventory.index') }}" class="row g-2 align-items-end">
-            <div class="col-sm-5">
-                <input type="text" name="search" value="{{ $search }}" class="form-control form-control-sm"
-                    placeholder="Search medicine name…">
-            </div>
-            <div class="col-sm-4">
-                <select name="category" class="form-select form-select-sm">
-                    <option value="">All Categories</option>
-                    @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}" @selected($category == $cat->id)>{{ $cat->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-sm-3 d-flex gap-2">
-                <button class="btn btn-primary btn-sm flex-fill">
-                    <i class="bi bi-search me-1"></i> Filter
-                </button>
-                <a href="{{ route('inventory.index') }}" class="btn btn-outline-secondary btn-sm">Clear</a>
-            </div>
-        </form>
-    </div>
-</div>
+    @include('inventory.partials.module-tabs', ['active' => 'levels'])
 
-{{-- Table --}}
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Medicine</th>
-                        <th>Category</th>
-                        <th class="text-center">Qty</th>
-                        <th class="text-center">Unit</th>
-                        <th>Expiry</th>
-                        <th class="text-center">Status</th>
-                        @can('manage-inventory')
-                        <th class="text-center">Actions</th>
+    <x-ui.filters :action="route('inventory.index')" search-placeholder="Name, generic name, barcode or batch"
+        :labels="['status' => 'Showing', 'category' => 'Category']"
+        :options="['status' => $statusOptions, 'category' => $categoryOptions]">
+        <x-slot:inline>
+            <x-ui.select name="status" size="sm" aria-label="Which medicines" :options="$statusOptions" :selected="$status" />
+        </x-slot:inline>
+        <x-ui.select name="category" label="Category" size="sm" :options="$categoryOptions" placeholder="All categories" :selected="$category" />
+    </x-ui.filters>
+
+    <x-ui.card flush>
+        <x-ui.table responsive="stack" :paginator="$medicines" noun="medicines" caption="Medicine stock">
+            <x-slot:head>
+                <x-ui.th>Medicine</x-ui.th>
+                <x-ui.th priority="md">Category</x-ui.th>
+                <x-ui.th align="end">On hand</x-ui.th>
+                <x-ui.th>Stock</x-ui.th>
+                <x-ui.th priority="lg">Expiry</x-ui.th>
+                <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
+            </x-slot:head>
+
+            @foreach ($medicines as $med)
+                <tr>
+                    <x-ui.td identity>
+                        @can('view-medicines')
+                            <a href="{{ route('medicines.show', $med) }}" class="cell-title d-inline-block">{{ $med->name }}</a>
+                        @else
+                            <span class="cell-title">{{ $med->name }}</span>
                         @endcan
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($medicines as $med)
-                    @php
-                        $stockClass = match(true) {
-                            $med->quantity === 0 => 'danger',
-                            $med->is_low_stock   => 'warning',
-                            default              => 'success',
-                        };
-                        $stockLabel = match(true) {
-                            $med->quantity === 0 => 'Out of Stock',
-                            $med->is_low_stock   => 'Low Stock',
-                            default              => 'In Stock',
-                        };
-                        $expiryClass = '';
-                        if ($med->expiration_date) {
-                            if ($med->is_expired)           $expiryClass = 'text-danger fw-semibold';
-                            elseif ($med->is_expiring_soon) $expiryClass = 'text-warning fw-semibold';
-                        }
-                    @endphp
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">{{ $med->name }}</div>
-                            @if($med->batch_number)
-                                <small class="text-muted">Batch: {{ $med->batch_number }}</small>
-                            @endif
-                        </td>
-                        <td>
-                            <span class="badge bg-secondary-subtle text-secondary-emphasis">
-                                {{ $med->category->name ?? '—' }}
-                            </span>
-                        </td>
-                        <td class="text-center fw-bold fs-5">{{ number_format($med->quantity) }}</td>
-                        <td class="text-center text-muted small">{{ ucfirst($med->unit) }}</td>
-                        <td class="{{ $expiryClass }}">
-                            {{ $med->expiration_date ? $med->expiration_date->format('M d, Y') : '—' }}
-                        </td>
-                        <td class="text-center">
-                            <span class="badge bg-{{ $stockClass }}-subtle text-{{ $stockClass }}-emphasis border border-{{ $stockClass }}-subtle">
-                                {{ $stockLabel }}
-                            </span>
-                        </td>
-                        @can('manage-inventory')
-                        <td class="text-center">
-                            <a href="{{ route('inventory.stock-in.form', ['medicine_id' => $med->id]) }}"
-                               class="btn btn-xs btn-outline-success me-1" title="Stock In">
-                                <i class="bi bi-plus"></i>
-                            </a>
-                            <a href="{{ route('inventory.stock-out.form', ['medicine_id' => $med->id]) }}"
-                               class="btn btn-xs btn-outline-warning" title="Stock Out">
-                                <i class="bi bi-dash"></i>
-                            </a>
-                        </td>
-                        @endcan
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
-                            <i class="bi bi-box-seam fs-2 d-block mb-2 opacity-30"></i>
-                            No medicines found.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        @if($medicines->hasPages())
-        <div class="px-3 py-2 border-top">{{ $medicines->links() }}</div>
-        @endif
-    </div>
+                        @unless ($med->is_active)
+                            <x-ui.status-badge :status="false" type="patient" size="sm" class="ms-1" />
+                        @endunless
+                        @if ($med->generic_name || $med->batch_number)
+                            <span class="cell-sub d-block">{{ $med->generic_name ?: 'Batch '.$med->batch_number }}</span>
+                        @endif
+                    </x-ui.td>
+                    <x-ui.td priority="md" label="Category">
+                        @if ($med->category)
+                            <x-ui.badge color="neutral" :dot="false" size="sm">{{ $med->category->name }}</x-ui.badge>
+                        @else
+                            <span class="text-muted">-</span>
+                        @endif
+                    </x-ui.td>
+                    <x-ui.td numeric label="On hand">@include('medicines.partials.qty', ['qty' => $med->quantity, 'unit' => $med->unit])</x-ui.td>
+                    <x-ui.td label="Stock">@include('medicines.partials.stock-status', ['medicine' => $med])</x-ui.td>
+                    <x-ui.td priority="lg" label="Expiry">@include('medicines.partials.expiry', ['date' => $med->expiration_date])</x-ui.td>
+                    <x-ui.td actions>
+                        @canany(['view-medicines', 'manage-inventory'])
+                            <x-ui.action-menu :for="$med->name">
+                                @can('view-medicines')
+                                    <x-ui.action-menu.item :href="route('medicines.show', $med)" icon="eye">View medicine</x-ui.action-menu.item>
+                                @endcan
+                                @can('manage-inventory')
+                                    <x-ui.action-menu.item :href="route('inventory.stock-in.form', ['medicine_id' => $med->id])" icon="box-arrow-in-down">Stock in</x-ui.action-menu.item>
+                                    @if ($med->quantity > 0)
+                                        <x-ui.action-menu.item :href="route('inventory.stock-out.form', ['medicine_id' => $med->id])" icon="box-arrow-up">Stock out</x-ui.action-menu.item>
+                                    @endif
+                                @endcan
+                            </x-ui.action-menu>
+                        @endcanany
+                    </x-ui.td>
+                </tr>
+            @endforeach
+
+            <x-slot:empty>
+                @if ($hasFilters)
+                    <x-ui.empty-state icon="search" title="No medicines match these filters" description="Try a different name or clear the filters." compact>
+                        <x-ui.button variant="secondary" size="sm" :href="route('inventory.index')">Clear filters</x-ui.button>
+                    </x-ui.empty-state>
+                @else
+                    <x-ui.empty-state icon="box-seam" title="No medicines in stock yet" description="Add medicines first, then record deliveries with stock in." compact />
+                @endif
+            </x-slot:empty>
+        </x-ui.table>
+    </x-ui.card>
 </div>
 @endsection

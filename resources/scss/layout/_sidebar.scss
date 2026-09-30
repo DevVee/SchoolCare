@@ -1,0 +1,224 @@
+// ═════════════════════════════════════════════════════════════════════════════
+// App sidebar (layouts/partials/sidebar.blade.php, items from
+// config/navigation.php). Modeled on the owner's reference (ui_principles.md
+// section 9): header (logo + school name + collapse chevron), profile card at
+// the top, grouped items (one per module) with module-toned outline icons.
+//
+// >= lg: fixed 260px; `html.sidebar-collapsed` gives a 72px icon rail.
+// <  lg: Bootstrap offcanvas drawer (.offcanvas-lg).
+// All rules are scoped under `.app-sidebar`.
+// ═════════════════════════════════════════════════════════════════════════════
+
+.app-sidebar {
+    --bs-offcanvas-width: 280px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+
+    @include media-breakpoint-up(lg) {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: var(--c-sidebar-w);
+        z-index: 1035;
+        border-right: 1px solid var(--c-border);
+        overflow: hidden;
+        transition: width $dur-slow $ease-out;
+        // Bootstrap's .offcanvas-lg forces a transparent background at lg
+        background-color: #fff !important;
+    }
+
+    // ─── Header ─────────────────────────────────────────────────────────────
+    .sidebar-brand {
+        height: var(--c-topbar-h);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        padding: 0 .5rem 0 1rem;
+        border-bottom: 1px solid var(--c-border);
+        .c-logo { flex: 1; min-width: 0; }
+        .c-logo-mark { width: 38px; height: 38px; border-radius: $radius-md; }
+        .c-logo-name { color: var(--brand-900, #1E3A8A); font-size: 1rem; font-weight: 700; }
+        .c-logo-sub { font-size: .8125rem; }
+    }
+    .sidebar-collapse-btn {
+        width: 2.25rem;
+        height: 2.25rem;
+        flex-shrink: 0;
+        border: 0;
+        border-radius: $radius-sm;
+        background: transparent;
+        color: var(--c-muted);
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        transition: background-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
+        &:hover { background: var(--c-surface-2); color: var(--c-ink); }
+        &:active { transform: scale($press-scale); }
+        &:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .35); }
+        &.d-lg-none { display: inline-flex; }
+    }
+
+    // Everything under the header scrolls together
+    .sidebar-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+    }
+
+    // ─── Profile card ───────────────────────────────────────────────────────
+    // Same white as the sidebar (owner round 4): no band, a hairline separates it from the nav
+    .sidebar-profile {
+        background: transparent;
+        border-bottom: 1px solid var(--c-border);
+        padding: 1.25rem .75rem 1rem;
+    }
+    .sidebar-profile-trigger {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: .375rem;
+        border: 0;
+        background: transparent;
+        padding: .25rem;
+        border-radius: $radius-md;
+        color: var(--c-ink);
+        -webkit-tap-highlight-color: transparent;
+        transition: background-color $dur-fast ease-out, transform $dur-press ease-out;
+        &:hover, &[aria-expanded="true"] { background: $gray-100; }
+        &:active { transform: scale(.98); }
+        &:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .35); }
+    }
+    .sidebar-profile-avatar {
+        position: relative;
+        display: inline-flex;
+        margin-bottom: .25rem;
+        .avatar {
+            --avatar-size: 76px;
+            font-size: 1.5rem;
+            box-shadow: 0 0 0 3px #fff, 0 2px 8px rgba(15, 23, 42, .12);
+            transition: width $dur-slow $ease-out, height $dur-slow $ease-out;
+        }
+    }
+    .online-dot {
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--c-online);
+        border: 2px solid #fff;
+    }
+    .sidebar-profile-name {
+        max-width: 100%;
+        font-family: $font-ui;
+        font-size: .9375rem;
+        font-weight: 700;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .sidebar-profile-role {
+        font-family: $font-ui;
+        font-size: .75rem;
+        font-weight: 600;
+        line-height: 1;
+        padding: .3125rem .625rem;
+        border-radius: $radius-sm;
+        background: var(--brand-100);
+        color: var(--brand-700);
+    }
+    .user-menu { width: 16rem; }
+
+    // ─── Navigation ─────────────────────────────────────────────────────────
+    .sidebar-nav {
+        padding: .5rem .625rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .sidebar-section {
+        font-family: $font-ui;
+        font-size: .75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--c-muted);
+        padding: 1rem .625rem .375rem;
+        line-height: 1;
+        margin: 0;
+    }
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        min-height: 40px;
+        padding: 0 .625rem;
+        border-radius: $radius-sm;
+        font-family: $font-ui;
+        font-size: .9375rem;
+        font-weight: 500;
+        color: $gray-700;
+        text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: background-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
+
+        .sidebar-link-icon {
+            width: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.125rem;
+            line-height: 1;
+            // One colour theme: every nav icon is the brand blue; kept on hover and active
+            color: var(--brand-600);
+        }
+        .sidebar-link-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+        // Plain count: neutral (never pink/red), capped at 99+ by x-ui.count
+        .count-chip { margin-left: auto; flex-shrink: 0; }
+
+        &:hover { background: $gray-100; color: var(--c-ink); }
+        &:active { transform: scale(.98); }
+        &:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .35); }
+        // Active: subtle brand tint + brand text, 6px radius. No left line, no fill, no glow.
+        &.active { background: var(--brand-50); color: var(--brand-700); font-weight: 600; }
+    }
+}
+
+// ─── Collapsed icon rail (lg and up) ────────────────────────────────────────
+@include media-breakpoint-up(lg) {
+    .sidebar-collapsed .app-sidebar {
+        width: var(--c-sidebar-cw);
+        .sidebar-brand { padding: 0; justify-content: center; }
+        .sidebar-brand .c-logo { flex: 0 0 auto; gap: 0; }
+        .c-logo-text, .sidebar-collapse-btn { display: none !important; }
+        .sidebar-profile { padding: .75rem .5rem; }
+        .sidebar-profile-avatar { margin: 0; .avatar { --avatar-size: 40px; font-size: .9375rem; box-shadow: 0 0 0 2px #fff; } }
+        .online-dot { right: 0; bottom: 0; width: 11px; height: 11px; }
+        .sidebar-profile-name, .sidebar-profile-role { display: none; }
+        .sidebar-section, .sidebar-link-label, .sidebar-link .count-chip { display: none !important; }
+        .sidebar-nav { padding: .5rem; }
+        .sidebar-link { justify-content: center; padding: 0; }
+        .sidebar-section + .sidebar-link { margin-top: .5rem; }
+    }
+}
+
+// Touch / drawer: 44px targets
+@media (pointer: coarse), (max-width: 991.98px) {
+    .app-sidebar .sidebar-link { min-height: 2.75rem; }
+    .app-sidebar .sidebar-collapse-btn { width: 2.75rem; height: 2.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-sidebar .sidebar-profile-avatar .avatar { transition: none; }
+}
+
+// Rail tooltips (collapsed sidebar)
+.rail-tooltip { --bs-tooltip-font-size: .8125rem; }

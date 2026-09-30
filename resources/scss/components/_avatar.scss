@@ -1,0 +1,53 @@
+// =============================================================================
+// Avatar (x-ui.avatar): image or initials on a restrained tinted palette.
+// xs 24 · sm 32 · md 40 · lg 48 · xl 64
+// =============================================================================
+
+.avatar {
+    --avatar-size: 40px;
+    width: var(--avatar-size);
+    height: var(--avatar-size);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
+    font-family: $font-ui;
+    font-size: .875rem;
+    font-weight: 700;
+    letter-spacing: .01em;
+    color: var(--brand-700);
+    background: var(--brand-50);
+    user-select: none;
+    vertical-align: middle;
+
+    img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    &.avatar-xs { --avatar-size: 24px; font-size: .5625rem; }
+    &.avatar-sm { --avatar-size: 32px; font-size: .75rem; }
+    &.avatar-md { --avatar-size: 40px; font-size: .875rem; }
+    &.avatar-lg { --avatar-size: 48px; font-size: 1.0625rem; }
+    &.avatar-xl { --avatar-size: 64px; font-size: 1.375rem; }
+
+    &.avatar-square { border-radius: $border-radius-lg; }
+    &.avatar-ring { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--c-online); overflow: visible; img { border-radius: inherit; } }
+}
+
+.avatar-group {
+    display: inline-flex;
+    .avatar + .avatar { margin-left: -.5rem; box-shadow: 0 0 0 2px #fff; }
+}
+
+// Identity cell: avatar + title + sub line
+.identity {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-width: 0;
+    .identity-text { min-width: 0; }
+    .identity-title { display: block; font-weight: 600; color: var(--c-ink); line-height: 1.3; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    a.identity-title:hover { color: var(--brand-700); text-decoration: underline; }
+    .identity-sub { display: block; font-size: .8125rem; color: var(--c-muted); margin-top: 1px; }
+}

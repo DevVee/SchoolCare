@@ -22,15 +22,20 @@ class ConsultationController extends Controller
     {
         $this->authorize('view-consultations');
 
-        $search  = $request->get('search', '');
+        $search  = trim((string) $request->get('search', ''));
         $date    = $request->get('date', '');
         $nurseId = $request->get('nurse_id', '');
 
+        // Search grouped in one where() so it can never bypass the other filters;
+        // matches patient name / number or the chief complaint / diagnosis.
         $consultations = Consultation::with('patient', 'nurse')
-            ->when($search, fn ($q) => $q->whereHas('patient', fn ($q2) =>
-                $q2->where('first_name', 'like', "%{$search}%")
-                   ->orWhere('last_name',  'like', "%{$search}%")
-                   ->orWhere('patient_number', 'like', "%{$search}%")
+            ->when($search, fn ($q) => $q->where(fn ($w) => $w
+                ->whereHas('patient', fn ($p) => $p->where(fn ($p2) => $p2
+                    ->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name',  'like', "%{$search}%")
+                    ->orWhere('patient_number', 'like', "%{$search}%")))
+                ->orWhere('chief_complaint', 'like', "%{$search}%")
+                ->orWhere('diagnosis', 'like', "%{$search}%")
             ))
             ->when($date,    fn ($q) => $q->whereDate('visit_date', $date))
             ->when($nurseId, fn ($q) => $q->where('nurse_id', $nurseId))
@@ -63,9 +68,30 @@ class ConsultationController extends Controller
             ->orderByDesc('appointment_date')
             ->get(['id', 'patient_id', 'appointment_date', 'appointment_time', 'purpose']);
 
-        $selectedPatient = $request->integer('patient_id') ?: null;
+        // Pre-formatted on the server: the date cast serialises as an ISO
+        // timestamp, which the old JS turned into "Invalid Date".
+        $appointmentOptions = $appointments
+            ->map(fn (Appointment $a) => [
+                'id'         => $a->id,
+                'patient_id' => $a->patient_id,
+                'label'      => $a->appointment_date->format('M d, Y')
+                    . ($a->appointment_time ? ' ' . \Carbon\Carbon::parse($a->appointment_time)->format('h:i A') : '')
+                    . ' (' . ($a->purpose ?: 'No purpose listed') . ')',
+            ])
+            ->groupBy('patient_id');
 
-        return view('consultations.create', compact('patients', 'appointments', 'selectedPatient'));
+        // "Start Consultation" from an appointment passes ?appointment_id=…
+        $selectedAppointment = $request->integer('appointment_id') ?: null;
+        $selectedPatient     = $request->integer('patient_id') ?: null;
+        if ($selectedAppointment && ($appt = $appointments->firstWhere('id', $selectedAppointment))) {
+            $selectedPatient = $appt->patient_id;
+        } else {
+            $selectedAppointment = null;
+        }
+
+        return view('consultations.create', compact(
+            'patients', 'appointments', 'appointmentOptions', 'selectedPatient', 'selectedAppointment'
+        ));
     }
 
     public function store(StoreConsultationRequest $request)

@@ -1,225 +1,137 @@
 @extends('layouts.app')
 
-@section('title', 'User Management')
+@section('title', 'Users')
+
+@php
+    $roleOptions = $roles->mapWithKeys(fn ($r) => [$r->name => \Illuminate\Support\Str::headline($r->name)])->all();
+    $statusOptions = ['1' => 'Active', '0' => 'Inactive'];
+    $total = $users->total();
+    $filtered = request()->hasAny(['search', 'role', 'status']) && collect(request()->only(['search', 'role', 'status']))->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty();
+@endphp
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">User Management</h4>
-        <p class="text-muted small mb-0">Manage Clinovia accounts, roles, and access</p>
-    </div>
-    @can('manage-users')
-    <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm px-3">
-        <i class="bi bi-person-plus me-1"></i> Add User
-    </a>
-    @endcan
-</div>
+<div class="vstack gap-3">
 
-{{-- Alerts --}}
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show py-2 small">
-    <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show py-2 small">
-    <i class="bi bi-exclamation-triangle me-2"></i>{{ session('error') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
+    <x-ui.page-header title="Users"
+        :description="'People who can sign in to '.settings('app_name').'. '.number_format($total).' '.\Illuminate\Support\Str::plural('account', $total).($filtered ? ' match the filters.' : '.')"
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Users' => null]">
+        @can('manage-users')
+            <x-slot:actions>
+                <x-ui.button :href="route('admin.users.create')" icon="person-plus">Add user</x-ui.button>
+            </x-slot:actions>
+        @endcan
+    </x-ui.page-header>
 
-{{-- Filters --}}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body py-3">
-        <form method="GET" action="{{ route('admin.users.index') }}" class="row g-2 align-items-end">
-            <div class="col-sm-4">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-light"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" name="search" value="{{ request('search') }}"
-                        class="form-control" placeholder="Search name or email…">
-                </div>
-            </div>
-            <div class="col-sm-2">
-                <select name="role" class="form-select form-select-sm">
-                    <option value="">All Roles</option>
-                    @foreach($roles as $role)
-                    <option value="{{ $role->name }}" @selected(request('role') === $role->name)>
-                        {{ ucfirst($role->name) }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-sm-2">
-                <select name="status" class="form-select form-select-sm">
-                    <option value="">All Status</option>
-                    <option value="1" @selected(request('status') === '1')>Active</option>
-                    <option value="0" @selected(request('status') === '0')>Inactive</option>
-                </select>
-            </div>
-            <div class="col-auto d-flex gap-1">
-                <button type="submit" class="btn btn-primary btn-sm px-3">Filter</button>
-                <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-x-lg"></i>
-                </a>
-            </div>
-            <div class="col-auto ms-auto text-muted small align-self-center">
-                {{ $users->total() }} user{{ $users->total() !== 1 ? 's' : '' }} found
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- Table --}}
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 small">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width:42px;"></th>
-                        <th>Name / Email</th>
-                        <th class="text-center" style="width:120px;">Role</th>
-                        <th class="text-center" style="width:90px;">Status</th>
-                        <th style="width:150px;">Last Login</th>
-                        <th style="width:120px;">Created</th>
-                        <th class="text-center" style="width:100px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($users as $user)
-                    @php
-                        $role = $user->roles->first();
-                        $roleColor = match($role?->name) {
-                            'administrator' => 'danger',
-                            'nurse'         => 'success',
-                            'staff'         => 'info',
-                            default         => 'secondary',
-                        };
-                        $initial = strtoupper(substr($user->name, 0, 1));
-                        $avatarColors = ['danger','success','info','warning','primary','purple'];
-                        $avatarColor  = $avatarColors[crc32($user->email) % count($avatarColors)];
-                    @endphp
-                    <tr>
-                        {{-- Avatar --}}
-                        <td>
-                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                                 style="width:34px;height:34px;font-size:.8rem;background:var(--gradient-primary);">
-                                {{ $initial }}
-                            </div>
-                        </td>
-
-                        {{-- Name / Email --}}
-                        <td>
-                            <div class="fw-semibold">{{ $user->name }}</div>
-                            <small class="text-muted">{{ $user->email }}</small>
-                        </td>
-
-                        {{-- Role --}}
-                        <td class="text-center">
-                            @if($role)
-                            <span class="badge text-bg-{{ $roleColor }}">{{ ucfirst($role->name) }}</span>
-                            @else
-                            <span class="text-muted">—</span>
-                            @endif
-                        </td>
-
-                        {{-- Status --}}
-                        <td class="text-center">
-                            @if($user->is_active)
-                                <span class="badge bg-success-subtle text-success-emphasis">
-                                    <i class="bi bi-circle-fill me-1" style="font-size:.45rem;"></i>Active
-                                </span>
-                            @else
-                                <span class="badge bg-danger-subtle text-danger-emphasis">
-                                    <i class="bi bi-circle-fill me-1" style="font-size:.45rem;"></i>Inactive
-                                </span>
-                            @endif
-                        </td>
-
-                        {{-- Last login --}}
-                        <td class="text-muted">
-                            {{ $user->last_login_at ? $user->last_login_at->diffForHumans() : 'Never' }}
-                        </td>
-
-                        {{-- Created --}}
-                        <td class="text-muted">
-                            {{ $user->created_at->format('M d, Y') }}
-                        </td>
-
-                        {{-- Actions --}}
-                        <td class="text-center">
-                            <div class="d-flex gap-1 justify-content-center">
-                                <a href="{{ route('admin.users.show', $user) }}"
-                                   class="btn btn-xs btn-outline-secondary" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                @can('manage-users')
-                                <a href="{{ route('admin.users.edit', $user) }}"
-                                   class="btn btn-xs btn-outline-primary" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                @if($user->id !== auth()->id())
-                                <button type="button"
-                                        class="btn btn-xs btn-outline-danger"
-                                        title="Delete"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#deleteModal"
-                                        data-id="{{ $user->id }}"
-                                        data-name="{{ $user->name }}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                                @endif
-                                @endcan
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
-                            <i class="bi bi-people fs-2 d-block mb-2 opacity-30"></i>
-                            No users found.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+    @isset($stats)
+        <div class="row g-3 row-cols-1 row-cols-sm-2 row-cols-xl-4">
+            <div class="col"><x-ui.stat-card class="h-100" label="Total users" :value="number_format($stats['total'])" icon="people" tone="brand"
+                :delta="'+'.$stats['new_month']" sub="added this month" /></div>
+            <div class="col"><x-ui.stat-card class="h-100" label="Active" :value="number_format($stats['active'])" icon="person-check" tone="success" sub="Can sign in" /></div>
+            <div class="col"><x-ui.stat-card class="h-100" label="Inactive" :value="number_format($stats['inactive'])" icon="person-dash" tone="neutral" sub="Cannot sign in" /></div>
+            <div class="col"><x-ui.stat-card class="h-100" label="Administrators" :value="number_format($stats['admins'])" icon="shield-check" tone="info" sub="Full access" /></div>
         </div>
-        @if($users->hasPages())
-        <div class="px-3 py-2 border-top">{{ $users->links() }}</div>
-        @endif
-    </div>
-</div>
+    @endisset
 
-{{-- Delete Confirm Modal --}}
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-body text-center py-4">
-                <i class="bi bi-person-x-fill text-danger fs-1 d-block mb-3"></i>
-                <h6 class="fw-bold mb-1">Delete User?</h6>
-                <p class="text-muted small mb-3">
-                    Are you sure you want to delete <strong id="delUserName"></strong>? This cannot be undone.
-                </p>
-                <form id="deleteForm" method="POST">
-                    @csrf @method('DELETE')
-                    <div class="d-flex gap-2 justify-content-center">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger btn-sm px-4">Delete</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+    <x-ui.filters :action="route('admin.users.index')" search-placeholder="Name or email"
+        :labels="['role' => 'Role', 'status' => 'Status']"
+        :options="['role' => $roleOptions, 'status' => $statusOptions]">
+        <x-slot:inline>
+            <x-ui.select name="role" size="sm" aria-label="Role" :options="$roleOptions" placeholder="All roles" :selected="request('role')" />
+            <x-ui.select name="status" size="sm" aria-label="Status" :options="$statusOptions" placeholder="Any status" :selected="request('status')" />
+        </x-slot:inline>
+    </x-ui.filters>
 
-@push('scripts')
-<script>
-document.getElementById('deleteModal').addEventListener('show.bs.modal', function(e) {
-    const btn = e.relatedTarget;
-    document.getElementById('delUserName').textContent = btn.dataset.name;
-    document.getElementById('deleteForm').action = `/admin/users/${btn.dataset.id}`;
-});
-</script>
-@endpush
+    <x-ui.card flush>
+        <x-ui.table :paginator="$users" noun="users" caption="Users" responsive="stack">
+            <x-slot:head>
+                <x-ui.th>Name</x-ui.th>
+                <x-ui.th>Role</x-ui.th>
+                <x-ui.th priority="md">Status</x-ui.th>
+                <x-ui.th priority="lg">Last sign in</x-ui.th>
+                <x-ui.th priority="xl">Added</x-ui.th>
+                <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
+            </x-slot:head>
+
+            @foreach ($users as $user)
+                @php
+                    $role = $user->roles->first();
+                    $isSelf = $user->id === auth()->id();
+                    $targetIsAdmin = $user->hasRole(config('clinovia.super_admin_role'));
+                    $canTouch = auth()->user()->can('manage-users') && (! $targetIsAdmin || auth()->user()->isAdmin());
+                @endphp
+                <tr>
+                    <x-ui.td identity>
+                        <div class="identity">
+                            <x-ui.avatar :name="$user->name" :src="$user->avatar ? $user->avatarUrl() : null" size="sm" />
+                            <div class="identity-text">
+                                <a href="{{ route('admin.users.show', $user) }}" class="identity-title">
+                                    {{ $user->name }}@if ($isSelf)<span class="text-muted fw-normal"> (you)</span>@endif
+                                </a>
+                                <span class="identity-sub cell-truncate" title="{{ $user->email }}">{{ $user->email }}</span>
+                            </div>
+                        </div>
+                    </x-ui.td>
+                    <x-ui.td label="Role">
+                        @if ($role)
+                            <x-ui.badge color="neutral" :dot="false">{{ \Illuminate\Support\Str::headline($role->name) }}</x-ui.badge>
+                        @else
+                            <span class="text-muted">No role</span>
+                        @endif
+                    </x-ui.td>
+                    <x-ui.td priority="md" label="Status">
+                        <x-ui.status-badge :status="(bool) $user->is_active" type="patient" />
+                    </x-ui.td>
+                    <x-ui.td priority="lg" label="Last sign in" muted>
+                        @if ($user->last_login_at)
+                            <time datetime="{{ $user->last_login_at->toIso8601String() }}" title="{{ $user->last_login_at->format('M j, Y, g:i A') }}">{{ $user->last_login_at->diffForHumans() }}</time>
+                        @else
+                            Never
+                        @endif
+                    </x-ui.td>
+                    <x-ui.td priority="xl" label="Added" muted>{{ $user->created_at->format('M j, Y') }}</x-ui.td>
+                    <x-ui.td actions>
+                        <x-ui.action-menu :for="$user->name">
+                            <x-ui.action-menu.item :href="route('admin.users.show', $user)" icon="eye">View</x-ui.action-menu.item>
+                            @if ($canTouch)
+                                <x-ui.action-menu.item :href="route('admin.users.edit', $user)" icon="pencil">Edit</x-ui.action-menu.item>
+                                @unless ($isSelf)
+                                    @if ($user->is_active)
+                                        <x-ui.action-menu.item :action="route('admin.users.toggle-active', $user)" method="PATCH" icon="person-dash"
+                                            confirm="They will be signed out right away and cannot sign in until the account is activated again."
+                                            :confirm-title="'Deactivate '.$user->name.'?'" confirm-button="Deactivate">Deactivate</x-ui.action-menu.item>
+                                    @else
+                                        <x-ui.action-menu.item :action="route('admin.users.toggle-active', $user)" method="PATCH" icon="person-check"
+                                            confirm="They will be able to sign in again."
+                                            :confirm-title="'Activate '.$user->name.'?'" confirm-button="Activate">Activate</x-ui.action-menu.item>
+                                    @endif
+                                    <x-ui.action-menu.item :action="route('admin.users.reset-password', $user)" icon="key"
+                                        confirm="A temporary password will be shown to you once. Their current password stops working and they are signed out."
+                                        :confirm-title="'Reset password for '.$user->name.'?'" confirm-button="Reset password">Reset password</x-ui.action-menu.item>
+                                    <x-ui.action-menu.divider />
+                                    <x-ui.action-menu.item :action="route('admin.users.destroy', $user)" method="DELETE" icon="trash" danger
+                                        confirm="This permanently removes the account. Accounts linked to clinic records cannot be deleted; deactivate them instead."
+                                        :confirm-title="'Delete '.$user->name.'?'" confirm-button="Delete user">Delete</x-ui.action-menu.item>
+                                @endunless
+                            @endif
+                        </x-ui.action-menu>
+                    </x-ui.td>
+                </tr>
+            @endforeach
+
+            <x-slot:empty>
+                @if ($filtered)
+                    <x-ui.empty-state icon="search" title="No users match these filters" description="Try a different name or clear the filters." compact>
+                        <x-ui.button variant="secondary" size="sm" :href="route('admin.users.index')">Clear filters</x-ui.button>
+                    </x-ui.empty-state>
+                @else
+                    <x-ui.empty-state icon="people" title="No users yet" description="Add the clinic staff who need to sign in." compact>
+                        @can('manage-users')
+                            <x-ui.button size="sm" icon="person-plus" :href="route('admin.users.create')">Add user</x-ui.button>
+                        @endcan
+                    </x-ui.empty-state>
+                @endif
+            </x-slot:empty>
+        </x-ui.table>
+    </x-ui.card>
+</div>
 @endsection

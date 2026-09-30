@@ -1,46 +1,19 @@
-{{-- Medical Information Tab --}}
-<div class="row g-3">
+{{-- Health information section (patients.create / patients.edit) --}}
+@php
+    $bloodTypes = $bloodTypes ?? \App\Models\Patient::bloodTypes();
+    $bloodOptions = array_combine($bloodTypes, $bloodTypes) ?: [];
+@endphp
+<x-ui.section title="Health information" description="Allergies and conditions show on the patient profile and when logging a visit." columns="3">
+    <x-ui.select name="blood_type" label="Blood type" :options="$bloodOptions" placeholder="Unknown" :selected="$patient->blood_type ?? null" />
+    <x-ui.input name="pediatrician_name" label="Pediatrician or family doctor" optional :value="$patient->pediatrician_name ?? null" />
+    <x-ui.input name="pediatrician_contact" type="tel" label="Doctor's contact number" optional :value="$patient->pediatrician_contact ?? null" />
 
-    <div class="col-md-4">
-        <label class="form-label fw-semibold">Blood Type</label>
-        <select name="blood_type" class="form-select @error('blood_type') is-invalid @enderror">
-            <option value="">— Unknown —</option>
-            @foreach ($bloodTypes as $bt)
-                <option value="{{ $bt }}"
-                    {{ old('blood_type', $patient->blood_type ?? '') === $bt ? 'selected' : '' }}>
-                    {{ $bt }}
-                </option>
-            @endforeach
-        </select>
-        @error('blood_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
-    </div>
-
-    <div class="col-12">
-        <label class="form-label fw-semibold">
-            <i class="bi bi-exclamation-triangle text-warning me-1"></i>Known Allergies
-        </label>
-        <textarea name="allergies" rows="3"
-                  class="form-control @error('allergies') is-invalid @enderror"
-                  placeholder="List any known drug, food, or environmental allergies...">{{ old('allergies', $patient->allergies ?? '') }}</textarea>
-        @error('allergies')<div class="invalid-feedback">{{ $message }}</div>@enderror
-    </div>
-
-    <div class="col-12">
-        <label class="form-label fw-semibold">
-            <i class="bi bi-heart-pulse text-danger me-1"></i>Existing Medical Conditions
-        </label>
-        <textarea name="medical_conditions" rows="3"
-                  class="form-control @error('medical_conditions') is-invalid @enderror"
-                  placeholder="e.g. Asthma, Hypertension, Diabetes...">{{ old('medical_conditions', $patient->medical_conditions ?? '') }}</textarea>
-        @error('medical_conditions')<div class="invalid-feedback">{{ $message }}</div>@enderror
-    </div>
-
-    <div class="col-12">
-        <label class="form-label fw-semibold">Additional Notes</label>
-        <textarea name="notes" rows="3"
-                  class="form-control @error('notes') is-invalid @enderror"
-                  placeholder="Any other relevant health information...">{{ old('notes', $patient->notes ?? '') }}</textarea>
-        @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
-    </div>
-
-</div>
+    <x-ui.textarea name="allergies" label="Known allergies" rows="3" wrapper-class="col-full"
+        placeholder="Drug, food or environmental allergies" :value="$patient->allergies ?? null" />
+    <x-ui.textarea name="medical_conditions" label="Existing medical conditions" rows="3" wrapper-class="col-full"
+        placeholder="e.g. Asthma, hypertension, diabetes" :value="$patient->medical_conditions ?? null" />
+    <x-ui.textarea name="current_medications" label="Current medications" rows="3" wrapper-class="col-full"
+        placeholder="Maintenance medicines and doses" :value="$patient->current_medications ?? null" />
+    <x-ui.textarea name="notes" label="Additional notes" rows="3" wrapper-class="col-full" optional
+        placeholder="Any other relevant health information" :value="$patient->notes ?? null" />
+</x-ui.section>

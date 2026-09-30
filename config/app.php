@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'SSCMS'),
 
     /*
     |--------------------------------------------------------------------------
@@ -130,7 +130,7 @@ return [
     | Trusted Proxies
     |--------------------------------------------------------------------------
     |
-    | Set to '*' to trust all proxies (e.g. Render, Cloudflare, shared hosting).
+    | Set to '*' to trust all proxies (e.g. nginx, Cloudflare, shared hosting).
     | For a known proxy IP (e.g. 10.0.0.1), set TRUST_PROXIES=10.0.0.1.
     | The TrustProxies middleware reads this via config() so it works
     | correctly even when config:cache is active.

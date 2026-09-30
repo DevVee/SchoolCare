@@ -1,0 +1,219 @@
+// =============================================================================
+// Forms: 42px controls (44px on touch), radius 8, 16px text, 3px brand focus
+// ring (colour wired in _brand-runtime). Labels always visible above controls.
+// =============================================================================
+
+.form-control, .form-select {
+    transition: border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, background-color $dur-fast ease-out;
+    &:hover:not(:focus):not(:disabled):not([readonly]):not(.is-invalid) {
+        border-color: var(--c-input-border-hover);
+    }
+}
+.form-control:not(textarea):not([type="file"]):not(.form-control-color):not(.form-control-plaintext),
+.form-select:not([multiple]):not([size]) {
+    min-height: 2.625rem;
+}
+.form-control-sm:not(textarea), .form-select-sm:not([multiple]) {
+    min-height: 2.25rem !important;
+}
+textarea.form-control {
+    min-height: 6rem;
+    line-height: 1.55;
+    resize: vertical;
+}
+textarea.form-control-sm { min-height: 4rem; }
+.form-control.is-invalid, .form-select.is-invalid { background-color: tone("danger", 50); }
+.form-control[readonly]:not(.form-control-plaintext) { background-color: var(--c-surface-2); }
+.form-control::placeholder { opacity: 1; }
+
+.form-label {
+    font-family: $font-ui;
+    letter-spacing: 0;
+    .text-danger, .form-required { margin-left: 2px; color: tone("danger", 700) !important; }
+}
+.form-required { color: tone("danger", 700); }
+.form-optional {
+    margin-left: .375rem;
+    font-size: .8125rem;
+    font-weight: 400;
+    color: var(--c-muted);
+}
+.form-text { line-height: 1.45; }
+
+.invalid-feedback {
+    align-items: flex-start;
+    gap: .3125rem;
+    font-weight: 500;
+    .c-icon { font-size: .875rem; margin-top: .125rem; }
+}
+// x-ui.field renders the message always (not only as a sibling of .is-invalid)
+.c-field .invalid-feedback, .invalid-feedback.d-flex { display: flex; }
+
+.c-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    > .form-label { align-self: flex-start; }
+}
+
+// Leading-icon input (x-ui.input icon="...")
+.input-icon {
+    position: relative;
+    > .c-icon {
+        position: absolute;
+        left: .75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1rem;
+        color: var(--c-muted);
+        pointer-events: none;
+        z-index: 5;
+    }
+    > .form-control { padding-left: 2.375rem; }
+}
+
+// Checkboxes / radios / switches
+.form-check { min-height: 1.5rem; }
+.form-check-input {
+    cursor: pointer;
+    margin-top: .1875em;
+}
+.form-check-label { cursor: pointer; color: var(--c-ink); }
+.form-check-description {
+    display: block;
+    font-size: .8125rem;
+    color: var(--c-muted);
+    margin-top: .0625rem;
+}
+.form-switch.form-switch-lg {
+    padding-left: 3.25rem;
+    min-height: 1.5rem;
+    .form-check-input {
+        width: 2.5rem;
+        height: 1.5rem;
+        margin-left: -3.25rem;
+        margin-top: 0;
+        border: 0;
+        background-color: var(--c-border-strong);
+        --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+        transition: background-color $dur-base ease-out, background-position $dur-base ease-out;
+        &:checked { background-color: var(--brand-600); }
+    }
+    .form-check-label { font-weight: 500; padding-top: .0625rem; }
+}
+
+// Search input (x-ui.search-input)
+.search-input {
+    position: relative;
+    flex: 1 1 16rem;
+    min-width: 12rem;
+    > .c-icon {
+        position: absolute;
+        left: .75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1rem;
+        color: var(--c-muted);
+        pointer-events: none;
+        z-index: 1;
+    }
+    > .form-control { padding-left: 2.375rem; padding-right: 2.5rem; }
+    > .form-control::-webkit-search-cancel-button { display: none; }
+    .search-clear {
+        position: absolute;
+        right: .375rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1.75rem;
+        height: 1.75rem;
+        border-radius: $border-radius-sm;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--c-muted);
+        font-size: .75rem;
+        text-decoration: none;
+        &:hover { background: var(--c-surface-2); color: var(--c-ink); }
+    }
+}
+
+// Form section divider label inside a card: "IDENTITY -----"
+.form-section-label {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    margin: .25rem 0 .125rem;
+    font-family: $font-ui;
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--c-muted);
+    white-space: nowrap;
+    &::after { content: ""; flex: 1; border-top: 1px solid var(--c-border); }
+}
+
+// Form section (x-ui.section). Default: stacked (title + one-line description on
+// top, fields full width below). `.form-section-aside` is the opt-in two-column
+// variant (title left, fields right from lg); avoid it, it wastes width.
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: .875rem;
+    padding: 1.25rem 0;
+    & + & { border-top: 1px solid var(--c-border); }
+    &:first-child { padding-top: 0; }
+    &:last-child  { padding-bottom: 0; }
+    .form-section-title { font-family: $font-ui; font-size: 1rem; font-weight: 700; letter-spacing: -.01em; color: var(--c-ink); margin: 0; }
+    .form-section-desc  { font-size: .875rem; color: var(--c-ink-2); margin: .125rem 0 0; line-height: 1.45; }
+    .form-section-body  { min-width: 0; }
+
+    &.form-section-aside {
+        @include media-breakpoint-up(lg) {
+            display: grid;
+            grid-template-columns: minmax(200px, 1fr) 2fr;
+            gap: 2rem;
+        }
+    }
+}
+
+// Responsive field grid: 1 column on phones, 2 from sm, 3 from lg (.form-grid-3).
+// Long fields (textareas, lists, choice groups) span the row with .col-full.
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    @include media-breakpoint-up(sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    &.form-grid-3 { @include media-breakpoint-up(lg) { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    > .col-full, > .row, > .form-section-label, > .alert-c, > textarea, > .c-field:has(> textarea) { grid-column: 1 / -1; }
+}
+
+// Sticky save bar for long forms (translucent material, solid fallback)
+.save-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 1010;
+    margin: 1.5rem -1rem -1rem;
+    padding: .75rem 1rem;
+    background: rgba(255, 255, 255, .85);
+    backdrop-filter: blur(12px) saturate(180%);
+    border-top: 1px solid var(--c-border);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: .5rem;
+    @include media-breakpoint-up(sm) { margin: 1.5rem -1.5rem -1.5rem; padding: .75rem 1.5rem; }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { background: #fff; }
+    @media (prefers-reduced-transparency: reduce) { background: #fff; backdrop-filter: none; }
+}
+
+// Touch: 44px controls
+@media (pointer: coarse), (max-width: 767.98px) {
+    .form-control:not(textarea):not([type="file"]):not(.form-control-color):not(.form-control-plaintext),
+    .form-select:not([multiple]):not([size]),
+    .form-control-sm:not(textarea), .form-select-sm:not([multiple]) { min-height: 2.75rem !important; }
+    // x-ui.checkbox / x-ui.switch: whole row is a 44px target
+    .c-check { min-height: 2.75rem; display: flex; align-items: center; gap: .625rem; padding-left: 0; }
+    .c-check > .form-check-input { float: none; margin: 0; flex-shrink: 0; }
+    .c-check.form-switch.form-switch-lg { padding-left: 0; > .form-check-input { margin-left: 0; } }
+}

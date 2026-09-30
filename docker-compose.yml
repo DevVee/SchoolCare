@@ -1,0 +1,32 @@
+# Clinovia — production-like local stack (nginx + php-fpm + scheduler + queue)
+#
+#   1. cp .env.production.example .env.production   (fill in APP_KEY, ADMIN_*, etc.)
+#   2. docker compose up -d --build
+#   3. open http://localhost:8080
+#
+# All data (SQLite database + uploaded files) lives in the `sscms-data`
+# volume, so it survives rebuilds and restarts. Back it up with:
+#   docker compose cp app:/var/data ./backup
+services:
+  app:
+    build: .
+    image: sscms:latest
+    container_name: sscms
+    env_file: .env.production
+    environment:
+      DATA_DIR: /var/data
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/data/database.sqlite
+    ports:
+      - "8080:8080"
+    volumes:
+      - sscms-data:/var/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  sscms-data:

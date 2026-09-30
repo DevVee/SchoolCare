@@ -18,7 +18,7 @@ database/database.sqlite
 database/database.sqlite-wal
 database/database.sqlite-shm
 
-# Env files — real env comes from Render dashboard
+# Env files — real env is injected at runtime (docker compose env_file / -e)
 .env
 .env.*
 !.env.example

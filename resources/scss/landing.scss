@@ -1,0 +1,14 @@
+// ═════════════════════════════════════════════════════════════════════════════
+// Public website entry (Vite input), loaded only by landing/* views on top of
+// app.scss. Imports Bootstrap's functions, variables and mixins plus our tokens
+// (no CSS output from those), then the landing page styles.
+// ═════════════════════════════════════════════════════════════════════════════
+
+@import "bootstrap/scss/functions";
+@import "tokens";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+
+@import "pages/landing";

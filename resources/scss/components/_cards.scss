@@ -1,0 +1,119 @@
+// =============================================================================
+// Cards: 1px slate border, radius 12, very soft shadow. Radius / border /
+// padding come from Bootstrap variables ($card-*), so legacy `.card` markup
+// adopts them. `c-card-*` classes belong to x-ui.card.
+// =============================================================================
+
+.card { box-shadow: $card-box-shadow; }
+
+// Legacy card chrome (kept for un-migrated views)
+.card-header {
+    background: var(--c-surface);
+    font-family: $font-ui;
+    font-weight: 600;
+    color: var(--c-ink);
+}
+.card-footer { background: var(--c-surface); }
+
+// -- x-ui.card ------------------------------------------------------------------
+.c-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--c-border);
+}
+.card-heading {
+    font-family: $font-ui;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    line-height: 1.3;
+    color: var(--c-ink);
+    margin: 0;
+}
+.card-description {
+    font-size: .875rem;
+    color: var(--c-muted);
+    margin: .125rem 0 0;
+}
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+.card-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: $border-radius;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+.card-body-none { padding: 0; }
+.card-body-sm   { padding: 1rem; }
+.card-body-md   { padding: 1.25rem; }
+.card-body-lg   { padding: 1.5rem; }
+@include media-breakpoint-down(sm) {
+    .card-body-md, .card-body-lg { padding: 1rem; }
+}
+.c-card-footer {
+    background: $gray-50;
+    padding: .75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: .5rem;
+    border-top: 1px solid var(--c-border);
+}
+.card-flat  { box-shadow: none; }
+// Quiet card: an empty panel that should not compete for attention
+.card-quiet {
+    box-shadow: none;
+    background: var(--c-surface-2);
+    border-color: var(--c-border);
+    color: var(--c-ink-2);
+    .c-card-header { background: transparent; border-bottom-color: transparent; padding-bottom: 0; }
+    .card-heading { font-size: .9375rem; color: var(--c-ink-2); }
+}
+.card-flush { overflow: hidden; }
+.card-interactive {
+    text-decoration: none;
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
+    &:hover { color: inherit; text-decoration: none; border-color: var(--c-border-strong); box-shadow: var(--c-shadow-elevated); }
+    &:active { transform: scale($press-scale); }
+}
+
+// Section heading used inside cards / pages
+.section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: 1rem;
+    .section-heading-title { font-family: $font-ui; font-size: 1rem; font-weight: 700; letter-spacing: -.01em; color: var(--c-ink); margin: 0; }
+    .section-heading-desc  { font-size: .875rem; color: var(--c-muted); margin: .125rem 0 0; }
+}
+
+// List rows (dashboard lists, settings lists)
+.list-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .625rem .75rem;
+    border-radius: $border-radius;
+    color: inherit;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color $dur-fast ease-out, transform $dur-press ease-out;
+    &:hover { background: var(--c-surface-2); color: inherit; text-decoration: none; }
+    &:is(a, button):active { transform: scale(.99); }
+}

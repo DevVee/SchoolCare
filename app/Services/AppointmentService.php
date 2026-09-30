@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Exceptions\InvalidStatusTransition;
 use App\Models\Appointment;
 use App\Models\AppointmentTimeSlot;
+use Illuminate\Support\Facades\DB;
 
 class AppointmentService
 {
@@ -37,6 +39,13 @@ class AppointmentService
      */
     public function approve(Appointment $appointment): void
     {
+        // Online requests must be linked to a patient record before approval.
+        if ($appointment->needsPatientLink()) {
+            throw new InvalidStatusTransition('Link this online request to a patient record before approving it.');
+        }
+
+        $this->transition($appointment, 'approved');
+
         $appointment->update([
             'status'      => 'approved',
             'approved_by' => auth()->id(),
@@ -46,16 +55,12 @@ class AppointmentService
         AuditLogService::log(
             action: 'approved',
             module: 'appointments',
-            description: "Approved appointment #{$appointment->id} for {$appointment->patient->full_name} on " .
+            description: "Approved appointment #{$appointment->id} for {$appointment->display_name} on " .
                          $appointment->appointment_date->format('M d, Y'),
         );
 
-        // Send SMS — wrapped so failure never blocks the approval
-        try {
-            $this->sms->sendAppointmentApproval($appointment->load('patient'));
-        } catch (\Throwable) {
-            // Silently swallow — SMS failure must not roll back appointment approval
-        }
+        // SMS/email (queued; never throws — see SMS log for the outcome)
+        app(AppointmentNotifier::class)->notify('approved', $appointment);
     }
 
     /**
@@ -63,6 +68,8 @@ class AppointmentService
      */
     public function cancel(Appointment $appointment, string $reason): void
     {
+        $this->transition($appointment, 'cancelled');
+
         $appointment->update([
             'status'           => 'cancelled',
             'cancelled_reason' => $reason,
@@ -71,14 +78,11 @@ class AppointmentService
         AuditLogService::log(
             action: 'cancelled',
             module: 'appointments',
-            description: "Cancelled appointment #{$appointment->id} for {$appointment->patient->full_name}. Reason: {$reason}",
+            description: "Cancelled appointment #{$appointment->id} for {$appointment->display_name}. Reason: {$reason}",
         );
 
-        try {
-            $this->sms->sendAppointmentCancellation($appointment->load('patient'), $reason);
-        } catch (\Throwable) {
-            // Silently swallow
-        }
+        // SMS/email (queued; never throws — see SMS log for the outcome)
+        app(AppointmentNotifier::class)->notify('cancelled', $appointment, ['reason' => $reason]);
     }
 
     /**
@@ -86,12 +90,14 @@ class AppointmentService
      */
     public function markNoShow(Appointment $appointment): void
     {
+        $this->transition($appointment, 'no_show');
+
         $appointment->update(['status' => 'no_show']);
 
         AuditLogService::log(
             action: 'updated',
             module: 'appointments',
-            description: "Marked appointment #{$appointment->id} as No Show for {$appointment->patient->full_name}",
+            description: "Marked appointment #{$appointment->id} as No Show for {$appointment->display_name}",
         );
     }
 
@@ -100,12 +106,62 @@ class AppointmentService
      */
     public function markCompleted(Appointment $appointment): void
     {
+        $this->transition($appointment, 'completed');
+
         $appointment->update(['status' => 'completed']);
 
         AuditLogService::log(
             action: 'updated',
             module: 'appointments',
-            description: "Marked appointment #{$appointment->id} as Completed for {$appointment->patient->full_name}",
+            description: "Marked appointment #{$appointment->id} as Completed for {$appointment->display_name}",
         );
+    }
+
+    /**
+     * Complete an appointment because a consultation was recorded for it.
+     * A pending appointment is implicitly approved by the attending nurse
+     * (approved_by/approved_at are only set if not already approved).
+     * Terminal appointments are left untouched.
+     */
+    public function completeFromConsultation(Appointment $appointment, ?int $nurseId): void
+    {
+        $appointment->refresh();
+
+        if ($appointment->isTerminal()) {
+            return;
+        }
+
+        $data = ['status' => 'completed'];
+        if ($appointment->isPending()) {
+            $data['approved_by'] = $nurseId;
+            $data['approved_at'] = now();
+        }
+
+        $appointment->update($data);
+    }
+
+    /**
+     * Guard a status change against the Appointment state machine.
+     *
+     * Re-reads the current status from the database (locking the row where
+     * the driver supports it) so a double-submitted approve/cancel cannot
+     * run twice — the second request sees the new status and is rejected,
+     * which also prevents re-sending the SMS.
+     *
+     * @throws InvalidStatusTransition
+     */
+    private function transition(Appointment $appointment, string $to): void
+    {
+        $current = DB::table('appointments')
+            ->where('id', $appointment->id)
+            ->lockForUpdate()
+            ->value('status') ?? $appointment->status;
+
+        $appointment->status = $current;
+        $appointment->syncOriginalAttribute('status');
+
+        if (! $appointment->canTransitionTo($to)) {
+            throw InvalidStatusTransition::for('appointment', $current, $to);
+        }
     }
 }

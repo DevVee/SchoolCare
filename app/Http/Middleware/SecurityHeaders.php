@@ -50,13 +50,16 @@ class SecurityHeaders
         // Google Fonts CSS comes from fonts.googleapis.com;
         // the actual woff2 files are served from fonts.gstatic.com.
         // Bootstrap Icons are now bundled locally via Vite — no CDN needed there.
+        // Chart.js (dashboard + monthly/annual reports) is loaded from
+        // cdn.jsdelivr.net; the patient address picker calls the PSGC API
+        // at https://psgc.cloud (patients/create + patients/edit).
         $csp = implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline'",
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
             "img-src 'self' data: blob:",
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
-            "connect-src 'self'",
+            "connect-src 'self' https://psgc.cloud",
             "form-action 'self' https:",
             "base-uri 'self'",
             "frame-ancestors 'none'",

@@ -1,0 +1,42 @@
+// =============================================================================
+// Logo (x-ui.logo): brand mark + name from settings. Variants size the text.
+// =============================================================================
+
+.c-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: .625rem;
+    min-width: 0;
+    color: var(--c-ink);
+    text-decoration: none;
+    &:hover { color: var(--c-ink); text-decoration: none; }
+
+    .c-logo-mark { flex-shrink: 0; border-radius: $radius-sm; object-fit: contain; }
+    .c-logo-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+    .c-logo-name {
+        font-family: $font-display;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: -.01em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .c-logo-sub {
+        font-size: .75rem;
+        color: var(--c-muted);
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &.c-logo-topbar .c-logo-name { font-size: .9375rem; font-weight: 600; font-family: $font-ui; }
+    &.c-logo-auth { gap: .75rem; .c-logo-name { font-size: 1.25rem; } .c-logo-sub { font-size: .875rem; } }
+
+    &.c-logo-inverse {
+        color: #fff;
+        &:hover { color: #fff; }
+        .c-logo-sub { color: rgba(255, 255, 255, .8); }
+    }
+}

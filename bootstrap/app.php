@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // ── Register custom middleware aliases ─────────────────────────────────
         $middleware->alias([
             'check.active'       => \App\Http\Middleware\CheckActiveUser::class,
+            'password.changed'   => \App\Http\Middleware\EnsurePasswordChanged::class,
             'role'               => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission'         => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
@@ -35,11 +36,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         // ── 419 CSRF TokenMismatch: log + graceful recovery ───────────────────
         //
-        // Root causes on Render free tier:
-        //   1. Container restart after inactivity → SQLite DB rebuilt → sessions wiped
-        //      → browser sends stale cookie referencing a session that no longer exists
-        //   2. User leaves a tab open across a session expiry / deploy
-        //   3. APP_KEY change (shouldn't happen with our stable key setup)
+        // Root causes:
+        //   1. User leaves a tab open across a session expiry / deploy
+        //   2. Sessions cleared (e.g. user deactivated, password reset)
+        //   3. APP_KEY change (invalidates every session and token)
         //
         // Recovery strategy:
         //   - AJAX/JSON callers  → 419 JSON so the JS can show a "refresh" prompt

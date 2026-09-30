@@ -2,419 +2,205 @@
 
 @section('title', 'Dashboard')
 
+@use('App\Support\DisplayFormat')
+
+@php
+    $user = auth()->user();
+
+    $canLogs  = $user->can('view-patient-logs');
+    $canAppts = $user->can('view-appointments');
+    $canMeds  = $user->can('view-medicines');
+    $canAudit = $user->can('view-audit-logs');
+
+    // Recent activity: audit "module" names mapped to the module tone map (config/ui.php).
+    $activityModule = function (?string $module) {
+        $key = str_replace('_', '-', (string) $module);
+        $key = config('ui.module_aliases.'.$key) ?? $key;
+        $key = match ($key) {
+            'appointment-slots', 'specialist-visits' => 'appointments',
+            'patient-intake' => 'patients',
+            default => $key,
+        };
+        return config('ui.module_meta.'.$key) ? $key : 'admin';
+    };
+
+    $showAppts = $canAppts;
+    $showTrend = $trend !== null;
+    $bottom    = array_filter(['reasons' => $canLogs, 'stock' => $canMeds, 'activity' => $canAudit]);
+    $bottomCol = match (count($bottom)) { 1 => 'col-12', 2 => 'col-lg-6', default => 'col-lg-6 col-xl-4' };
+@endphp
+
 @section('content')
 
-{{-- ─── Welcome Banner ──────────────────────────────────────────────────────── --}}
-<div class="welcome-banner">
-    <div class="welcome-left">
-        <h2 class="welcome-greeting">
-            <span id="dashGreeting">Good Morning</span>,
-            {{ explode(' ', auth()->user()->name)[0] }}!
-        </h2>
-        <p class="welcome-subtitle">
-            Here's what's happening at the clinic today.
-        </p>
-    </div>
-    <div class="welcome-date-badge">
-        <i class="bi bi-calendar3"></i>
-        {{ now()->format('l, F d, Y') }}
-    </div>
-</div>
+<x-ui.hero subtitle="Clinic visits, appointments and inventory at a glance." class="mb-4">
+    @canany(['create-patient-logs', 'view-appointments'])
+    <x-slot:actions>
+        @can('create-patient-logs')
+            <x-ui.button variant="hero" icon="journal-plus" :href="route('patient-logs.create')">Log a visit</x-ui.button>
+        @endcan
+        @can('view-appointments')
+            <x-ui.button variant="hero-outline" icon="calendar-check" :href="route('appointments.index')">Appointments</x-ui.button>
+        @endcan
+    </x-slot:actions>
+    @endcanany
+</x-ui.hero>
 
-{{-- ─── Stat Cards — 8 cards / 4×2 ───────────────────────────────────────────── --}}
-<div class="row g-3 mb-4">
+@php
+    $cardCount = ($canLogs ? 2 : 0) + ($canAppts ? 1 : 0) + ($canMeds ? 1 : 0) + (isset($stats['patients_active']) ? 1 : 0);
+@endphp
+@if($cardCount)
+<x-ui.stat-cards :cols="$cardCount" class="mb-4">
+    @if($canLogs)
+        <x-ui.stat-card label="Visits today" :value="$stats['visits_today']" tone="logbook" icon="journal-medical" :href="route('patient-logs.index')">
+            <span class="stat-mark mark-up">+{{ number_format($stats['visits_week']) }}</span> this week
+        </x-ui.stat-card>
+        <x-ui.stat-card label="In clinic now" :value="$stats['in_clinic']" tone="logbook" icon="door-open" href="#inClinicPanel">
+            Checked in, not yet out
+        </x-ui.stat-card>
+    @endif
+    @if($canAppts)
+        <x-ui.stat-card label="Pending appointments" :value="$stats['appointments_pending']" tone="appointments" icon="hourglass-split"
+            :href="route('appointments.index', ['status' => 'pending'])">
+            {{ number_format($stats['appointments_today']) }} scheduled today
+        </x-ui.stat-card>
+    @endif
+    @if($canMeds)
+        <x-ui.stat-card label="Low stock" :value="$stats['low_stock_medicines']" tone="inventory" icon="exclamation-triangle" :href="route('medicines.low-stock')">
+            <span @class(['stat-mark mark-warn' => $stats['expiring_medicines'] > 0])>{{ number_format($stats['expiring_medicines']) }}</span>
+            expiring within {{ \App\Models\Medicine::expiryWarningDays() }} days
+        </x-ui.stat-card>
+    @endif
+    @isset($stats['patients_active'])
+        <x-ui.stat-card label="Patients" :value="$stats['patients_active']" tone="patients" icon="people" :href="route('patients.index')">
+            <span class="stat-meta-item"><x-ui.icon name="gender-male" class="tone-sky" />{{ number_format($stats['patients_male']) }} male</span>
+            <span class="stat-meta-item"><x-ui.icon name="gender-female" class="tone-rose" />{{ number_format($stats['patients_female']) }} female</span>
+        </x-ui.stat-card>
+    @endisset
+</x-ui.stat-cards>
+@endif
 
-    {{-- 1. Clinic Visits Today --}}
-    <div class="col-sm-6 col-xl-3" style="cursor:pointer;"
-         onclick="window.location.href='{{ route('patient-logs.index') }}'">
-        <div class="card stat-card stat-visits h-100">
-            <div class="card-body">
-                <div class="stat-icon icon-visits">
-                    <i class="bi bi-journal-medical"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">Clinic Visits Today</div>
-                    <div class="stat-value">{{ $stats['visits_today'] }}</div>
-                    <div class="stat-trend">
-                        <i class="bi bi-calendar3"></i> {{ $stats['visits_month'] }} this month
-                    </div>
-                </div>
-            </div>
-        </div>
+{{-- Currently in clinic (discharge "Out" buttons); one quiet line when empty --}}
+@include('patient-logs.partials.in-clinic', ['compact' => true])
+
+@if($showTrend || $showAppts)
+<div class="row g-4 mb-4">
+    @if($showTrend)
+    <div class="{{ $showAppts ? 'col-lg-7 col-xl-8' : 'col-12' }}">
+        <x-ui.card module="logbook" icon="graph-up" title="Clinic visits" :subtitle="'Last '.$trend['days'].' days'" class="h-100">
+            <x-ui.chart type="line" :series="$trend['series']" :categories="$trend['categories']" height="260"
+                :empty="'No visits in the last '.$trend['days'].' days.'" />
+        </x-ui.card>
     </div>
+    @endif
 
-    {{-- 2. Total Patients --}}
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card stat-patients h-100">
-            <div class="card-body">
-                <div class="stat-icon icon-patients">
-                    <i class="bi bi-people-fill"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">Total Patients</div>
-                    <div class="stat-value">{{ number_format($stats['total_patients']) }}</div>
-                    <div class="stat-trend trend-up">
-                        <i class="bi bi-person-check-fill"></i> registered
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- 3. Consultations Today --}}
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card stat-consults-today h-100">
-            <div class="card-body">
-                <div class="stat-icon icon-consults-today">
-                    <i class="bi bi-clipboard2-pulse-fill"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">Consultations Today</div>
-                    <div class="stat-value">{{ $stats['consultations_today'] }}</div>
-                    <div class="stat-trend">
-                        <i class="bi bi-activity"></i> clinic visits
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- 4. Consultations This Month --}}
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card stat-consults-month h-100">
-            <div class="card-body">
-                <div class="stat-icon icon-consults-month">
-                    <i class="bi bi-clipboard-check-fill"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">Consultations This Month</div>
-                    <div class="stat-value">{{ $stats['consultations_month'] }}</div>
-                    <div class="stat-trend">
-                        <i class="bi bi-calendar3"></i> {{ now()->format('M Y') }}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- 5. Appointments Today --}}
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card stat-appointments h-100">
-            <div class="card-body">
-                <div class="stat-icon icon-appointments">
-                    <i class="bi bi-calendar-check-fill"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">Appointments Today</div>
-                    <div class="stat-value">{{ $stats['appointments_today'] }}</div>
-                    <div class="stat-trend">
-                        <i class="bi bi-calendar-day"></i> scheduled
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- 6. Active Medicines --}}
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card stat-medicines h-100">
-            <div class="card-body">
-                <div class="stat-icon icon-medicines">
-                    <i class="bi bi-capsule-pill"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">Active Medicines</div>
-                    <div class="stat-value">{{ $stats['total_medicines'] }}</div>
-                    <div class="stat-trend">
-                        <i class="bi bi-box-seam-fill"></i> in inventory
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- 7. Low Stock --}}
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card stat-low-stock h-100">
-            <div class="card-body">
-                <div class="stat-icon icon-low-stock">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">Low Stock</div>
-                    <div class="stat-value">{{ $stats['low_stock_medicines'] }}</div>
-                    @if($stats['low_stock_medicines'] > 0)
-                        <div class="stat-trend trend-down">
-                            <i class="bi bi-arrow-down-circle-fill"></i> need restock
-                        </div>
-                    @else
-                        <div class="stat-trend trend-up">
-                            <i class="bi bi-shield-check-fill"></i> stock is good
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- 8. Expiring Soon --}}
-    <div class="col-sm-6 col-xl-3">
-        <div class="card stat-card stat-expiring h-100">
-            <div class="card-body">
-                <div class="stat-icon icon-expiring">
-                    <i class="bi bi-calendar-x-fill"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">Expiring Soon</div>
-                    <div class="stat-value">{{ $stats['expiring_medicines'] }}</div>
-                    @if($stats['expiring_medicines'] > 0)
-                        <div class="stat-trend trend-down">
-                            <i class="bi bi-clock-history"></i> within 30 days
-                        </div>
-                    @else
-                        <div class="stat-trend trend-up">
-                            <i class="bi bi-check-circle-fill"></i> none expiring
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div>{{-- /.row stat cards --}}
-
-{{-- ─── Today's Clinic Log (below cards, clean table) ─────────────────────── --}}
-@can('view-consultations')
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
-        <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-journal-medical text-primary fs-5"></i>
-            <span class="fw-semibold">Today's Clinic Log</span>
-            <span class="badge bg-primary rounded-pill">{{ $stats['visits_today'] }}</span>
-        </div>
-        <div class="d-flex gap-2">
-            @can('create-consultations')
-            <a href="{{ route('patient-logs.create') }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-lg me-1"></i>Log a Visit
-            </a>
-            @endcan
-            <a href="{{ route('patient-logs.index') }}" class="btn btn-outline-secondary btn-sm">
-                View All
-            </a>
-        </div>
-    </div>
-
-    @if($todayClinicLog->isEmpty())
-    <div class="card-body text-center py-5 text-muted">
-        <i class="bi bi-journal-x d-block mb-2 opacity-25" style="font-size:2.5rem;"></i>
-        <p class="mb-0 fw-semibold">No patient visits logged today.</p>
-        <p class="small mb-0">Use <strong>Log a Visit</strong> to record when a patient comes to the clinic.</p>
-    </div>
-    @else
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light">
-                <tr>
-                    <th class="ps-4">Time In</th>
-                    <th>Patient</th>
-                    <th>Complaint</th>
-                    <th>Treatment</th>
-                    <th class="text-center">Disposition</th>
-                    <th class="text-center">SMS</th>
-                    <th class="pe-4 text-end">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach($todayClinicLog as $log)
-            <tr>
-                <td class="ps-4 fw-semibold text-nowrap">
-                    {{ \Carbon\Carbon::parse($log->time_in)->format('h:i A') }}
-                </td>
-                <td>
-                    <div class="fw-semibold">{{ $log->patient->full_name }}</div>
-                    <div class="text-muted" style="font-size:.73rem;">
-                        {{ $log->patient->patient_number }}
-                        @if($log->patient->section) · {{ $log->patient->section }} @endif
-                    </div>
-                </td>
-                <td style="max-width:180px;">{{ Str::limit($log->chief_complaint, 50) }}</td>
-                <td class="text-muted" style="max-width:160px;">
-                    {{ $log->treatment ? Str::limit($log->treatment, 45) : '—' }}
-                </td>
-                <td class="text-center">
-                    <span class="badge bg-{{ $log->disposition_color }}-subtle text-{{ $log->disposition_color }}-emphasis border border-{{ $log->disposition_color }}-subtle">
-                        {{ $log->disposition_label }}
-                    </span>
-                </td>
-                <td class="text-center">
-                    @if($log->sms_guardian && $log->sms_sent)
-                        <i class="bi bi-check2-circle text-success" title="SMS sent"></i>
-                    @elseif($log->sms_guardian)
-                        <i class="bi bi-x-circle text-danger" title="SMS failed"></i>
-                    @else
-                        <span class="text-muted">—</span>
-                    @endif
-                </td>
-                <td class="pe-4 text-end">
-                    <a href="{{ route('patient-logs.show', $log) }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-eye"></i>
-                    </a>
-                </td>
-            </tr>
-            @endforeach
-            </tbody>
-        </table>
+    @if($showAppts)
+    <div class="{{ $showTrend ? 'col-lg-5 col-xl-4' : 'col-12' }}">
+        <x-ui.card flush module="appointments" title="Today's appointments" class="h-100">
+            <x-slot:actions>
+                <x-ui.button variant="ghost" size="sm" :href="route('appointments.today')">View all</x-ui.button>
+            </x-slot:actions>
+            @if($todayAppointments->isEmpty())
+                <x-ui.empty-state compact module="appointments" title="No appointments today" description="Approved and pending appointments for today show here." />
+            @else
+                <ul class="dash-list">
+                    @foreach($todayAppointments as $appt)
+                    <li>
+                        <a href="{{ route('appointments.show', $appt) }}" class="dash-row dash-row-link">
+                            <span class="dash-row-time">{{ DisplayFormat::time($appt->appointment_time, '-') }}</span>
+                            <span class="dash-row-main">
+                                <span class="dash-row-title">{{ $appt->patient?->full_name ?? $appt->requester_name ?? 'Unknown patient' }}</span>
+                                @if($appt->purpose)<span class="dash-row-sub">{{ $appt->purpose }}</span>@endif
+                            </span>
+                            <x-ui.status-badge :status="$appt->status" type="appointment" size="sm" />
+                        </a>
+                    </li>
+                    @endforeach
+                </ul>
+            @endif
+        </x-ui.card>
     </div>
     @endif
 </div>
-@endcan
+@endif
 
-{{-- ─── Main Content Row ─────────────────────────────────────────────────────── --}}
-<div class="row g-3 mb-4">
-
-    {{-- Monthly Visits Chart --}}
-    <div class="col-lg-7">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white d-flex align-items-center justify-content-between">
-                <span class="fw-semibold"><i class="bi bi-bar-chart-line me-2 text-primary"></i>Monthly Patient Visits</span>
-                <small class="text-muted">Last 6 months</small>
-            </div>
-            <div class="card-body">
-                <canvas id="monthlyChart" height="250"></canvas>
-            </div>
-        </div>
+@if(count($bottom))
+<div class="row g-4">
+    @if($canLogs)
+    <div class="{{ $bottomCol }}">
+        <x-ui.card module="logbook" icon="clipboard2-pulse" title="Top reasons for visit" :subtitle="'This month ('.now()->format('F').')'" class="h-100">
+            <x-ui.chart type="horizontal-bar"
+                :series="[['name' => 'Visits', 'data' => $topReasons->pluck('total')->all()]]"
+                :categories="$topReasons->pluck('reason')->all()"
+                :height="max(160, 38 * $topReasons->count() + 40)"
+                empty="No visits logged this month." />
+        </x-ui.card>
     </div>
+    @endif
 
-    {{-- Today's Appointments --}}
-    <div class="col-lg-5">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white d-flex align-items-center justify-content-between">
-                <span class="fw-semibold"><i class="bi bi-calendar-event me-2 text-success"></i>Today's Appointments</span>
-                <a href="{{ route('appointments.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
-            </div>
-            <div class="card-body p-0">
-                @forelse($todayAppointments as $appt)
-                    <div class="d-flex align-items-center px-3 py-2 border-bottom">
-                        <div class="me-3 text-center" style="min-width:50px;">
-                            <div class="fw-bold text-primary" style="font-size:.85rem;">{{ date('h:i', strtotime($appt->appointment_time)) }}</div>
-                            <div class="text-muted" style="font-size:.65rem;">{{ date('A', strtotime($appt->appointment_time)) }}</div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="fw-semibold" style="font-size:.85rem;">{{ $appt->patient->full_name ?? '—' }}</div>
-                            <div class="text-muted" style="font-size:.75rem;">{{ $appt->purpose }}</div>
-                        </div>
-                        <span class="badge bg-{{ $appt->status_badge }}">{{ ucfirst($appt->status) }}</span>
-                    </div>
-                @empty
-                    <div class="text-center py-5 text-muted">
-                        <i class="bi bi-calendar-x d-block mb-2 opacity-25" style="font-size:2rem;"></i>
-                        <small>No appointments for today</small>
-                    </div>
-                @endforelse
-            </div>
-        </div>
+    @if($canMeds)
+    <div class="{{ $bottomCol }}">
+        <x-ui.card flush module="inventory" icon="exclamation-triangle" title="Inventory alerts" class="h-100">
+            <x-slot:actions>
+                <x-ui.dropdown label="View" size="sm" variant="ghost">
+                    <x-ui.dropdown-item :href="route('medicines.low-stock')" icon="box-seam">Low stock</x-ui.dropdown-item>
+                    <x-ui.dropdown-item :href="route('medicines.expiring')" icon="calendar-x">Expiring soon</x-ui.dropdown-item>
+                </x-ui.dropdown>
+            </x-slot:actions>
+            @if($inventoryAlerts->isEmpty())
+                <x-ui.empty-state compact icon="check2-circle" tone="success" title="Stock is in good shape" description="No medicines are low or expiring soon." />
+            @else
+                <ul class="dash-list">
+                    @foreach($inventoryAlerts as $med)
+                    @php
+                        [$status, $label] = match (true) {
+                            $med->quantity == 0 => ['out_of_stock', 'Out of stock'],
+                            $med->is_low_stock  => ['low_stock', $med->quantity.' '.$med->unit.' left'],
+                            default             => ['expiring', 'Expires '.DisplayFormat::date($med->expiration_date)],
+                        };
+                    @endphp
+                    <li>
+                        <a href="{{ route('medicines.show', $med) }}" class="dash-row dash-row-link">
+                            <x-ui.icon-chip module="medicines" size="sm" />
+                            <span class="dash-row-main">
+                                <span class="dash-row-title">{{ $med->name }}</span>
+                                <span class="dash-row-sub">{{ $med->category->name ?? 'No category' }}</span>
+                            </span>
+                            <x-ui.status-badge :status="$status" type="stock" :label="$label" size="sm" />
+                        </a>
+                    </li>
+                    @endforeach
+                </ul>
+            @endif
+        </x-ui.card>
     </div>
-</div>
+    @endif
 
-{{-- ─── Alerts Row ───────────────────────────────────────────────────────────── --}}
-<div class="row g-3">
-
-    {{-- Low Stock Medicines --}}
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white d-flex align-items-center justify-content-between">
-                <span class="fw-semibold"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Low Stock Medicines</span>
-                @can('view-medicines')
-                <a href="{{ route('medicines.low-stock') }}" class="btn btn-sm btn-outline-warning">View All</a>
-                @endcan
-            </div>
-            <div class="card-body p-0">
-                @forelse($lowStockMedicines as $med)
-                    <div class="d-flex align-items-center px-3 py-2 border-bottom">
-                        <div class="flex-grow-1">
-                            <div class="fw-semibold" style="font-size:.85rem;">{{ $med->name }}</div>
-                            <div class="text-muted" style="font-size:.75rem;">{{ $med->category->name ?? '—' }}</div>
-                        </div>
-                        <span class="badge bg-{{ $med->quantity == 0 ? 'danger' : 'warning text-dark' }}">
-                            {{ $med->quantity }} {{ $med->unit }}
+    @if($canAudit)
+    <div class="{{ $bottomCol }}">
+        <x-ui.card flush module="admin" icon="clock-history" title="Recent activity" class="h-100">
+            <x-slot:actions>
+                <x-ui.button variant="ghost" size="sm" :href="route('admin.audit-logs.index')">Activity log</x-ui.button>
+            </x-slot:actions>
+            @if($recentActivity->isEmpty())
+                <x-ui.empty-state compact module="admin" icon="clock-history" title="No recent activity" />
+            @else
+                <ul class="dash-list">
+                    @foreach($recentActivity as $log)
+                    @php $mod = $activityModule($log->module); @endphp
+                    <li class="dash-row">
+                        <x-ui.icon-chip :module="$mod" :icon="$log->module === 'auth' ? 'person-check' : null" size="sm" />
+                        <span class="dash-row-main">
+                            <span class="dash-row-title fw-normal" title="{{ $log->description }}">{{ $log->description }}</span>
+                            <span class="dash-row-sub">{{ $log->user_name ?: 'System' }}, {{ $log->created_at->diffForHumans() }}</span>
                         </span>
-                    </div>
-                @empty
-                    <div class="text-center py-5 text-muted">
-                        <i class="bi bi-check-circle d-block mb-2 text-success opacity-50" style="font-size:2rem;"></i>
-                        <small>All medicines are well-stocked</small>
-                    </div>
-                @endforelse
-            </div>
-        </div>
+                    </li>
+                    @endforeach
+                </ul>
+            @endif
+        </x-ui.card>
     </div>
-
-    {{-- Recent Activity --}}
-    <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white d-flex align-items-center justify-content-between">
-                <span class="fw-semibold"><i class="bi bi-activity me-2 text-info"></i>Recent Activity</span>
-                @role('administrator')
-                <a href="{{ route('admin.audit-logs.index') }}" class="btn btn-sm btn-outline-secondary">Audit Log</a>
-                @endrole
-            </div>
-            <div class="card-body p-0">
-                @forelse($recentActivity as $log)
-                    <div class="d-flex align-items-start px-3 py-2 border-bottom gap-2">
-                        <span class="badge bg-{{ $log->action_badge }} mt-1" style="min-width:60px;">{{ $log->action }}</span>
-                        <div class="flex-grow-1">
-                            <div style="font-size:.8rem;">{{ $log->description }}</div>
-                            <div class="text-muted" style="font-size:.7rem;">
-                                {{ $log->user_name }} &bull; {{ $log->created_at->diffForHumans() }}
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-center py-5 text-muted"><small>No recent activity</small></div>
-                @endforelse
-            </div>
-        </div>
-    </div>
+    @endif
 </div>
+@endif
 
 @endsection
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const ctx = document.getElementById('monthlyChart');
-    if (!ctx) return;
-
-    const labels = {!! json_encode(collect($monthlyData)->pluck('month')) !!};
-    const data   = {!! json_encode(collect($monthlyData)->pluck('count')) !!};
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Patient Visits',
-                data,
-                backgroundColor: 'rgba(13,110,253,0.12)',
-                borderColor: '#0d6efd',
-                borderWidth: 2,
-                borderRadius: 6,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: (c) => ` ${c.raw} visits` } }
-            },
-            scales: {
-                y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f0f0f0' } },
-                x: { grid: { display: false } }
-            }
-        }
-    });
-});
-</script>
-@endpush

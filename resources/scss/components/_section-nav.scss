@@ -1,0 +1,60 @@
+// =============================================================================
+// Section nav (x-ui.section-nav): settings-style section list.
+// >= lg: vertical list, sticky under the topbar (top: topbar height + 16px).
+// <  lg: horizontal scrollable tab row.
+// --c-sticky-top (set in _root.scss: topbar height + 16px) can be overridden per page.
+// =============================================================================
+
+.section-nav {
+    margin-bottom: 1rem;
+    .section-nav-list {
+        display: flex;
+        gap: .25rem;
+        margin: 0;
+        padding: 0 0 .25rem;
+        list-style: none;
+        overflow-x: auto;
+        scrollbar-width: none;
+        &::-webkit-scrollbar { display: none; }
+        border-bottom: 1px solid var(--c-border);
+    }
+    .section-nav-link {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        min-height: 2.75rem;
+        padding: .375rem .75rem;
+        border-radius: $radius-sm;
+        font-family: $font-ui;
+        font-size: .9375rem;
+        font-weight: 500;
+        color: var(--c-ink-2);
+        white-space: nowrap;
+        text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: background-color $dur-fast ease-out, color $dur-fast ease-out;
+        .c-icon { color: var(--c-muted); font-size: 1rem; }
+        .count-chip { margin-left: auto; }
+        &:hover { background: $gray-100; color: var(--c-ink); text-decoration: none; }
+        &.active { background: var(--brand-50); color: var(--brand-700); font-weight: 600; .c-icon { color: var(--brand-600); } }
+    }
+
+    @include media-breakpoint-up(lg) {
+        position: sticky;
+        top: var(--c-sticky-top, calc(var(--c-topbar-h) + 1rem));
+        margin-bottom: 0;
+        .section-nav-list { flex-direction: column; overflow: visible; border-bottom: 0; padding: 0; gap: 2px; }
+        .section-nav-link { min-height: 2.375rem; }
+        .section-nav-title {
+            display: block;
+            font-family: $font-ui;
+            font-size: .75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--c-muted);
+            margin: 0 0 .5rem .75rem;
+        }
+    }
+    .section-nav-title { display: none; }
+}

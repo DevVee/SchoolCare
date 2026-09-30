@@ -12,7 +12,7 @@ class AppointmentObserver
         AuditLogService::log(
             action: 'created',
             module: 'appointments',
-            description: "Booked appointment for {$appointment->patient->full_name} on " .
+            description: "Booked appointment for {$appointment->display_name} on " .
                          $appointment->appointment_date->format('M d, Y'),
             newValues: $appointment->toArray(),
         );
@@ -48,7 +48,7 @@ class AppointmentObserver
         AuditLogService::log(
             action: 'deleted',
             module: 'appointments',
-            description: "Deleted appointment #{$appointment->id} for {$appointment->patient->full_name}",
+            description: "Deleted appointment #{$appointment->id} for {$appointment->display_name}",
         );
     }
 }

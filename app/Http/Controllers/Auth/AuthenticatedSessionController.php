@@ -8,6 +8,7 @@ use App\Services\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
@@ -29,12 +30,24 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
-        $request->session()->regenerate();
-
         $user = auth()->user();
 
-        // Update last login timestamp
-        $user->update(['last_login_at' => now()]);
+        // Deactivated accounts must not be able to sign in at all.
+        if (! $user->is_active) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Your account has been deactivated. Please contact the administrator.',
+            ]);
+        }
+
+        $request->session()->regenerate();
+
+        // Update last login timestamp + IP (shown on the admin user page)
+        $user->forceFill([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+        ])->save();
 
         // Audit: record successful login with IP for forensic trail
         AuditLogService::log(

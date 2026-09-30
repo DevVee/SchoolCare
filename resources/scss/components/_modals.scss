@@ -1,0 +1,110 @@
+// =============================================================================
+// Modals (sizes sm 440 / md 520 / lg 640 / xl 800, radius 16, scrim) and the
+// global confirm dialog. Modals scale in from .97 (reduced motion: fade only).
+// =============================================================================
+
+.modal-md { --bs-modal-width: #{$modal-md}; }   // Bootstrap has no .modal-md class
+
+.modal-content { overflow: hidden; }
+.modal-content > form { display: contents; }   // x-ui.modal :action keeps scrollable body layout
+.modal.fade .modal-dialog { transition: transform $dur-slow $ease-out; }
+.modal-header {
+    gap: .75rem;
+    .modal-title {
+        font-family: $font-ui;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        letter-spacing: -.01em;
+        color: var(--c-ink);
+        margin: 0;
+    }
+    .modal-subtitle { font-size: .875rem; color: var(--c-muted); margin: .125rem 0 0; }
+}
+.modal-footer {
+    gap: .5rem;
+    background: $gray-50;
+    > * { margin: 0; }
+}
+
+// Close button (28px visual, 44px hit area on touch). Used by modals, toasts, alerts.
+.btn-close-c {
+    width: 2rem;
+    height: 2rem;
+    border-radius: $border-radius;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--c-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: .875rem;
+    line-height: 1;
+    margin-left: auto;
+    transition: background-color $dur-fast ease-out, color $dur-fast ease-out;
+    &:hover { background: var(--c-surface-2); color: var(--c-ink); }
+    &:active { transform: scale($press-scale); }
+    &.btn-close-sm { width: 1.625rem; height: 1.625rem; font-size: .75rem; border-radius: $border-radius-sm; }
+}
+@media (pointer: coarse) {
+    .btn-close-c, .btn-close-c.btn-close-sm { width: 2.75rem; height: 2.75rem; }
+}
+
+// Bottom sheet below sm (x-ui.modal sheet): slides up, leaves downwards
+@include media-breakpoint-down(sm) {
+    .modal-sheet .modal-dialog {
+        margin: 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-width: none;
+        min-height: 0;
+        align-items: flex-end;
+    }
+    .modal-sheet .modal-content { border-radius: $border-radius-xl $border-radius-xl 0 0; padding-bottom: env(safe-area-inset-bottom); }
+    .modal-sheet.fade .modal-dialog { transform: translateY(100%); }
+    .modal-sheet.show .modal-dialog { transform: none; }
+}
+
+// -- Global confirm dialog ------------------------------------------------------
+.modal-confirm {
+    .modal-dialog { --bs-modal-width: 420px; }
+    .modal-content { padding: 1.5rem; }
+}
+.confirm-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: $border-radius-lg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.375rem;
+    margin-bottom: 1rem;
+}
+@each $name, $t in $tones {
+    .confirm-icon.tone-#{$name} { color: tone($name, 600); }
+}
+.confirm-title {
+    font-family: $font-ui;
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--c-ink);
+    margin: 0 0 .375rem;
+}
+.confirm-body {
+    font-size: .9375rem;
+    color: var(--c-ink-2);
+    line-height: 1.5;
+    margin: 0 0 1.25rem;
+    white-space: pre-line;
+}
+.confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    flex-wrap: wrap;
+    @include media-breakpoint-down(sm) { > .btn { flex: 1 1 0; } }
+}

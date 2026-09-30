@@ -3,118 +3,79 @@
 @section('title', 'Dispense Medicine')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-0">Dispense Medicine</h4>
-        <p class="text-muted small mb-0">Record medicine dispensed to a patient</p>
-    </div>
-    <a href="{{ route('dispensing.index') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i> Back
-    </a>
-</div>
+<x-ui.page-header title="Dispense medicine" description="Record a medicine given to a patient. Stock is deducted, earliest expiry first."
+    :back="route('dispensing.index')" back-label="Back to dispensing records" />
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
-                @if($errors->any())
-                <div class="alert alert-danger">
-                    <ul class="mb-0 ps-3">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-                </div>
-                @endif
+@if($errors->any())
+    <x-ui.alert variant="danger" title="Please fix the errors below" class="mb-3">Nothing was saved and no stock was deducted.</x-ui.alert>
+@endif
 
-                <form method="POST" action="{{ route('dispensing.store') }}">
-                    @csrf
-
-                    {{-- Step 1: Patient --}}
-                    <h6 class="fw-bold text-muted text-uppercase small mb-3 border-bottom pb-2">1. Select Patient</h6>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Patient <span class="text-danger">*</span></label>
-                        <select name="patient_id" id="patientSelect"
-                            class="form-select @error('patient_id') is-invalid @enderror" required>
-                            <option value="">— Select Patient —</option>
-                            @foreach($patients as $p)
-                            <option value="{{ $p->id }}"
-                                @selected(old('patient_id', $selectedPatient) == $p->id)>
-                                {{ $p->last_name }}, {{ $p->first_name }}
-                                @if($p->middle_name) {{ $p->middle_name[0] }}. @endif
-                                — {{ $p->patient_number }}
-                            </option>
-                            @endforeach
-                        </select>
-                        @error('patient_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-
-                    {{-- Step 2: Consultation (optional) --}}
-                    <h6 class="fw-bold text-muted text-uppercase small mb-3 border-bottom pb-2 mt-4">2. Link Consultation <span class="text-muted fw-normal">(Optional)</span></h6>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Consultation Visit</label>
-                        <select name="consultation_id" id="consultSelect" class="form-select">
-                            <option value="">— None (walk-in dispensing) —</option>
-                        </select>
-                    </div>
-
-                    {{-- Step 3: Medicine --}}
-                    <h6 class="fw-bold text-muted text-uppercase small mb-3 border-bottom pb-2 mt-4">3. Select Medicine</h6>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Medicine <span class="text-danger">*</span></label>
-                        <select name="medicine_id" id="medicineSelect"
-                            class="form-select @error('medicine_id') is-invalid @enderror" required>
-                            <option value="">— Select Medicine —</option>
-                            @foreach($medicines as $med)
-                            <option value="{{ $med->id }}"
-                                data-unit="{{ $med->unit }}"
-                                data-qty="{{ $med->quantity }}"
-                                data-low="{{ $med->low_stock_threshold }}"
-                                @selected(old('medicine_id') == $med->id)>
-                                {{ $med->name }} — {{ $med->quantity }} {{ $med->unit }}s available
-                            </option>
-                            @endforeach
-                        </select>
-                        @error('medicine_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-
-                    {{-- Stock indicator --}}
-                    <div id="stockBar" class="mb-3 d-none">
-                        <div class="d-flex justify-content-between small mb-1">
-                            <span>Available Stock</span>
-                            <span id="stockQty" class="fw-semibold"></span>
-                        </div>
-                        <div class="progress" style="height:6px;">
-                            <div id="stockProgress" class="progress-bar" role="progressbar" style="width:0%"></div>
-                        </div>
-                    </div>
-
-                    {{-- Step 4: Quantity & Remarks --}}
-                    <h6 class="fw-bold text-muted text-uppercase small mb-3 border-bottom pb-2 mt-4">4. Quantity & Remarks</h6>
-                    <div class="row g-3">
-                        <div class="col-sm-4">
-                            <label class="form-label fw-semibold">Quantity <span class="text-danger">*</span></label>
-                            <input type="number" name="quantity" id="qtyInput" value="{{ old('quantity', 1) }}"
-                                class="form-control @error('quantity') is-invalid @enderror"
-                                min="1" required>
-                            @error('quantity')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Remarks</label>
-                            <textarea name="remarks" rows="2"
-                                class="form-control @error('remarks') is-invalid @enderror"
-                                placeholder="Dosage instructions, special notes…">{{ old('remarks') }}</textarea>
-                            @error('remarks')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a href="{{ route('dispensing.index') }}" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="bi bi-capsule me-1"></i> Dispense
-                        </button>
-                    </div>
-                </form>
+<form method="POST" action="{{ route('dispensing.store') }}">
+    @csrf
+    <x-ui.card padding="lg">
+        <x-ui.section title="Patient" description="Link a consultation from the last 30 days, or leave it as walk-in.">
+            <div class="row g-3">
+                <x-ui.select wrapper-class="col-12" name="patient_id" id="patientSelect" label="Patient" required
+                    placeholder="Select a patient" :selected="$selectedPatient"
+                    :options="$patients->mapWithKeys(fn ($p) => [$p->id => $p->last_name.', '.$p->first_name.($p->middle_name ? ' '.mb_substr($p->middle_name, 0, 1).'.' : '').' ('.$p->patient_number.')'])->all()" />
+                <x-ui.select wrapper-class="col-12" name="consultation_id" id="consultSelect" label="Consultation" optional
+                    placeholder="None (walk-in dispensing)" :options="[]" />
             </div>
+        </x-ui.section>
+
+        <x-ui.section title="Medicine" description="Only active, unexpired medicines with stock on hand are listed.">
+            @php $medError = $errors->first('medicine_id'); @endphp
+            <x-ui.field label="Medicine" name="medicine_id" for="medicineSelect" required>
+                <select name="medicine_id" id="medicineSelect" required
+                        @class(['form-select', 'is-invalid' => $medError])
+                        @if($medError) aria-invalid="true" aria-describedby="medicineSelect-error" @endif>
+                    <option value="">Select a medicine</option>
+                    @foreach($medicines as $med)
+                    @php
+                        $usable = (int) ($med->usable_quantity ?? $med->quantity);
+                        $expiry = $med->next_expiry ? \App\Support\DisplayFormat::date($med->next_expiry) : '';
+                    @endphp
+                    <option value="{{ $med->id }}"
+                        data-unit="{{ $med->unit }}"
+                        data-qty="{{ $usable }}"
+                        data-low="{{ $med->low_stock_threshold }}"
+                        data-expiry="{{ $expiry }}"
+                        data-expiring="{{ $med->is_expiring_soon ? 1 : 0 }}"
+                        @selected(old('medicine_id') == $med->id)>
+                        {{ $med->name }}: {{ $usable }} {{ $med->unit }}(s) usable{{ $expiry ? ', next expiry '.$expiry : '' }}{{ $med->is_expiring_soon ? ' (expiring soon)' : '' }}
+                    </option>
+                    @endforeach
+                </select>
+            </x-ui.field>
+
+            {{-- Stock indicator --}}
+            <div id="stockBar" class="mt-3 d-none" aria-live="polite">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span class="text-ink-2">Available stock</span>
+                    <span id="stockQty" class="fw-semibold tabular"></span>
+                </div>
+                <div id="expiryNote" class="small mb-1"></div>
+                <div class="progress" style="height:6px;">
+                    <div id="stockProgress" class="progress-bar" role="progressbar" style="width:0%" aria-label="Stock level"></div>
+                </div>
+            </div>
+        </x-ui.section>
+
+        <x-ui.section title="Quantity and remarks">
+            <div class="row g-3">
+                <x-ui.input wrapper-class="col-12 col-sm-4" type="number" name="quantity" id="qtyInput" label="Quantity" required
+                    min="1" :value="1" />
+                <x-ui.textarea wrapper-class="col-12" name="remarks" label="Remarks" optional rows="2"
+                    placeholder="Dosage instructions or special notes" />
+            </div>
+        </x-ui.section>
+
+        <div class="save-bar">
+            <x-ui.button variant="secondary" :href="route('dispensing.index')">Cancel</x-ui.button>
+            <x-ui.button type="submit" icon="check-lg">Dispense</x-ui.button>
         </div>
-    </div>
-</div>
+    </x-ui.card>
+</form>
 
 @push('scripts')
 <script>
@@ -126,15 +87,19 @@ const stockBar    = document.getElementById('stockBar');
 const stockQty    = document.getElementById('stockQty');
 const stockProg   = document.getElementById('stockProgress');
 const qtyInput    = document.getElementById('qtyInput');
+const expiryNote  = document.getElementById('expiryNote');
+const oldConsult  = @json((string) old('consultation_id'));
 
 function populateConsultations(patientId) {
-    consultSel.innerHTML = '<option value="">— None (walk-in dispensing) —</option>';
+    consultSel.innerHTML = '<option value="">None (walk-in dispensing)</option>';
     (consultations[patientId] || []).forEach(c => {
         const opt = document.createElement('option');
         opt.value = c.id;
-        const d = new Date(c.visit_date + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
-        opt.textContent = d + ' — ' + (c.chief_complaint ? c.chief_complaint.substring(0, 50) : 'Visit');
-        if ('{{ old('consultation_id') }}' == c.id) opt.selected = true;
+        // visit_date serialises as an ISO timestamp: use its date part only.
+        const ymd = String(c.visit_date).substring(0, 10).split('-').map(Number);
+        const d = new Date(ymd[0], ymd[1] - 1, ymd[2]).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+        opt.textContent = d + ', ' + (c.chief_complaint ? c.chief_complaint.substring(0, 50) : 'Visit');
+        if (oldConsult == String(c.id)) opt.selected = true;
         consultSel.appendChild(opt);
     });
 }
@@ -149,7 +114,14 @@ medSel.addEventListener('change', function () {
         const qty  = parseInt(opt.dataset.qty);
         const low  = parseInt(opt.dataset.low);
         const pct  = Math.min(100, Math.round((qty / Math.max(low * 3, qty, 1)) * 100));
-        stockQty.textContent = qty + ' ' + opt.dataset.unit + 's';
+        stockQty.textContent = qty + ' ' + opt.dataset.unit + '(s)';
+        if (opt.dataset.expiry) {
+            expiryNote.textContent = 'Expires ' + opt.dataset.expiry + (opt.dataset.expiring === '1' ? ' (expiring soon)' : '');
+            expiryNote.className = 'small mb-1 ' + (opt.dataset.expiring === '1' ? 'text-warning-emphasis fw-semibold' : 'text-muted');
+        } else {
+            expiryNote.textContent = 'No expiry date recorded';
+            expiryNote.className = 'small mb-1 text-muted';
+        }
         stockProg.style.width = pct + '%';
         stockProg.className   = 'progress-bar bg-' + (qty === 0 ? 'danger' : qty <= low ? 'warning' : 'success');
         qtyInput.max = qty;

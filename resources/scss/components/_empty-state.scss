@@ -1,0 +1,63 @@
+// =============================================================================
+// Empty state (x-ui.empty-state). Left-aligned is not required here: an empty
+// list is a single message, centred in its container.
+// =============================================================================
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.75rem 1rem;
+
+    .empty-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: $radius-sm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: .625rem;
+        font-size: 1rem;
+    }
+    .empty-title {
+        font-family: $font-ui;
+        font-size: .9375rem;
+        font-weight: 600;
+        color: var(--c-ink);
+        margin: 0;
+    }
+    .empty-desc {
+        font-size: .875rem;
+        color: var(--c-ink-2);
+        line-height: 1.45;
+        max-width: 28rem;
+        margin: .125rem 0 0;
+    }
+    .empty-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: .5rem;
+        margin-top: .875rem;
+    }
+
+    &.empty-state-compact { padding: 1rem; }
+
+    // Quiet: a single muted line (e.g. "Nobody is in the clinic right now.")
+    &.empty-state-quiet {
+        flex-direction: row;
+        justify-content: flex-start;
+        text-align: left;
+        gap: .5rem;
+        padding: .625rem 0;
+        .empty-icon { width: auto; height: auto; margin: 0; background: none !important; color: var(--c-muted) !important; font-size: .9375rem; }
+        .empty-title { font-family: $font-body; font-weight: 400; font-size: .9375rem; color: var(--c-ink-2); }
+        .empty-desc { display: none; }
+        .empty-actions { margin: 0 0 0 auto; }
+    }
+}
+@each $name, $t in $tones {
+    .empty-icon.tone-#{$name} { color: tone($name, 600); }
+}

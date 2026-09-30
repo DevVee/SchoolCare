@@ -12,38 +12,66 @@ class DispensingService
 
     /**
      * Dispense medicine to a patient inside a DB transaction.
-     * Rolls back and throws RuntimeException if stock is insufficient.
+     *
+     * Stock is taken First-Expiry-First-Out from unexpired batches
+     * (InventoryService::consume), writing one ledger row per batch used.
+     * Throws \RuntimeException (rolled back, nothing written) when the
+     * medicine is inactive, removed, only has expired stock, or has
+     * insufficient usable stock. When called inside an outer transaction
+     * (e.g. a logbook visit), the exception rolls back the whole visit.
+     *
+     * @param  array{patient_id:int, medicine_id:int, quantity:int, consultation_id?:?int, patient_log_id?:?int, remarks?:?string}  $data
      */
     public function dispense(array $data): DispensingRecord
     {
-        return DB::transaction(function () use ($data) {
+        $quantity = (int) $data['quantity'];
 
-            // Lock the row to prevent race conditions
-            $medicine = Medicine::lockForUpdate()->findOrFail($data['medicine_id']);
+        if ($quantity < 1) {
+            throw new \RuntimeException('Quantity must be at least 1.');
+        }
 
-            if ($medicine->quantity < $data['quantity']) {
+        return DB::transaction(function () use ($data, $quantity) {
+
+            // Lock the row where supported (MySQL/Postgres) to serialise writers.
+            $medicine = Medicine::withTrashed()->lockForUpdate()->findOrFail($data['medicine_id']);
+
+            if ($medicine->trashed() || ! $medicine->is_active) {
+                throw new \RuntimeException("\"{$medicine->name}\" is inactive and cannot be dispensed.");
+            }
+
+            $this->inventory->reconcileUnbatched($medicine);
+
+            if ($medicine->availableQuantity() === 0 && $medicine->expiredQuantity() > 0) {
                 throw new \RuntimeException(
-                    "Insufficient stock for \"{$medicine->name}\". " .
-                    "Available: {$medicine->quantity} {$medicine->unit}(s), requested: {$data['quantity']}."
+                    "All remaining stock of \"{$medicine->name}\" is expired and cannot be dispensed. Dispose of it from the Expiry page."
                 );
             }
 
             $record = DispensingRecord::create([
                 'patient_id'      => $data['patient_id'],
                 'consultation_id' => $data['consultation_id'] ?? null,
-                'medicine_id'     => $data['medicine_id'],
-                'quantity'        => $data['quantity'],
+                'patient_log_id'  => $data['patient_log_id'] ?? null,
+                'medicine_id'     => $medicine->id,
+                'quantity'        => $quantity,
                 'dispensed_by'    => auth()->id(),
-                'dispensed_at'    => now(),
+                'dispensed_at'    => $data['dispensed_at'] ?? now(),
                 'remarks'         => $data['remarks'] ?? null,
             ]);
 
-            $this->inventory->dispense($medicine, $data['quantity'], $record);
+            $notes = "Dispensed to patient ID {$record->patient_id}"
+                .($record->consultation_id ? ", consultation #{$record->consultation_id}" : '')
+                .($record->patient_log_id ? ", clinic visit #{$record->patient_log_id}" : '');
+
+            $this->inventory->consume($medicine, $quantity, 'dispensed', [
+                'notes'     => $notes,
+                'reference' => $record,
+            ]);
 
             AuditLogService::log(
                 action: 'created',
                 module: 'dispensing',
-                description: "Dispensed {$data['quantity']} {$medicine->unit}(s) of \"{$medicine->name}\" to patient ID {$data['patient_id']}"
+                description: "Dispensed {$quantity} {$medicine->unit}(s) of \"{$medicine->name}\" to patient ID {$data['patient_id']}"
+                    .($record->patient_log_id ? " (clinic visit #{$record->patient_log_id})" : '')
             );
 
             return $record;

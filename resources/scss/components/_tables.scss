@@ -1,0 +1,225 @@
+// ═════════════════════════════════════════════════════════════════════════════
+// Tables
+//   • Legacy `.table` markup: uppercase slate headers, brand hover (below).
+//   • `.table-c` (x-ui.table): comfortable spacing, sticky header, edge padding.
+//   • `.priority-{sm|md|lg|xl|xxl}`: hide a column BELOW that breakpoint.
+//   • `.table-stack-{sm|md}`: below the breakpoint rows become stacked cards,
+//     each cell rendered as "LABEL ....... value" using td[data-label].
+//   • `.table-sticky-first`: pin the first column while scrolling horizontally.
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ── Legacy base (all `.table`)
+.table {
+    --bs-table-color: var(--c-ink);
+    > thead > tr > th,
+    > thead > tr > td {
+        font-family: $font-ui;
+        font-size: .75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--c-ink-2);
+        background: $gray-50;
+        border-bottom: 1px solid var(--c-border);
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+    > tbody > tr > td, > tbody > tr > th {
+        vertical-align: middle;
+        border-bottom-color: var(--bs-table-border-color);
+    }
+    > tbody > tr:last-child > td, > tbody > tr:last-child > th { border-bottom-width: 0; }
+}
+// Legacy thead.table-light
+.table-light {
+    --bs-table-bg: #{$gray-50};
+    --bs-table-color: #{$gray-500};
+    --bs-table-border-color: #{$gray-200};
+}
+.table-responsive { -webkit-overflow-scrolling: touch; }
+
+// Legacy tables sitting flush inside a card get rounded bottom corners
+.card > .table-responsive:last-child,
+.card > .card-body.p-0 > .table-responsive:last-child {
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+}
+
+// ── Component table
+.table-shell {
+    position: relative;
+    &.has-max-height { overflow-y: auto; }
+}
+
+.table-c {
+    --bs-table-bg: transparent;
+    font-size: .9375rem;
+    margin-bottom: 0;
+
+    > thead > tr > th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: $gray-50;
+        padding: .625rem 1rem;
+        user-select: none;
+        vertical-align: middle;
+
+        a {
+            color: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: .25rem;
+            text-decoration: none;
+            &:hover { color: var(--c-ink); }
+        }
+        .sort-icon { font-size: .6875rem; opacity: .55; }
+        &.is-sorted { color: var(--c-ink); .sort-icon { opacity: 1; color: var(--brand-600); } }
+    }
+    > tbody > tr > td {
+        padding: .75rem 1rem;
+        font-weight: 400;
+        color: var(--c-ink);
+        line-height: 1.45;
+        white-space: nowrap;
+    }
+    > :not(caption) > * > *:first-child { padding-left: 1.25rem; }
+    > :not(caption) > * > *:last-child  { padding-right: 1.25rem; }
+
+    > tbody > tr[data-href] { cursor: pointer; }
+    > tbody > tr.is-selected > td { background: var(--brand-50); }
+
+    td.cell-wrap     { white-space: normal; min-width: 12rem; }
+    td.cell-muted    { color: var(--c-muted); }
+    td.cell-numeric  { text-align: right; font-variant-numeric: tabular-nums; }
+    td.cell-primary  { font-weight: 600; }
+    .cell-title      { font-weight: 600; color: var(--c-ink); line-height: 1.25; }
+    .cell-sub        { font-size: .8125rem; color: var(--c-muted); margin-top: 2px; }
+    .cell-truncate   { display: inline-block; max-width: 240px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+
+    // Dense
+    &.table-sm {
+        font-size: .875rem;
+        > thead > tr > th { padding: .5rem .75rem; font-size: .6875rem; }
+        > tbody > tr > td { padding: .5rem .75rem; }
+        > :not(caption) > * > *:first-child { padding-left: 1.125rem; }
+        > :not(caption) > * > *:last-child  { padding-right: 1.125rem; }
+    }
+
+    // Empty row
+    td.table-empty-cell { padding: 0 !important; white-space: normal; }
+}
+
+// Toolbar strip above a component table (search, bulk actions)
+.table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    padding: .75rem 1.25rem;
+    border-bottom: 1px solid var(--c-border);
+}
+// Footer strip (pagination)
+.table-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .75rem;
+    padding: .75rem 1.25rem;
+    border-top: 1px solid var(--c-border);
+    background: $gray-50;
+    font-size: .875rem;
+    color: var(--c-muted);
+    @include media-breakpoint-up(sm) { flex-direction: row; justify-content: space-between; }
+    strong { color: var(--c-ink-2); font-weight: 600; }
+    &:empty { display: none; }
+}
+
+// ── Column priority: hidden below the named breakpoint
+@each $bp in (sm, md, lg, xl, xxl) {
+    @include media-breakpoint-down($bp) {
+        .priority-#{$bp} { display: none; }
+    }
+}
+
+// ── Sticky first column
+.table-sticky-first .table-c {
+    > thead > tr > th:first-child { left: 0; z-index: 3; }
+    > tbody > tr > td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background: var(--c-surface);
+        box-shadow: 1px 0 0 var(--c-border);
+    }
+    > thead > tr > th:first-child { box-shadow: 1px 0 0 var(--c-border); }
+    > tbody > tr:hover > td:first-child { background: color-mix(in srgb, var(--brand-600) 4%, #fff); }
+}
+
+// ── Stacked cards (phones)
+@mixin table-stack {
+    > thead { display: none; }
+    > tbody, > tbody > tr, > tbody > tr > td { display: block; width: 100%; }
+    > tbody > tr {
+        position: relative;
+        width: auto;
+        margin: .75rem;
+        padding: .5rem 0;
+        border: 1px solid var(--c-border);
+        border-radius: $border-radius-lg;
+        background: var(--c-surface);
+    }
+    > tbody > tr:hover > * { --bs-table-bg-state: transparent; }
+    > tbody > tr > td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        border: 0;
+        padding: .375rem 1rem !important;
+        white-space: normal;
+        text-align: right;
+        min-width: 0;
+    }
+    > tbody > tr > td[data-label]::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        font-family: $font-ui;
+        font-size: .75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--c-muted);
+        text-align: left;
+    }
+    > tbody > tr > td.cell-identity {
+        display: block;
+        text-align: left;
+        font-size: 1rem;
+        padding-top: .625rem !important;
+        padding-right: 3.75rem !important;
+        &::before { display: none; }
+    }
+    > tbody > tr > td.cell-actions {
+        position: absolute;
+        top: .5rem;
+        right: .5rem;
+        width: auto;
+        padding: 0 !important;
+        &::before { display: none; }
+    }
+    > tbody > tr > td.table-empty-cell { display: block; text-align: center; }
+    > tbody > tr:has(> td.table-empty-cell) { border: 0; margin: 0; }
+    // Priority-hidden cells come back as label/value rows
+    > tbody > tr > td[class*="priority-"] { display: flex; }
+    // Nothing is clipped in card mode
+    .cell-truncate { max-width: 60vw; }
+}
+@include media-breakpoint-down(sm) {
+    .table-stack-sm { @include table-stack; }
+    .table-shell:has(> .table-stack-sm) { overflow-x: visible; }
+}
+@include media-breakpoint-down(md) {
+    .table-stack-md { @include table-stack; }
+    .table-shell:has(> .table-stack-md) { overflow-x: visible; }
+}

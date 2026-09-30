@@ -96,9 +96,10 @@ class ProfileController extends Controller
             'password'         => ['required', Password::defaults(), 'confirmed'],
         ]);
 
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-        ]);
+        $request->user()->forceFill([
+            'password'             => Hash::make($validated['password']),
+            'must_change_password' => false,
+        ])->save();
 
         AuditLogService::log('updated', 'users', 'Changed own password');
 
@@ -116,6 +117,24 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        // Never allow the last active administrator to remove their own
+        // account — that would leave nobody able to manage the system.
+        if ($user->isLastActiveAdmin()) {
+            return Redirect::route('profile.edit')->withErrors([
+                'password' => 'You are the last active administrator. Promote another administrator before deleting your account.',
+            ], 'userDeletion');
+        }
+
+        // Accounts that own clinical records must be deactivated by an
+        // administrator instead (several records cascade or restrict on delete).
+        if ($user->clinicalRecordCount() > 0) {
+            return Redirect::route('profile.edit')->withErrors([
+                'password' => 'Your account is linked to clinical records and cannot be deleted. Ask an administrator to deactivate it instead.',
+            ], 'userDeletion');
+        }
+
+        AuditLogService::log('deleted', 'users', "User deleted own account: {$user->name} ({$user->email})");
 
         // Clean up avatar
         if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {

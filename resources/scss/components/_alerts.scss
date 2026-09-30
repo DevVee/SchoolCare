@@ -1,0 +1,41 @@
+// =============================================================================
+// Alerts. Legacy `.alert-*` inherit tones via Bootstrap subtle maps.
+// `.alert-c` (x-ui.alert): icon + title + body + actions, tone-driven.
+// =============================================================================
+
+.alert {
+    font-size: .9375rem;
+    border-width: 1px;
+    .alert-link { font-weight: 600; }
+}
+
+.alert-c {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    font-size: .9375rem;
+    border: 1px solid;
+    border-radius: $border-radius-lg;
+    padding: .875rem 1rem;
+    margin-bottom: 1rem;
+
+    .alert-icon    { font-size: 1.125rem; margin-top: .0625rem; flex-shrink: 0; }
+    .alert-content { flex: 1; min-width: 0; }
+    .alert-title   { font-family: $font-ui; font-weight: 700; margin: 0 0 .125rem; font-size: .9375rem; color: inherit; }
+    .alert-body    { line-height: 1.5; > :last-child { margin-bottom: 0; } ul { padding-left: 1.125rem; margin: .25rem 0 0; } }
+    .alert-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .625rem; }
+    .btn-close-c   { color: inherit; opacity: .7; margin: -.25rem -.25rem 0 0; &:hover { opacity: 1; background: rgba(15, 23, 42, .06); } }
+
+    &.alert-accent { border-left-width: 4px; }
+    &.fade { transition: opacity $dur-base ease-in; }
+    &.fade:not(.show) { opacity: 0; }
+}
+@each $name, $t in $tones {
+    .alert-c.tone-#{$name} {
+        background: tone($name, 50);
+        border-color: tone($name, 200);
+        color: tone($name, text);
+        &.alert-accent { border-left-color: tone($name, 600); }
+        .alert-icon { color: tone($name, 600); }
+    }
+}

@@ -1,398 +1,292 @@
 @extends('layouts.app')
 
-@section('title', $patient->full_name . ' — Patient Profile')
+@section('title', $patient->full_name . ' | Patient profile')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('patients.index') }}">Patients</a></li>
-    <li class="breadcrumb-item active">{{ $patient->full_name }}</li>
-@endsection
+@php
+    $categoryLabel = \App\Models\Patient::categoryLabels()[$patient->category] ?? $patient->category;
+    $tabs = [
+        'overview'      => ['label' => 'Overview'],
+        'visits'        => ['label' => 'Clinic visits', 'count' => $history['clinic_visits']->count()],
+        'consultations' => ['label' => 'Consultations', 'count' => $history['consultations']->count()],
+        'appointments'  => ['label' => 'Appointments', 'count' => $history['appointments']->count()],
+        'medicines'     => ['label' => 'Medicines', 'count' => $history['dispensing_records']->count()],
+    ];
+    $tab = array_key_exists(request('tab'), $tabs) ? request('tab') : 'overview';
+    $academic = collect([$patient->year_level, $patient->section])->filter()->implode(', ');
+@endphp
 
 @section('content')
+<div class="vstack gap-3">
 
-{{-- Header --}}
-<div class="page-header d-flex align-items-start justify-content-between mb-4">
-    <div class="d-flex align-items-center gap-3">
-        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fs-4 fw-bold"
-             style="width:56px;height:56px;flex-shrink:0;">
-            {{ strtoupper(substr($patient->first_name, 0, 1)) }}
-        </div>
-        <div>
-            <h4 class="mb-0">{{ $patient->full_name }}</h4>
-            <div class="d-flex align-items-center gap-2 mt-1">
-                <span class="font-monospace text-primary small fw-semibold">{{ $patient->patient_number }}</span>
-                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">
-                    {{ \App\Models\Patient::categoryLabels()[$patient->category] ?? $patient->category }}
-                </span>
-                @if ($patient->is_active)
-                    <span class="badge bg-success-subtle text-success rounded-pill">Active</span>
-                @else
-                    <span class="badge bg-danger-subtle text-danger rounded-pill">Inactive</span>
-                @endif
-            </div>
-        </div>
-    </div>
-
-    <div class="d-flex gap-2">
-        @can('update-patients')
-        <a href="{{ route('patients.edit', $patient) }}" class="btn btn-outline-primary">
-            <i class="bi bi-pencil me-1"></i>Edit
-        </a>
-        @endcan
-        @can('create-appointments')
-        <a href="{{ route('appointments.create', ['patient_id' => $patient->id]) }}" class="btn btn-primary">
-            <i class="bi bi-calendar-plus me-1"></i>Book Appointment
-        </a>
-        @endcan
-    </div>
-</div>
-
-<div class="row g-4">
-
-    {{-- ---- LEFT: Patient Details ---- --}}
-    <div class="col-lg-4">
-
-        {{-- Personal Info --}}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white fw-semibold py-3">
-                <i class="bi bi-person-circle me-2 text-primary"></i>Personal Information
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0 small">
-                    <dt class="col-5 text-muted">Sex</dt>
-                    <dd class="col-7">{{ ucfirst($patient->sex) }}</dd>
-
-                    <dt class="col-5 text-muted">Birthdate</dt>
-                    <dd class="col-7">{{ $patient->birthdate->format('M d, Y') }}</dd>
-
-                    <dt class="col-5 text-muted">Age</dt>
-                    <dd class="col-7">{{ $patient->age }} years old</dd>
-
-                    <dt class="col-5 text-muted">Contact</dt>
-                    <dd class="col-7">{{ $patient->contact_number ?? '—' }}</dd>
-
-                    <dt class="col-5 text-muted">Email</dt>
-                    <dd class="col-7" style="word-break:break-all">{{ $patient->email ?? '—' }}</dd>
-
-                    <dt class="col-5 text-muted">Address</dt>
-                    <dd class="col-7">{{ $patient->address ?? '—' }}</dd>
-                </dl>
-            </div>
-        </div>
-
-        {{-- Academic Info --}}
-        @if ($patient->year_level || $patient->program_strand || $patient->section)
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white fw-semibold py-3">
-                <i class="bi bi-mortarboard me-2 text-primary"></i>Academic Information
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0 small">
-                    <dt class="col-5 text-muted">Year / Grade</dt>
-                    <dd class="col-7">{{ $patient->year_level ?? '—' }}</dd>
-
-                    <dt class="col-5 text-muted">Program / Strand</dt>
-                    <dd class="col-7">{{ $patient->program_strand ?? '—' }}</dd>
-
-                    <dt class="col-5 text-muted">Section</dt>
-                    <dd class="col-7">{{ $patient->section ?? '—' }}</dd>
-                </dl>
-            </div>
-        </div>
+    <x-ui.page-header :title="$patient->full_name"
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Patients' => route('patients.index'), $patient->full_name => null]">
+        <span class="font-ui tabular text-muted">{{ $patient->patient_number }}</span>
+        <x-ui.badge color="neutral" :dot="false">{{ $categoryLabel }}</x-ui.badge>
+        @if ($patient->trashed())
+            <x-ui.badge color="neutral" icon="archive" :dot="false">Archived</x-ui.badge>
+        @else
+            <x-ui.status-badge :status="(bool) $patient->is_active" type="patient" />
         @endif
+        <x-slot:actions>
+            @if ($patient->trashed())
+                <x-ui.dropdown label="More" variant="secondary">
+                    <x-ui.dropdown-item :href="route('patients.health-report', $patient->id)" icon="clipboard2-data">Health report</x-ui.dropdown-item>
+                    <x-ui.dropdown-item :href="route('patients.history', $patient->id)" icon="clock-history">Full history</x-ui.dropdown-item>
+                </x-ui.dropdown>
+                @can('restore-patients')
+                    <form method="POST" action="{{ route('patients.restore', $patient->id) }}" class="d-inline">
+                        @csrf @method('PATCH')
+                        <x-ui.button type="submit" icon="arrow-counterclockwise">Restore patient</x-ui.button>
+                    </form>
+                @endcan
+            @else
+                <x-ui.dropdown label="More" variant="secondary">
+                    @can('create-appointments')
+                        <x-ui.dropdown-item :href="route('appointments.create', ['patient_id' => $patient->id])" icon="calendar-plus">Book appointment</x-ui.dropdown-item>
+                    @endcan
+                    <x-ui.dropdown-item :href="route('patients.health-report', $patient->id)" icon="clipboard2-data">Health report</x-ui.dropdown-item>
+                    <x-ui.dropdown-item :href="route('patients.history', $patient->id)" icon="clock-history">Full history</x-ui.dropdown-item>
+                    @can('delete-patients')
+                        <x-ui.dropdown-divider />
+                        <x-ui.dropdown-item :action="route('patients.destroy', $patient)" method="DELETE" icon="archive" tone="danger"
+                            confirm="The record is hidden from the list and can be restored later. Clinic history is kept."
+                            :confirm-title="'Archive '.$patient->full_name.'?'" confirm-button="Archive">Archive patient</x-ui.dropdown-item>
+                    @endcan
+                </x-ui.dropdown>
+                @can('update-patients')
+                    <x-ui.button variant="secondary" icon="pencil" :href="route('patients.edit', $patient)">Edit</x-ui.button>
+                @endcan
+                @can('create-patient-logs')
+                    <x-ui.button icon="journal-plus" :href="route('patient-logs.create', ['patient_id' => $patient->id])">Log visit</x-ui.button>
+                @endcan
+            @endif
+        </x-slot:actions>
+    </x-ui.page-header>
 
-        {{-- Guardian Info --}}
-        @if ($patient->guardian_name)
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white fw-semibold py-3">
-                <i class="bi bi-house-heart me-2 text-primary"></i>Guardian / Parent
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0 small">
-                    <dt class="col-5 text-muted">Name</dt>
-                    <dd class="col-7">{{ $patient->guardian_name }}</dd>
+    @if ($patient->trashed())
+        <x-ui.alert variant="neutral" icon="archive" title="This patient record is archived">
+            It is hidden from the patient list and pickers. The clinic history below is kept.
+            @can('restore-patients') Restore it to use it again.@endcan
+        </x-ui.alert>
+    @endif
 
-                    <dt class="col-5 text-muted">Relationship</dt>
-                    <dd class="col-7">{{ $patient->guardian_relationship ?? '—' }}</dd>
-
-                    <dt class="col-5 text-muted">Contact</dt>
-                    <dd class="col-7">{{ $patient->guardian_contact ?? '—' }}</dd>
-
-                    <dt class="col-5 text-muted">Address</dt>
-                    <dd class="col-7">{{ $patient->guardian_address ?? '—' }}</dd>
-                </dl>
-            </div>
-        </div>
-        @endif
-
-        {{-- Medical Info --}}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white fw-semibold py-3">
-                <i class="bi bi-heart-pulse me-2 text-danger"></i>Medical Information
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0 small">
-                    <dt class="col-5 text-muted">Blood Type</dt>
-                    <dd class="col-7">
-                        @if ($patient->blood_type)
-                            <span class="badge bg-danger-subtle text-danger fw-semibold">{{ $patient->blood_type }}</span>
-                        @else
-                            <span class="text-muted">Unknown</span>
-                        @endif
-                    </dd>
-
-                    <dt class="col-12 text-muted mt-2">Allergies</dt>
-                    <dd class="col-12">
-                        @if ($patient->allergies)
-                            <div class="alert alert-warning py-2 px-3 mb-0 small">
-                                <i class="bi bi-exclamation-triangle me-1"></i>{{ $patient->allergies }}
-                            </div>
-                        @else
-                            <span class="text-muted">None recorded</span>
-                        @endif
-                    </dd>
-
-                    <dt class="col-12 text-muted mt-2">Medical Conditions</dt>
-                    <dd class="col-12">{{ $patient->medical_conditions ?? '—' }}</dd>
-
-                    @if ($patient->notes)
-                    <dt class="col-12 text-muted mt-2">Notes</dt>
-                    <dd class="col-12">{{ $patient->notes }}</dd>
-                    @endif
-                </dl>
-            </div>
-        </div>
-
-        {{-- Emergency Contact --}}
-        @if ($patient->emergency_contact_name)
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold py-3">
-                <i class="bi bi-telephone-fill me-2 text-danger"></i>Emergency Contact
-            </div>
-            <div class="card-body small">
-                <div class="fw-semibold">{{ $patient->emergency_contact_name }}</div>
-                <div class="text-muted">{{ $patient->emergency_contact_number ?? '—' }}</div>
-            </div>
-        </div>
-        @endif
-
-    </div>
-
-    {{-- ---- RIGHT: Health History Tabs ---- --}}
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
-                <ul class="nav nav-tabs" id="historyTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="visits-tab"
-                                data-bs-toggle="tab" data-bs-target="#clinic-visits-pane"
-                                type="button" role="tab">
-                            <i class="bi bi-journal-medical me-1"></i>Clinic Visits
-                            <span class="badge bg-primary ms-1">{{ $history['clinic_visits']->count() }}</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="appt-tab"
-                                data-bs-toggle="tab" data-bs-target="#appointments-pane"
-                                type="button" role="tab">
-                            <i class="bi bi-calendar-check me-1"></i>Appointments
-                            <span class="badge bg-primary ms-1">{{ $history['appointments']->count() }}</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="consult-tab"
-                                data-bs-toggle="tab" data-bs-target="#consultations-pane"
-                                type="button" role="tab">
-                            <i class="bi bi-clipboard-pulse me-1"></i>Consultations
-                            <span class="badge bg-primary ms-1">{{ $history['consultations']->count() }}</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="dispense-tab"
-                                data-bs-toggle="tab" data-bs-target="#dispensing-pane"
-                                type="button" role="tab">
-                            <i class="bi bi-capsule me-1"></i>Dispensing
-                            <span class="badge bg-primary ms-1">{{ $history['dispensing_records']->count() }}</span>
-                        </button>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="card-body p-0">
-                <div class="tab-content">
-
-                    {{-- Clinic Visits --}}
-                    <div class="tab-pane fade show active" id="clinic-visits-pane" role="tabpanel">
-                        @if ($history['clinic_visits']->isEmpty())
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-journal-x" style="font-size:2rem;"></i>
-                                <p class="mt-2 mb-0">No clinic visits recorded.</p>
-                            </div>
-                        @else
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 small">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Date</th>
-                                        <th>Time In</th>
-                                        <th>Complaint</th>
-                                        <th class="text-center">Disposition</th>
-                                        <th>Logged By</th>
-                                        <th class="pe-4 text-end">View</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                @foreach ($history['clinic_visits'] as $visit)
-                                <tr>
-                                    <td class="ps-4 fw-semibold">
-                                        {{ $visit->log_date->format('M d, Y') }}
-                                    </td>
-                                    <td class="text-nowrap">
-                                        {{ \Carbon\Carbon::parse($visit->time_in)->format('h:i A') }}
-                                    </td>
-                                    <td>{{ \Illuminate\Support\Str::limit($visit->chief_complaint, 60) }}</td>
-                                    <td class="text-center">
-                                        <span class="badge bg-{{ $visit->disposition_color }}-subtle text-{{ $visit->disposition_color }}-emphasis border border-{{ $visit->disposition_color }}-subtle rounded-pill">
-                                            {{ $visit->disposition_label }}
-                                        </span>
-                                    </td>
-                                    <td class="text-muted text-nowrap">{{ $visit->loggedBy->name ?? '—' }}</td>
-                                    <td class="pe-4 text-end">
-                                        <a href="{{ route('patient-logs.show', $visit) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        @endif
+    <div class="row g-3">
+        {{-- Profile --}}
+        <div class="col-lg-4">
+            <x-ui.card>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <x-ui.avatar :name="$patient->full_name" size="xl" />
+                    <div class="min-w-0">
+                        <p class="fw-semibold font-ui mb-0 text-truncate">{{ $patient->full_name }}</p>
+                        <p class="text-muted small mb-0">{{ $categoryLabel }}@if ($academic), {{ $academic }}@endif</p>
                     </div>
-
-                    {{-- Appointments --}}
-                    <div class="tab-pane fade" id="appointments-pane" role="tabpanel">
-                        @if ($history['appointments']->isEmpty())
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-calendar-x" style="font-size:2rem;"></i>
-                                <p class="mt-2 mb-0">No appointments recorded.</p>
-                            </div>
-                        @else
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 small">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Date & Time</th>
-                                        <th>Purpose</th>
-                                        <th>Status</th>
-                                        <th class="pe-4 text-end">View</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                @foreach ($history['appointments'] as $appt)
-                                <tr>
-                                    <td class="ps-4">
-                                        <div class="fw-semibold">{{ \Carbon\Carbon::parse($appt->appointment_date)->format('M d, Y') }}</div>
-                                        <div class="text-muted">{{ \Carbon\Carbon::parse($appt->appointment_time)->format('h:i A') }}</div>
-                                    </td>
-                                    <td>{{ $appt->purpose }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ $appt->status_badge }}-subtle text-{{ $appt->status_badge }}-emphasis rounded-pill">
-                                            {{ ucfirst(str_replace('_', ' ', $appt->status)) }}
-                                        </span>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <a href="{{ route('appointments.show', $appt) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        @endif
-                    </div>
-
-                    {{-- Consultations --}}
-                    <div class="tab-pane fade" id="consultations-pane" role="tabpanel">
-                        @if ($history['consultations']->isEmpty())
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-clipboard2-x" style="font-size:2rem;"></i>
-                                <p class="mt-2 mb-0">No consultations recorded.</p>
-                            </div>
-                        @else
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 small">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Date</th>
-                                        <th>Complaint</th>
-                                        <th>Nurse</th>
-                                        <th class="pe-4 text-end">View</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                @foreach ($history['consultations'] as $consult)
-                                <tr>
-                                    <td class="ps-4">{{ \Carbon\Carbon::parse($consult->visit_date)->format('M d, Y') }}</td>
-                                    <td>{{ \Illuminate\Support\Str::limit($consult->chief_complaint, 60) }}</td>
-                                    <td>{{ $consult->nurse->name ?? '—' }}</td>
-                                    <td class="pe-4 text-end">
-                                        <a href="{{ route('consultations.show', $consult) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        @endif
-                    </div>
-
-                    {{-- Dispensing --}}
-                    <div class="tab-pane fade" id="dispensing-pane" role="tabpanel">
-                        @if ($history['dispensing_records']->isEmpty())
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-capsule" style="font-size:2rem;"></i>
-                                <p class="mt-2 mb-0">No medicines dispensed.</p>
-                            </div>
-                        @else
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 small">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Date</th>
-                                        <th>Medicine</th>
-                                        <th>Qty</th>
-                                        <th>Dispensed By</th>
-                                        <th class="pe-4 text-end">View</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                @foreach ($history['dispensing_records'] as $rec)
-                                <tr>
-                                    <td class="ps-4">{{ \Carbon\Carbon::parse($rec->dispensed_at)->format('M d, Y') }}</td>
-                                    <td>{{ $rec->medicine->name ?? '—' }}</td>
-                                    <td>{{ $rec->quantity }}</td>
-                                    <td>{{ $rec->dispensedBy->name ?? '—' }}</td>
-                                    <td class="pe-4 text-end">
-                                        <a href="{{ route('dispensing.show', $rec) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        @endif
-                    </div>
-
                 </div>
-            </div>
+
+                @if ($patient->allergies)
+                    <x-ui.alert variant="warning" title="Allergies" class="mb-3">{{ $patient->allergies }}</x-ui.alert>
+                @endif
+
+                <x-ui.description-list layout="compact">
+                    @if ($patient->student_id)
+                        <x-ui.description-item label="Student ID"><span class="tabular">{{ $patient->student_id }}</span></x-ui.description-item>
+                    @endif
+                    <x-ui.description-item label="Sex">{{ $patient->sex_label }}</x-ui.description-item>
+                    <x-ui.description-item label="Birthdate">{{ $patient->birthdate?->format('M d, Y') }}</x-ui.description-item>
+                    <x-ui.description-item label="Age">{{ $patient->age !== null ? $patient->age.' years old' : '' }}</x-ui.description-item>
+                    <x-ui.description-item label="Contact">{{ $patient->contact_number }}</x-ui.description-item>
+                    @if ($patient->other_contact)
+                        <x-ui.description-item label="Other contact">{{ $patient->other_contact }}</x-ui.description-item>
+                    @endif
+                    <x-ui.description-item label="Email" class="text-break">{{ $patient->email }}</x-ui.description-item>
+                    <x-ui.description-item label="Address">{{ $patient->address }}</x-ui.description-item>
+                </x-ui.description-list>
+            </x-ui.card>
+        </div>
+
+        {{-- History --}}
+        <div class="col-lg-8">
+            <x-ui.card flush>
+                <x-slot:header class="pb-0">
+                    <x-ui.tabs :items="$tabs" :active="$tab" variant="underline" label="Patient record sections" />
+                </x-slot:header>
+
+                @if ($tab === 'overview')
+                    <div class="p-3 p-md-4 vstack gap-4">
+                        <section>
+                            <h2 class="form-section-title mb-2">Health</h2>
+                            <x-ui.description-list>
+                                <x-ui.description-item label="Blood type">{{ $patient->blood_type }}</x-ui.description-item>
+                                <x-ui.description-item label="Allergies" empty="None recorded">{{ $patient->allergies }}</x-ui.description-item>
+                                <x-ui.description-item label="Medical conditions" empty="None recorded">{{ $patient->medical_conditions }}</x-ui.description-item>
+                                <x-ui.description-item label="Current medications" empty="None recorded">{{ $patient->current_medications }}</x-ui.description-item>
+                                <x-ui.description-item label="Pediatrician or family doctor">@if ($patient->pediatrician_name || $patient->pediatrician_contact){{ $patient->pediatrician_name ?? 'Name not recorded' }}@if ($patient->pediatrician_contact), {{ $patient->pediatrician_contact }}@endif @endif</x-ui.description-item>
+                                @if ($patient->notes)
+                                    <x-ui.description-item label="Notes">{{ $patient->notes }}</x-ui.description-item>
+                                @endif
+                            </x-ui.description-list>
+                        </section>
+
+                        <section>
+                            <h2 class="form-section-title mb-2">School details</h2>
+                            <x-ui.description-list :items="[
+                                'Grade / year level' => $patient->year_level,
+                                'Section' => $patient->section,
+                                'Program or strand' => $patient->program_strand,
+                            ]" />
+                        </section>
+
+                        <section>
+                            <h2 class="form-section-title mb-2">Guardian or parent</h2>
+                            <x-ui.description-list>
+                                <x-ui.description-item label="Name">{{ $patient->guardian_name }}</x-ui.description-item>
+                                <x-ui.description-item label="Relationship">{{ $patient->guardian_relationship }}</x-ui.description-item>
+                                <x-ui.description-item label="Contact">{{ $patient->guardian_contact }}</x-ui.description-item>
+                                @if ($patient->guardian_facebook)
+                                    <x-ui.description-item label="Facebook" class="text-break">{{ $patient->guardian_facebook }}</x-ui.description-item>
+                                @endif
+                                <x-ui.description-item label="Address">{{ $patient->guardian_address }}</x-ui.description-item>
+                            </x-ui.description-list>
+                        </section>
+
+                        <section>
+                            <h2 class="form-section-title mb-2">Emergency contact</h2>
+                            <x-ui.description-list :items="[
+                                'Name' => $patient->emergency_contact_name,
+                                'Number' => $patient->emergency_contact_number,
+                            ]" />
+                        </section>
+                    </div>
+
+                @elseif ($tab === 'visits')
+                    <x-ui.table dense responsive="stack" caption="Clinic visits">
+                        <x-slot:head>
+                            <x-ui.th>Date</x-ui.th>
+                            <x-ui.th priority="md">Time in</x-ui.th>
+                            <x-ui.th>Complaint</x-ui.th>
+                            <x-ui.th>Outcome</x-ui.th>
+                            <x-ui.th priority="lg">Logged by</x-ui.th>
+                            <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
+                        </x-slot:head>
+                        @foreach ($history['clinic_visits'] as $visit)
+                            <tr>
+                                <x-ui.td identity>
+                                    @can('view-patient-logs')
+                                        <a href="{{ route('patient-logs.show', $visit) }}" class="fw-semibold">{{ $visit->log_date->format('M d, Y') }}</a>
+                                    @else
+                                        <span class="fw-semibold">{{ $visit->log_date->format('M d, Y') }}</span>
+                                    @endcan
+                                </x-ui.td>
+                                <x-ui.td priority="md" label="Time in" muted>{{ \Carbon\Carbon::parse($visit->time_in)->format('h:i A') }}</x-ui.td>
+                                <x-ui.td label="Complaint" truncate>{{ $visit->complaint_summary }}@if ($visit->severity) ({{ $visit->severity }})@endif</x-ui.td>
+                                <x-ui.td label="Outcome"><x-ui.badge :color="$visit->disposition_color">{{ $visit->disposition_label }}</x-ui.badge></x-ui.td>
+                                <x-ui.td priority="lg" label="Logged by" muted>{{ $visit->loggedBy->name ?? '-' }}</x-ui.td>
+                                <x-ui.td actions>
+                                    @can('view-patient-logs')
+                                        <x-ui.action-menu :for="'visit on '.$visit->log_date->format('M d, Y')">
+                                            <x-ui.action-menu.item :href="route('patient-logs.show', $visit)" icon="eye">View visit</x-ui.action-menu.item>
+                                        </x-ui.action-menu>
+                                    @endcan
+                                </x-ui.td>
+                            </tr>
+                        @endforeach
+                        <x-slot:empty>
+                            <x-ui.empty-state module="logbook" title="No clinic visits recorded" compact>
+                                @can('create-patient-logs')
+                                    @unless ($patient->trashed())
+                                        <x-ui.button size="sm" icon="journal-plus" :href="route('patient-logs.create', ['patient_id' => $patient->id])">Log visit</x-ui.button>
+                                    @endunless
+                                @endcan
+                            </x-ui.empty-state>
+                        </x-slot:empty>
+                    </x-ui.table>
+
+                @elseif ($tab === 'consultations')
+                    <x-ui.table dense responsive="stack" caption="Consultations">
+                        <x-slot:head>
+                            <x-ui.th>Date</x-ui.th>
+                            <x-ui.th>Complaint</x-ui.th>
+                            <x-ui.th priority="md">Nurse</x-ui.th>
+                            <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
+                        </x-slot:head>
+                        @foreach ($history['consultations'] as $consult)
+                            <tr>
+                                <x-ui.td identity><a href="{{ route('consultations.show', $consult) }}" class="fw-semibold">{{ \Carbon\Carbon::parse($consult->visit_date)->format('M d, Y') }}</a></x-ui.td>
+                                <x-ui.td label="Complaint" truncate>{{ $consult->chief_complaint }}</x-ui.td>
+                                <x-ui.td priority="md" label="Nurse" muted>{{ $consult->nurse->name ?? '-' }}</x-ui.td>
+                                <x-ui.td actions>
+                                    <x-ui.action-menu :for="'consultation on '.\Carbon\Carbon::parse($consult->visit_date)->format('M d, Y')">
+                                        <x-ui.action-menu.item :href="route('consultations.show', $consult)" icon="eye">View consultation</x-ui.action-menu.item>
+                                    </x-ui.action-menu>
+                                </x-ui.td>
+                            </tr>
+                        @endforeach
+                        <x-slot:empty>
+                            <x-ui.empty-state module="consultations" title="No consultations recorded" compact />
+                        </x-slot:empty>
+                    </x-ui.table>
+
+                @elseif ($tab === 'appointments')
+                    <x-ui.table dense responsive="stack" caption="Appointments">
+                        <x-slot:head>
+                            <x-ui.th>Date</x-ui.th>
+                            <x-ui.th priority="md">Time</x-ui.th>
+                            <x-ui.th>Purpose</x-ui.th>
+                            <x-ui.th>Status</x-ui.th>
+                            <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
+                        </x-slot:head>
+                        @foreach ($history['appointments'] as $appt)
+                            <tr>
+                                <x-ui.td identity><a href="{{ route('appointments.show', $appt) }}" class="fw-semibold">{{ \Carbon\Carbon::parse($appt->appointment_date)->format('M d, Y') }}</a></x-ui.td>
+                                <x-ui.td priority="md" label="Time" muted>{{ \Carbon\Carbon::parse($appt->appointment_time)->format('h:i A') }}</x-ui.td>
+                                <x-ui.td label="Purpose" truncate>{{ $appt->purpose }}</x-ui.td>
+                                <x-ui.td label="Status"><x-ui.status-badge :status="$appt->status" type="appointment" /></x-ui.td>
+                                <x-ui.td actions>
+                                    <x-ui.action-menu :for="'appointment on '.\Carbon\Carbon::parse($appt->appointment_date)->format('M d, Y')">
+                                        <x-ui.action-menu.item :href="route('appointments.show', $appt)" icon="eye">View appointment</x-ui.action-menu.item>
+                                    </x-ui.action-menu>
+                                </x-ui.td>
+                            </tr>
+                        @endforeach
+                        <x-slot:empty>
+                            <x-ui.empty-state module="appointments" title="No appointments recorded" compact>
+                                @can('create-appointments')
+                                    @unless ($patient->trashed())
+                                        <x-ui.button size="sm" variant="secondary" icon="calendar-plus" :href="route('appointments.create', ['patient_id' => $patient->id])">Book appointment</x-ui.button>
+                                    @endunless
+                                @endcan
+                            </x-ui.empty-state>
+                        </x-slot:empty>
+                    </x-ui.table>
+
+                @else
+                    <x-ui.table dense responsive="stack" caption="Medicines given">
+                        <x-slot:head>
+                            <x-ui.th>Date</x-ui.th>
+                            <x-ui.th>Medicine</x-ui.th>
+                            <x-ui.th align="end">Qty</x-ui.th>
+                            <x-ui.th priority="md">Given by</x-ui.th>
+                            <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
+                        </x-slot:head>
+                        @foreach ($history['dispensing_records'] as $rec)
+                            <tr>
+                                <x-ui.td identity><a href="{{ route('dispensing.show', $rec) }}" class="fw-semibold">{{ \Carbon\Carbon::parse($rec->dispensed_at)->format('M d, Y') }}</a></x-ui.td>
+                                <x-ui.td label="Medicine" truncate>{{ $rec->medicine->name ?? '-' }}</x-ui.td>
+                                <x-ui.td label="Qty" numeric>{{ $rec->quantity }}</x-ui.td>
+                                <x-ui.td priority="md" label="Given by" muted>{{ $rec->dispensedBy->name ?? '-' }}</x-ui.td>
+                                <x-ui.td actions>
+                                    <x-ui.action-menu :for="'medicine given on '.\Carbon\Carbon::parse($rec->dispensed_at)->format('M d, Y')">
+                                        <x-ui.action-menu.item :href="route('dispensing.show', $rec)" icon="eye">View record</x-ui.action-menu.item>
+                                    </x-ui.action-menu>
+                                </x-ui.td>
+                            </tr>
+                        @endforeach
+                        <x-slot:empty>
+                            <x-ui.empty-state module="dispensing" title="No medicines given yet" compact />
+                        </x-slot:empty>
+                    </x-ui.table>
+                @endif
+            </x-ui.card>
         </div>
     </div>
-
 </div>
 @endsection

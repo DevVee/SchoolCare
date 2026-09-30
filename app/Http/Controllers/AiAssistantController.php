@@ -14,6 +14,10 @@ class AiAssistantController extends Controller
     {
         $this->authorize('use-ai-assistant');
 
+        if (! settings('ai_enabled', true)) {
+            return view('ai-assistant.disabled');
+        }
+
         $conversations = AiConversation::where('user_id', auth()->id())
             ->latest()
             ->limit(30)
@@ -25,6 +29,13 @@ class AiAssistantController extends Controller
     public function chat(Request $request)
     {
         $this->authorize('use-ai-assistant');
+
+        if (! settings('ai_enabled', true)) {
+            return response()->json([
+                'response' => (settings('ai_assistant_name') ?: 'The assistant').' is turned off by an administrator.',
+                'disabled' => true,
+            ], 503);
+        }
 
         $request->validate([
             'message' => ['required', 'string', 'max:4000'],

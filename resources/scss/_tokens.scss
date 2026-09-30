@@ -1,0 +1,401 @@
+// =============================================================================
+// Design tokens
+// -----------------------------------------------------------------------------
+// Binding rules: scratchpad ui_principles.md (Swiss minimal, accessible, one
+// accent, no gradients, Apple-style motion). Imported AFTER
+// bootstrap/scss/functions and BEFORE bootstrap/scss/bootstrap, so every
+// Bootstrap variable below replaces Bootstrap's `!default` and all legacy views
+// (text-primary, btn-outline-primary, bg-*-subtle, alerts, tables, forms)
+// adopt the palette without markup changes.
+//
+// Brand colours here are COMPILE-TIME DEFAULTS. Components read the runtime
+// custom properties --brand-50 ... --brand-950 / --brand-rgb (see _root.scss),
+// which <x-ui.brand-style /> overrides from settings('brand_primary_color').
+// =============================================================================
+
+// -- Brand: royal blue ---------------------------------------------------------
+$brand-50:  #EFF6FF;
+$brand-100: #DBEAFE;
+$brand-200: #BFDBFE;
+$brand-300: #93C5FD;
+$brand-400: #60A5FA;
+$brand-500: #3B82F6;
+$brand-600: #2563EB;   // PRIMARY (white text 5.17:1)
+$brand-700: #1D4ED8;   // hover / pressed, text on tints (6.7:1)
+$brand-800: #1E40AF;
+$brand-900: #1E3A8A;
+$brand-950: #172554;
+
+// -- Neutrals: slate -----------------------------------------------------------
+$gray-50:  #F8FAFC;
+$gray-100: #F1F5F9;
+$gray-200: #E2E8F0;
+$gray-300: #CBD5E1;
+$gray-400: #94A3B8;
+$gray-500: #64748B;   // muted text, 4.76:1 on white (never lighter for text)
+$gray-600: #475569;   // secondary text
+$gray-700: #334155;
+$gray-800: #1E293B;
+$gray-900: #0F172A;
+
+// -- Tones ---------------------------------------------------------------------
+// 50 tint bg · 100 icon square / hover · 200 border · 600 solid / icon ·
+// 700 hover-solid / solid-with-white-text · text = AA text on the 50 tint.
+//
+// One colour theme (owner: "just use blue, red on buttons like delete"): every
+// tone except danger (red) and neutral (slate) is the brand blue. The names
+// stay so markup and config keep their meaning; at runtime they all chain to
+// --brand-* (see _root.scss), so a brand colour set in Settings recolours them.
+$brand-tone: (50: $brand-50, 100: $brand-100, 200: $brand-200, 600: $brand-600, 700: $brand-700, text: $brand-700);
+$brand-tone-names: ("brand", "success", "warning", "info", "orange", "teal", "cobi");
+$tones: (
+  "brand":   $brand-tone,
+  "success": $brand-tone,
+  "warning": $brand-tone,
+  "danger":  (50: #FEF2F2, 100: #FEE2E2, 200: #FECACA, 600: #DC2626, 700: #B91C1C, text: #B91C1C),
+  "info":    $brand-tone,
+  "neutral": (50: #F8FAFC, 100: #F1F5F9, 200: #E2E8F0, 600: #64748B, 700: #475569, text: #475569),
+  "orange":  $brand-tone,
+  "teal":    $brand-tone,
+  "cobi":    $brand-tone,
+);
+
+// Helpers: components use the RUNTIME custom properties emitted by _root.scss.
+//   tone("danger", 600)      -> var(--c-danger-600)
+//   tone-rgba("brand", .35)  -> rgba(var(--c-brand-rgb), .35)
+//   tone-hex("danger", 600)  -> #DC2626 (compile-time literal; never use for brand)
+@function tone($name, $step) {
+  @return var(--c-#{$name}-#{$step});
+}
+@function tone-rgba($name, $alpha) {
+  @return unquote("rgba(var(--c-#{$name}-rgb), #{$alpha})");
+}
+@function tone-hex($name, $step) {
+  @return map-get(map-get($tones, $name), $step);
+}
+
+// -- Layout --------------------------------------------------------------------
+$sidebar-width:           260px;
+$sidebar-collapsed-width: 72px;
+$topbar-height:           64px;
+$content-max-width:       1400px;
+
+// -- Motion (Apple: 150-250ms, ease-out enter, ease-in exit, press 100ms) ------
+$ease-out:   cubic-bezier(.22, 1, .36, 1);
+$ease-in:    cubic-bezier(.4, 0, 1, 1);
+$ease:       cubic-bezier(.4, 0, .2, 1);
+$dur-press:  100ms;
+$dur-fast:   150ms;
+$dur-base:   200ms;
+$dur-slow:   250ms;
+$press-scale: .97;
+
+// -- Fonts ---------------------------------------------------------------------
+// Figtree (headings, numbers, UI labels) + Noto Sans (body). Inter / Poppins stay
+// as fallbacks so pages keep their current look until layouts load the new
+// families (<x-ui.brand-style /> outputs the Google Fonts link).
+$font-ui:      "Figtree", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+$font-body:    "Noto Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-display: "Figtree", "Poppins", "Inter", system-ui, sans-serif;
+
+// =============================================================================
+// Bootstrap variable overrides
+// =============================================================================
+
+// -- Theme colours (compile-time; runtime brand comes from --brand-*) ----------
+$primary:   $brand-600;
+$secondary: $gray-500;
+$success:   $brand-600;   // one colour theme: success / info / warning are the brand blue
+$info:      $brand-600;
+$warning:   $brand-600;
+$danger:    #DC2626;   // white text 4.83:1
+$light:     $gray-100;
+$dark:      $gray-900;
+
+$theme-colors: (
+  "primary":   $primary,
+  "secondary": $secondary,
+  "success":   $success,
+  "info":      $info,
+  "warning":   $warning,
+  "danger":    $danger,
+  "light":     $light,
+  "dark":      $dark,
+);
+
+// 5.3 subtle maps: every `bg-*-subtle text-*-emphasis border-*-subtle` adopts the tones
+$primary-bg-subtle:   #DBEAFE;  $primary-border-subtle:   #BFDBFE;  $primary-text-emphasis:   #1D4ED8;
+$success-bg-subtle:   #DBEAFE;  $success-border-subtle:   #BFDBFE;  $success-text-emphasis:   #1D4ED8;
+$warning-bg-subtle:   #DBEAFE;  $warning-border-subtle:   #BFDBFE;  $warning-text-emphasis:   #1D4ED8;
+$danger-bg-subtle:    #FEE2E2;  $danger-border-subtle:    #FECACA;  $danger-text-emphasis:    #B91C1C;
+$info-bg-subtle:      #DBEAFE;  $info-border-subtle:      #BFDBFE;  $info-text-emphasis:      #1D4ED8;
+$secondary-bg-subtle: #F1F5F9;  $secondary-border-subtle: #E2E8F0;  $secondary-text-emphasis: #475569;
+$light-bg-subtle:     #F8FAFC;  $light-border-subtle:     #E2E8F0;  $light-text-emphasis:     #334155;
+$dark-bg-subtle:      #CBD5E1;  $dark-border-subtle:      #94A3B8;  $dark-text-emphasis:      #1E293B;
+
+// -- Body / text / borders -----------------------------------------------------
+$body-bg:               $gray-50;    // app background #F8FAFC
+$body-color:            $gray-800;
+$headings-color:        $gray-900;
+$emphasis-color:        $gray-900;
+$body-secondary-color:  $gray-500;   // .text-muted -> #64748B (AA)
+$body-tertiary-color:   $gray-500;   // never lighter than muted for text
+$body-secondary-bg:     $gray-100;
+$body-tertiary-bg:      $gray-50;
+$text-muted:            $gray-500;
+$border-color:          $gray-200;
+$border-color-translucent: rgba(15, 23, 42, .1);
+$link-color:            $brand-600;
+$link-hover-color:      $brand-700;
+$link-decoration:       none;
+$link-hover-decoration: underline;
+
+// -- Typography ----------------------------------------------------------------
+$font-family-sans-serif: $font-body;
+$headings-font-family:   $font-display;
+$font-size-root:   null;
+$font-size-base:   1rem;       // 16px body
+$font-size-sm:     .875rem;    // 14px
+$font-size-lg:     1.125rem;
+$line-height-base: 1.5;
+$line-height-sm:   1.45;
+$headings-font-weight: 700;
+$headings-line-height: 1.2;
+$h1-font-size: 1.875rem;
+$h2-font-size: 1.5rem;
+$h3-font-size: 1.25rem;
+$h4-font-size: 1.125rem;
+$h5-font-size: 1rem;
+$h6-font-size: .9375rem;
+$font-sizes: (
+  1: $h1-font-size, 2: $h2-font-size, 3: $h3-font-size, 4: $h4-font-size, 5: $h5-font-size, 6: $h6-font-size,
+  "sm": .875rem, "xs": .8125rem, "2xs": .75rem,
+);
+$small-font-size: .875rem;
+
+// -- Radii (owner: "reduce border radius, we need it professional") -----------
+// 4 badges/tags/checkboxes · 6 buttons/inputs/selects/nav items/dropdown items/
+// action buttons · 8 cards/dropdown menus/toasts/alerts · 10 modals/offcanvas.
+// Fully round ONLY for avatars and status dots. No pill buttons / nav items.
+$radius-xs: .25rem;    // 4
+$radius-sm: .375rem;   // 6
+$radius-md: .5rem;     // 8
+$radius-lg: .625rem;   // 10
+$border-radius-sm:   $radius-xs;
+$border-radius:      $radius-sm;
+$border-radius-lg:   $radius-md;
+$border-radius-xl:   $radius-lg;
+$border-radius-xxl:  $radius-lg;
+$border-radius-pill: 50rem;       // avatars / dots only
+
+// -- Shadows: minimal ----------------------------------------------------------
+$box-shadow-sm: 0 1px 2px rgba(15, 23, 42, .05);
+$box-shadow:    0 1px 3px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
+$box-shadow-lg: 0 10px 30px rgba(15, 23, 42, .10);
+
+// -- Focus: visible 3px ring ---------------------------------------------------
+$focus-ring-width:   3px;
+$focus-ring-opacity: .25;
+$focus-ring-color:   rgba($brand-600, .25);
+$input-btn-focus-width:         3px;
+$input-btn-focus-color-opacity: .25;
+$input-btn-focus-color:         rgba($brand-600, .25);
+$input-btn-focus-box-shadow:    0 0 0 3px rgba($brand-600, .25);
+
+// -- Inputs: 42px desktop (44px on touch), radius 6, 16px text (no iOS zoom) ---
+$input-btn-line-height:  1.5;
+$input-padding-y:        .5rem;
+$input-padding-x:        .75rem;
+$input-font-size:        1rem;
+$input-padding-y-sm:     .3125rem;
+$input-padding-x-sm:     .625rem;
+$input-font-size-sm:     .875rem;
+$input-padding-y-lg:     .625rem;
+$input-padding-x-lg:     .875rem;
+$input-font-size-lg:     1.0625rem;
+$input-bg:               #fff;
+$input-border-color:     $gray-300;
+$input-color:            $gray-900;
+$input-border-radius:    $radius-sm;
+$input-border-radius-sm: $radius-sm;
+$input-border-radius-lg: $radius-sm;
+$input-focus-bg:           #fff;
+$input-focus-border-color: $brand-600;
+$input-placeholder-color:  $gray-500;
+$input-disabled-bg:        $gray-100;
+$input-group-addon-bg:     $gray-50;
+$input-group-addon-color:  $gray-600;
+$form-label-font-size:     .875rem;
+$form-label-font-weight:   600;
+$form-label-color:         $gray-800;
+$form-label-margin-bottom: .375rem;
+$form-text-font-size:      .8125rem;
+$form-text-color:          $gray-600;
+$form-text-margin-top:     .25rem;
+$form-feedback-font-size:     .8125rem;
+$form-feedback-invalid-color: #B91C1C;
+$form-feedback-valid-color:   $brand-700;
+$form-select-indicator-color:   $gray-500;
+$form-select-bg-position:       right .75rem center;
+$form-select-bg-size:           14px 14px;
+$form-select-padding-x:         .75rem;
+$form-select-indicator-padding: 2.25rem;
+$form-check-input-width:                1.125em;
+$form-check-input-checked-bg-color:     $brand-600;
+$form-check-input-checked-border-color: $brand-600;
+$form-check-input-border:               1.5px solid $gray-400;
+$form-check-input-border-radius:        $radius-xs;
+$form-switch-focus-color:               $brand-300;
+
+// -- Buttons: radius 6, 40px desktop (44px on touch) ---------------------------
+$btn-font-family:      $font-ui;
+$btn-font-weight:      600;
+$btn-font-size:        .9375rem;
+$btn-padding-x:        1rem;
+$btn-padding-y:        .5rem;
+$btn-border-width:     1px;
+$btn-border-radius:    $radius-sm;
+$btn-border-radius-sm: $radius-sm;
+$btn-border-radius-lg: $radius-sm;
+$btn-padding-x-sm:     .75rem;
+$btn-padding-y-sm:     .3125rem;
+$btn-font-size-sm:     .875rem;
+$btn-padding-x-lg:     1.375rem;
+$btn-padding-y-lg:     .625rem;
+$btn-font-size-lg:     1rem;
+$btn-disabled-opacity: .5;
+$btn-box-shadow:       none;
+$btn-transition:       color $dur-fast ease-out, background-color $dur-fast ease-out, border-color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
+
+// -- Cards: 1px border, radius 8, very soft shadow ----------------------------
+$card-border-radius:  $radius-md;
+$card-border-width:   1px;
+$card-border-color:   $gray-200;
+$card-spacer-x:       1.25rem;
+$card-spacer-y:       1.25rem;
+$card-cap-bg:         #fff;
+$card-cap-padding-x:  1.25rem;
+$card-cap-padding-y:  .875rem;
+$card-box-shadow:     $box-shadow-sm;
+
+// -- Tables --------------------------------------------------------------------
+$table-cell-padding-x:    1rem;
+$table-cell-padding-y:    .75rem;
+$table-cell-padding-x-sm: .75rem;
+$table-cell-padding-y-sm: .5rem;
+$table-color:             $gray-900;
+$table-border-color:      $gray-200;
+$table-hover-bg:          rgba($brand-600, .04);
+$table-striped-bg:        $gray-50;
+$table-th-font-weight:    600;
+$table-group-separator-color: $gray-200;
+
+// -- Badges (counts; status uses .pill) ----------------------------------------
+$badge-font-size:     .75rem;
+$badge-font-weight:   600;
+$badge-padding-y:     .3em;
+$badge-padding-x:     .6em;
+$badge-border-radius: $radius-xs;
+
+// -- Modals: radius 10, scrim ----------------------------------------------------
+$modal-inner-padding:            1.25rem 1.5rem;
+$modal-header-padding:           1rem 1.5rem;
+$modal-content-border-radius:    $radius-lg;
+$modal-content-border-color:     $gray-200;
+$modal-content-box-shadow-xs:    0 20px 50px rgba(15, 23, 42, .18);
+$modal-content-box-shadow-sm-up: $modal-content-box-shadow-xs;
+$modal-header-border-color:      $gray-200;
+$modal-footer-border-color:      $gray-200;
+$modal-backdrop-bg:              $gray-900;
+$modal-backdrop-opacity:         .45;
+$modal-sm: 440px;
+$modal-md: 520px;
+$modal-lg: 640px;
+$modal-xl: 800px;
+$modal-fade-transform: scale(.97);
+$modal-transition:     transform $dur-slow $ease-out;
+
+// -- Dropdowns -----------------------------------------------------------------
+$dropdown-border-width:   1px;
+$dropdown-border-color:   $gray-200;
+$dropdown-border-radius:  $radius-md;
+$dropdown-font-size:      .9375rem;
+$dropdown-padding-y:      .375rem;
+$dropdown-padding-x:      .375rem;
+$dropdown-item-padding-y: .5rem;
+$dropdown-item-padding-x: .75rem;
+$dropdown-min-width:      11rem;
+$dropdown-box-shadow:     0 10px 30px rgba(15, 23, 42, .12);
+$dropdown-link-color:        $gray-800;
+$dropdown-link-hover-color:  $gray-900;
+$dropdown-link-hover-bg:     $gray-100;
+$dropdown-link-active-bg:    $brand-50;
+$dropdown-link-active-color: $brand-700;
+$dropdown-divider-bg:        $gray-200;
+$dropdown-header-color:      $gray-500;
+
+// -- Nav / tabs ----------------------------------------------------------------
+$nav-link-font-size:   .9375rem;
+$nav-link-font-weight: 600;
+$nav-link-color:       $gray-600;
+$nav-link-hover-color: $gray-900;
+$nav-tabs-link-active-color: $brand-700;
+$nav-pills-link-active-bg:   $brand-600;
+$nav-underline-border-width: 2px;
+$nav-underline-link-active-color: $brand-700;
+
+// -- Pagination ----------------------------------------------------------------
+$pagination-padding-y:      .25rem;
+$pagination-padding-x:      .5rem;
+$pagination-font-size:      .875rem;
+$pagination-color:          $gray-700;
+$pagination-bg:             transparent;
+$pagination-border-width:   0;
+$pagination-border-radius:  $radius-sm;
+$pagination-hover-bg:       $gray-100;
+$pagination-hover-color:    $gray-900;
+$pagination-active-bg:      $brand-600;
+$pagination-active-color:   #fff;
+$pagination-active-border-color: $brand-600;
+$pagination-disabled-bg:    transparent;
+$pagination-disabled-color: $gray-400;
+
+// -- Toasts --------------------------------------------------------------------
+$toast-max-width:     380px;
+$toast-padding-x:     .875rem;
+$toast-padding-y:     .75rem;
+$toast-font-size:     .9375rem;
+$toast-border-radius: $radius-md;
+$toast-box-shadow:    0 10px 30px rgba(15, 23, 42, .12);
+$toast-spacing:       .5rem;
+
+// -- Offcanvas (mobile sidebar drawer) -------------------------------------------
+$offcanvas-horizontal-width:    280px;
+$offcanvas-backdrop-bg:         $gray-900;
+$offcanvas-backdrop-opacity:    .45;
+$offcanvas-transition-duration: $dur-slow;
+$offcanvas-border-width:        0;
+
+// -- Breadcrumb ----------------------------------------------------------------
+$breadcrumb-font-size:      .875rem;
+$breadcrumb-margin-bottom:  0;
+$breadcrumb-divider-color:  $gray-400;
+$breadcrumb-active-color:   $gray-900;
+$breadcrumb-item-padding-x: .375rem;
+
+// -- Alerts --------------------------------------------------------------------
+$alert-padding-y:     .875rem;
+$alert-padding-x:     1rem;
+$alert-border-radius: $radius-md;
+
+// -- Tooltips ------------------------------------------------------------------
+$tooltip-bg:            $gray-900;
+$tooltip-border-radius: $radius-xs;
+$tooltip-font-size:     .8125rem;
+$tooltip-padding-y:     .375rem;
+$tooltip-padding-x:     .625rem;
+
+// -- Progress / list group -----------------------------------------------------
+$progress-bar-bg:                $brand-600;
+$list-group-active-bg:           $brand-600;
+$list-group-active-border-color: $brand-600;

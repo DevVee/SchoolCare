@@ -12,7 +12,7 @@ http {
     include      /etc/nginx/mime.types;
     default_type application/octet-stream;
 
-    # Logging — send to stdout/stderr so Render captures it
+    # Logging — send to stdout/stderr so the container runtime captures it
     access_log /dev/stdout;
     error_log  /dev/stderr warn;
 

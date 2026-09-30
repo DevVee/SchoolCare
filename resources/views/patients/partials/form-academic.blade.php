@@ -1,78 +1,102 @@
-{{-- Academic Information --}}
+{{--
+    School details section. Grade / section / program choices depend on the selected
+    category (Settings, Academic: per-category lists); categories without their own
+    lists use the shared lists. The script below reads the map rendered here and
+    rebuilds the three selects when the category changes. Server-side validation
+    uses the same lists (App\Support\AcademicLists).
+--}}
 @php
-    // Load from Settings (admin-configurable)
-    $yearLevels    = \App\Models\Setting::get('year_levels',    []);
-    $sectionOpts   = \App\Models\Setting::get('sections',       []);
-    $programOpts   = \App\Models\Setting::get('program_strands',[]);
-
-    // Helper: convert any string to Sentence case
-    $sc = fn(string $v): string => mb_strtoupper(mb_substr($v,0,1)) . mb_strtolower(mb_substr($v,1));
-
-    $currentYr  = old('year_level',    $patient->year_level    ?? '');
-    $currentSec = old('section',       $patient->section       ?? '');
-    $currentPg  = old('program_strand',$patient->program_strand ?? '');
+    $academic   = $academic ?? \App\Support\AcademicLists::clientConfig();
+    $category   = old('category', $patient->category ?? '');
+    $lists      = \App\Support\AcademicLists::forCategory($category ?: null);
+    $currentYr  = (string) old('year_level',     $patient->year_level     ?? '');
+    $currentSec = (string) old('section',        $patient->section        ?? '');
+    $currentPg  = (string) old('program_strand', $patient->program_strand ?? '');
+    $fields = [
+        ['name' => 'year_level',     'key' => 'levels',   'label' => 'Grade / year level',        'current' => $currentYr,  'placeholder' => 'Select grade or year level'],
+        ['name' => 'section',        'key' => 'sections', 'label' => 'Section',                   'current' => $currentSec, 'placeholder' => 'Select section'],
+        ['name' => 'program_strand', 'key' => 'programs', 'label' => 'Program, strand or course', 'current' => $currentPg,  'placeholder' => 'Select program or strand'],
+    ];
 @endphp
 
-<div class="row g-3">
-
-    <div class="col-12">
-        <div class="alert alert-info d-flex align-items-center gap-2 py-2 small" role="alert">
-            <i class="bi bi-info-circle-fill flex-shrink-0"></i>
-            Fill in academic details for students. Leave blank for employees, visitors, or others.
-            Options are managed in <strong>Settings → Academic</strong>.
-        </div>
+<x-ui.section title="School details" description="Choices follow the category above. Leave them empty for employees, visitors and others.">
+    <div class="form-grid form-grid-3" id="academicFields" data-academic="{{ json_encode($academic, JSON_UNESCAPED_UNICODE) }}">
+        @foreach ($fields as $f)
+            @php $options = $lists[$f['key']]; @endphp
+            <x-ui.field :label="$f['label']" :name="$f['name']">
+                <select name="{{ $f['name'] }}" id="f-{{ $f['name'] }}" data-academic-field="{{ $f['key'] }}"
+                        data-placeholder="{{ $f['placeholder'] }}" data-current="{{ $f['current'] }}"
+                        class="form-select @error($f['name']) is-invalid @enderror" @disabled($options === [] && $f['current'] === '')>
+                    <option value="">{{ $options === [] && $f['current'] === '' ? 'Not applicable' : $f['placeholder'] }}</option>
+                    @foreach ($options as $opt)
+                        <option value="{{ $opt }}" @selected($f['current'] === $opt)>{{ $opt }}</option>
+                    @endforeach
+                    @if ($f['current'] !== '' && ! in_array($f['current'], $options, true))
+                        <option value="{{ $f['current'] }}" selected>{{ $f['current'] }} (current)</option>
+                    @endif
+                </select>
+            </x-ui.field>
+        @endforeach
+        @can('manage-settings')
+            <p class="form-text col-full mb-0">The lists are managed in <a href="{{ route('admin.settings.edit', 'academic') }}">Settings, Academic</a>.</p>
+        @endcan
     </div>
+</x-ui.section>
 
-    {{-- Year Level --}}
-    <div class="col-md-4">
-        <label class="form-label fw-semibold">Year Level / Grade</label>
-        <select name="year_level" class="form-select @error('year_level') is-invalid @enderror">
-            <option value="">— Select year level —</option>
-            @foreach($yearLevels as $yl)
-                <option value="{{ $yl }}" {{ $currentYr === $yl ? 'selected' : '' }}>
-                    {{ $sc($yl) }}
-                </option>
-            @endforeach
-            {{-- If the saved value isn't in the list, show it anyway --}}
-            @if($currentYr && !in_array($currentYr, $yearLevels))
-                <option value="{{ $currentYr }}" selected>{{ $sc($currentYr) }}</option>
-            @endif
-        </select>
-        @error('year_level')<div class="invalid-feedback">{{ $message }}</div>@enderror
-    </div>
+<script>
+(function () {
+    const wrap = document.getElementById('academicFields');
+    if (!wrap || wrap.dataset.bound) return;
+    wrap.dataset.bound = '1';
 
-    {{-- Program / Strand --}}
-    <div class="col-md-4">
-        <label class="form-label fw-semibold">Program / Strand / Course</label>
-        <select name="program_strand" class="form-select @error('program_strand') is-invalid @enderror">
-            <option value="">— Select program or strand —</option>
-            @foreach($programOpts as $pg)
-                <option value="{{ $pg }}" {{ $currentPg === $pg ? 'selected' : '' }}>
-                    {{ $sc($pg) }}
-                </option>
-            @endforeach
-            @if($currentPg && !in_array($currentPg, $programOpts))
-                <option value="{{ $currentPg }}" selected>{{ $sc($currentPg) }}</option>
-            @endif
-        </select>
-        @error('program_strand')<div class="invalid-feedback">{{ $message }}</div>@enderror
-    </div>
+    let config = {};
+    try { config = JSON.parse(wrap.dataset.academic || '{}'); } catch (e) { config = {}; }
 
-    {{-- Section --}}
-    <div class="col-md-4">
-        <label class="form-label fw-semibold">Section</label>
-        <select name="section" class="form-select @error('section') is-invalid @enderror">
-            <option value="">— Select section —</option>
-            @foreach($sectionOpts as $sec)
-                <option value="{{ $sec }}" {{ $currentSec === $sec ? 'selected' : '' }}>
-                    {{ $sc($sec) }}
-                </option>
-            @endforeach
-            @if($currentSec && !in_array($currentSec, $sectionOpts))
-                <option value="{{ $currentSec }}" selected>{{ $sc($currentSec) }}</option>
-            @endif
-        </select>
-        @error('section')<div class="invalid-feedback">{{ $message }}</div>@enderror
-    </div>
+    const form = wrap.closest('form') || document;
+    const categorySelect = form.querySelector('[data-academic-category]') || form.querySelector('select[name="category"]');
+    const selects = wrap.querySelectorAll('[data-academic-field]');
 
-</div>
+    function listsFor(category) {
+        return (config.byCategory && config.byCategory[category]) || config.flat || {};
+    }
+
+    function rebuild(keepCurrent) {
+        const lists = listsFor(categorySelect ? categorySelect.value : '');
+        selects.forEach(function (sel) {
+            const key = sel.dataset.academicField;
+            const options = lists[key] || [];
+            const previous = keepCurrent ? (sel.value || sel.dataset.current || '') : sel.value;
+            const keep = previous && options.indexOf(previous) !== -1;
+
+            sel.innerHTML = '';
+            const blank = document.createElement('option');
+            blank.value = '';
+            blank.textContent = options.length ? sel.dataset.placeholder : 'Not applicable';
+            sel.appendChild(blank);
+
+            options.forEach(function (value) {
+                const opt = document.createElement('option');
+                opt.value = value;
+                opt.textContent = value;
+                if (keep && value === previous) opt.selected = true;
+                sel.appendChild(opt);
+            });
+
+            // A saved value that is not in the list stays selectable when nothing changed.
+            if (keepCurrent && previous && !keep) {
+                const opt = document.createElement('option');
+                opt.value = previous;
+                opt.textContent = previous + ' (current)';
+                opt.selected = true;
+                sel.appendChild(opt);
+            }
+
+            sel.disabled = options.length === 0 && !(keepCurrent && previous);
+        });
+    }
+
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function () { rebuild(false); });
+    }
+})();
+</script>

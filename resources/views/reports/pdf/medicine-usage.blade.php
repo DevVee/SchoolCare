@@ -1,41 +1,44 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-    body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1a1a2e; margin: 0; padding: 24px; }
-    h1   { font-size: 18px; margin: 0 0 4px; color: #0a3d62; }
-    p    { margin: 0 0 16px; color: #555; font-size: 10px; }
-    .header { border-bottom: 2px solid #0a3d62; padding-bottom: 8px; margin-bottom: 16px; }
-    .meta   { font-size: 10px; color: #777; text-align: right; margin-top: -36px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th    { background: #0a3d62; color: #fff; padding: 6px 8px; text-align: left; font-size: 10px; }
-    td    { padding: 5px 8px; border-bottom: 1px solid #e5e5e5; }
-    tr:nth-child(even) td { background: #f7f9fc; }
-</style>
-</head>
-<body>
-<div class="header">
-    <h1>Clinovia — Medicine Usage Report</h1>
-    <p>{{ \Carbon\Carbon::parse($from)->format('M d, Y') }} — {{ \Carbon\Carbon::parse($to)->format('M d, Y') }}</p>
-</div>
-<div class="meta">Generated: {{ now()->format('M d, Y h:i A') }}</div>
-<p>Total Units Dispensed: <strong>{{ $totalDispensed }}</strong></p>
-<table>
+@extends('reports.pdf._layout')
+
+@use('App\Support\DisplayFormat')
+
+@php
+    $reportTitle  = 'Medicine usage';
+    $reportPeriod = DisplayFormat::date($from).' to '.DisplayFormat::date($to);
+@endphp
+
+@section('content')
+<table class="summary">
+    <tr>
+        <td><div class="n">{{ number_format($totalDispensed) }}</div><div class="l">Units dispensed</div></td>
+        <td><div class="n">{{ number_format($usage->count()) }}</div><div class="l">Medicines used</div></td>
+        <td><div class="n">{{ number_format($usage->sum('times_dispensed')) }}</div><div class="l">Times dispensed</div></td>
+    </tr>
+</table>
+
+<h2>Dispensing totals</h2>
+<table class="data">
     <thead>
-        <tr><th>#</th><th>Medicine</th><th>Category</th><th>Times Dispensed</th><th>Total Qty</th></tr>
+        <tr><th>#</th><th>Medicine</th><th>Category</th><th class="num">Times dispensed</th><th class="num">Quantity</th><th class="num">Share</th></tr>
     </thead>
     <tbody>
-        @foreach($usage as $i => $u)
+        @forelse($usage as $i => $u)
         <tr>
             <td>{{ $i + 1 }}</td>
-            <td>{{ $u->medicine->name ?? '—' }}</td>
-            <td>{{ $u->medicine->category->name ?? '—' }}</td>
-            <td>{{ $u->times_dispensed }}</td>
-            <td>{{ $u->total_dispensed }}</td>
+            <td>{{ $u->medicine->name ?? 'Unknown medicine' }}</td>
+            <td>{{ $u->medicine->category->name ?? '-' }}</td>
+            <td class="num">{{ number_format($u->times_dispensed) }}</td>
+            <td class="num">{{ number_format($u->total_dispensed) }}</td>
+            <td class="num">{{ $totalDispensed > 0 ? round(($u->total_dispensed / $totalDispensed) * 100) : 0 }}%</td>
         </tr>
-        @endforeach
+        @empty
+        <tr><td colspan="6" class="empty">No medicines dispensed in this period.</td></tr>
+        @endforelse
     </tbody>
+    @if($usage->isNotEmpty())
+    <tfoot>
+        <tr><td></td><td>Total</td><td></td><td class="num">{{ number_format($usage->sum('times_dispensed')) }}</td><td class="num">{{ number_format($totalDispensed) }}</td><td class="num">100%</td></tr>
+    </tfoot>
+    @endif
 </table>
-</body>
-</html>
+@endsection

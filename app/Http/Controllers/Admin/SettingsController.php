@@ -2,88 +2,183 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\SavesSettingsGroup;
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
+use App\Http\Requests\Admin\UpdateSettingsRequest;
+use App\Services\SettingsService;
+use App\Services\SmsService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
+/**
+ * Admin → Settings. One page per group defined in config/settings.php.
+ * All routes require the `manage-settings` permission.
+ */
 class SettingsController extends Controller
 {
-    public function index()
+    use SavesSettingsGroup;
+
+    public function __construct(private readonly SettingsService $settings) {}
+
+    public function index(): RedirectResponse
     {
         $this->authorize('manage-settings');
 
-        // Group all settings; include new 'academic' group
-        $settings = Setting::all()->groupBy('group');
+        $first = array_key_first($this->settings->visibleGroups()) ?? 'general';
 
-        return view('admin.settings.index', compact('settings'));
+        return redirect()->route('admin.settings.edit', $first);
     }
 
-    public function update(Request $request)
+    public function edit(string $group)
+    {
+        $this->authorize('manage-settings');
+        abort_unless($this->groupIsEditable($group), 404);
+
+        return view('admin.settings.edit', [
+            'group'    => $group,
+            'meta'     => $this->settings->groups()[$group],
+            'groups'   => $this->settings->visibleGroups(),
+            'fields'   => $this->settings->fields($group),
+            'settings' => $this->settings,
+            'status'   => $this->providerStatus($group),
+        ]);
+    }
+
+    public function update(UpdateSettingsRequest $request, string $group): RedirectResponse
+    {
+        abort_unless($this->groupIsEditable($group), 404);
+
+        $fields = $this->settings->fields($group);
+
+        // Partial save: only these keys of the group (e.g. the SMS on/off switch on
+        // the SMS page saves notifications.sms_enabled without touching the others).
+        if ($request->filled('only')) {
+            $fields = array_intersect_key($fields, array_flip(array_filter((array) $request->input('only'), 'is_string')));
+        }
+
+        $changed = $this->saveSettingsFields($request, $this->settings, $group, $fields);
+
+        // Return to the page the change was made from (e.g. SMS), when it is a settings page.
+        $returnTo = $request->input('return_to');
+        $target = is_string($returnTo) && $this->groupIsEditable($returnTo) ? $returnTo : $group;
+
+        return redirect()
+            ->route('admin.settings.edit', $target)
+            ->with('success', $changed ? 'Settings saved.' : 'No changes to save.');
+    }
+
+    /** Send a test SMS to a number typed by the admin (bypasses the master switch). */
+    public function testSms(Request $request, SmsService $sms): RedirectResponse
     {
         $this->authorize('manage-settings');
 
-        $request->validate([
-            // Clinic / General
-            'app_name'                  => ['nullable', 'string', 'max:100'],
-            'org_name'                  => ['nullable', 'string', 'max:200'],
-            'org_short_name'            => ['nullable', 'string', 'max:20'],
-            'clinic_name'               => ['nullable', 'string', 'max:150'],
-            'clinic_address'            => ['nullable', 'string', 'max:300'],
-            'clinic_contact'            => ['nullable', 'string', 'max:30'],
-            'clinic_email'              => ['nullable', 'email', 'max:100'],
-            'clinic_status_text'        => ['nullable', 'string', 'max:50'],
-
-            // Academic
-            'year_levels'               => ['nullable', 'string'],
-            'sections'                  => ['nullable', 'string'],
-            'program_strands'           => ['nullable', 'string'],
-            'patient_categories'        => ['nullable', 'string'],
-
-            // Pharmacy / Notifications
-            'medicine_units'            => ['nullable', 'string'],
-            'low_stock_threshold'       => ['nullable', 'integer', 'min:1', 'max:9999'],
-            'expiry_warning_days'       => ['nullable', 'integer', 'min:1', 'max:365'],
-            'max_daily_appointments'    => ['nullable', 'integer', 'min:1', 'max:9999'],
-
-            // SMS
-            'sms_sender_name'           => ['nullable', 'string', 'max:11'],
-            'sms_template_approval'     => ['nullable', 'string', 'max:320'],
-            'sms_template_cancellation' => ['nullable', 'string', 'max:320'],
-            'sms_template_clinic_log'   => ['nullable', 'string', 'max:320'],
-
-            // AI
-            'ai_model'                  => ['nullable', 'string', 'max:80'],
+        $validated = $request->validate([
+            'test_number' => ['required', 'string', 'max:20', function ($attr, $value, $fail) use ($sms) {
+                if (! $sms->normalizeNumber($value)) {
+                    $fail('Enter a valid Philippine mobile number (09XXXXXXXXX or +639XXXXXXXXX).');
+                }
+            }],
         ]);
 
-        $data = $request->except(['_token']);
+        $app = settings('app_name') ?: config('app.name');
+        $log = $sms->send(
+            number: $validated['test_number'],
+            message: "Test message from {$app}. SMS delivery is working.",
+            recipientName: 'Settings test',
+            event: 'test',
+            force: true,
+        );
 
-        // ── Boolean fields: unchecked = absent from POST → set to 'false' ──────
-        $booleanKeys = Setting::where('type', 'boolean')->pluck('key')->all();
-        foreach ($booleanKeys as $boolKey) {
-            if (! array_key_exists($boolKey, $data)) {
-                $data[$boolKey] = 'false';
+        return redirect()
+            ->route('admin.settings.edit', 'sms')
+            ->with($log->status === 'sent' ? 'success' : 'warning',
+                $log->status === 'sent'
+                    ? 'Test SMS sent to '.$log->recipient_number.'.'
+                    : 'Test SMS not sent: '.($log->error_message ?: 'unknown error').'.');
+    }
+
+    /** Send a test email to the signed-in administrator. */
+    public function testEmail(Request $request): RedirectResponse
+    {
+        $this->authorize('manage-settings');
+
+        $user = $request->user();
+        $app  = settings('app_name') ?: config('app.name');
+
+        try {
+            Mail::raw(
+                "This is a test email from {$app}.\n\nIf you received it, outgoing email is configured correctly.",
+                fn ($m) => $m->to($user->email, $user->name)->subject("{$app}: test email")
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Test email failed', ['error' => $e->getMessage()]);
+
+            return redirect()->route('admin.settings.edit', 'email')
+                ->with('warning', 'Test email failed: '.Str::limit($e->getMessage(), 200));
+        }
+
+        $mailer = config('mail.default');
+        $note = in_array($mailer, ['log', 'array'], true)
+            ? ' Email sending is not set up yet, so it was saved to the system log instead of being delivered.'
+            : '';
+
+        return redirect()->route('admin.settings.edit', 'email')
+            ->with('success', "Test email sent to {$user->email}.{$note}");
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    private function groupIsEditable(string $group): bool
+    {
+        return array_key_exists($group, $this->settings->visibleGroups());
+    }
+
+    /** Read-only provider status for the SMS / Email / AI pages. Never exposes secrets. */
+    private function providerStatus(string $group): array
+    {
+        return match ($group) {
+            'sms' => [
+                'api_key_configured' => filled(config('semaphore.api_key')),
+                'env_sender'         => (string) config('semaphore.sender_name'),
+                'sms_enabled'        => (bool) settings('sms_enabled'),
+                'queue'              => (string) config('queue.default'),
+            ],
+            'email' => $this->mailStatus(),
+            'ai' => [
+                'api_key_configured' => filled(config('services.groq.api_key')),
+            ],
+            default => [],
+        };
+    }
+
+    private function mailStatus(): array
+    {
+        $mailer    = (string) config('mail.default');
+        $transport = (string) config("mail.mailers.{$mailer}.transport", $mailer);
+        $logLevel  = null;
+
+        if ($transport === 'log') {
+            $channel  = config("mail.mailers.{$mailer}.channel") ?: config('logging.default');
+            $logLevel = config("logging.channels.{$channel}.level");
+            if (config("logging.channels.{$channel}.driver") === 'stack') {
+                $first    = config("logging.channels.{$channel}.channels.0");
+                $logLevel = config("logging.channels.{$first}.level", $logLevel);
             }
         }
 
-        // ── JSON fields: validate + re-encode cleanly ────────────────────────
-        $jsonKeys = ['year_levels', 'sections', 'program_strands', 'patient_categories', 'medicine_units'];
-        foreach ($jsonKeys as $jk) {
-            if (isset($data[$jk])) {
-                $decoded = json_decode($data[$jk], true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    return back()->withErrors([$jk => "Invalid format for {$jk}. Please check your input."]);
-                }
-                $data[$jk] = json_encode(array_values(array_filter(array_map('trim', $decoded))));
-            }
-        }
-
-        // ── Save each key that exists in the DB (guards against injection) ───
-        foreach ($data as $key => $value) {
-            if (Setting::where('key', $key)->exists()) {
-                Setting::set($key, $value ?? '');
-            }
-        }
-
-        return back()->with('success', 'Settings saved successfully.');
+        return [
+            'mailer'        => $mailer,
+            'transport'     => $transport,
+            'host'          => $transport === 'smtp' ? (string) config("mail.mailers.{$mailer}.host") : null,
+            'from_address'  => (string) config('mail.from.address'),
+            'from_name'     => (string) config('mail.from.name'),
+            'log_mode'      => in_array($transport, ['log', 'array'], true),
+            'log_level'     => $logLevel,
+            'log_hidden'    => $logLevel !== null && ! in_array(strtolower((string) $logLevel), ['debug'], true),
+            'queue'         => (string) config('queue.default'),
+        ];
     }
 }

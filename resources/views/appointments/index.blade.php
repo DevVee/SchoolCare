@@ -2,219 +2,144 @@
 
 @section('title', 'Appointments')
 
-@section('breadcrumb')
-    <li class="breadcrumb-item active">Appointments</li>
-@endsection
+@php
+    $sourceOptions = ['staff' => 'Booked by staff', 'online' => 'Online requests', 'unlinked' => 'Not linked to a patient'];
+    $providerOptions = $providers ? array_combine($providers, $providers) : [];
+    $statusItems = ['' => ['label' => 'All', 'count' => $counts->sum()]];
+    foreach ($statusLabels as $val => $label) {
+        $statusItems[$val] = ['label' => $label, 'count' => $counts[$val] ?? 0];
+    }
+    $filtered = $filters['search'] || $filters['date'] || $filters['source'] || $filters['provider'] || $filters['status'];
+@endphp
 
 @section('content')
-<div class="page-header d-flex align-items-center justify-content-between mb-4">
-    <div>
-        <h4 class="mb-0"><i class="bi bi-calendar-check-fill me-2 text-primary"></i>Appointments</h4>
-        <p class="text-muted mb-0 small">Manage patient appointment bookings</p>
-    </div>
-    @can('create-appointments')
-    <a href="{{ route('appointments.create') }}" class="btn btn-primary">
-        <i class="bi bi-calendar-plus-fill me-1"></i>New Appointment
-    </a>
-    @endcan
-</div>
+<div class="vstack gap-3">
 
-{{-- Status Tab Pills --}}
-<div class="d-flex gap-2 flex-wrap mb-3">
-    @php
-        $statusColors = [
-            ''          => 'primary',
-            'pending'   => 'warning',
-            'approved'  => 'success',
-            'completed' => 'info',
-            'cancelled' => 'danger',
-            'no_show'   => 'secondary',
-        ];
-        $statusNames = array_merge([''=>'All'], $statusLabels);
-    @endphp
-    @foreach ($statusNames as $val => $label)
-    <a href="{{ route('appointments.index', array_merge($filters, ['status' => $val])) }}"
-       class="btn btn-sm {{ $filters['status'] === $val ? 'btn-'.$statusColors[$val] : 'btn-outline-'.$statusColors[$val] }}">
-        {{ $label }}
-        @if (isset($counts[$val]))
-            <span class="badge bg-white bg-opacity-25 ms-1 text-dark">{{ $counts[$val] }}</span>
-        @elseif ($val === '')
-            <span class="badge bg-white bg-opacity-25 ms-1 text-dark">{{ $counts->sum() }}</span>
+    <x-ui.page-header title="Appointments" description="Clinic appointments booked by staff and requested online."
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Appointments' => null]">
+        @can('create-appointments')
+            <x-slot:actions>
+                <x-ui.button :href="route('appointments.create')" icon="calendar-plus">New appointment</x-ui.button>
+            </x-slot:actions>
+        @endcan
+    </x-ui.page-header>
+
+    @include('appointments.partials.tabs', ['active' => 'list'])
+
+    <x-ui.stat-cards cols="4">
+        <x-ui.stat-card label="Pending" :value="$counts['pending'] ?? 0" tone="appointments" icon="hourglass-split"
+            :href="route('appointments.index', ['status' => 'pending'])">Waiting for approval</x-ui.stat-card>
+        <x-ui.stat-card label="Approved today" :value="$todayCounts['approved'] ?? 0" tone="appointments" icon="calendar-check"
+            :href="route('appointments.today')">
+            <span class="stat-meta-item"><span class="stat-dot tone-amber"></span>Pending {{ $todayCounts['pending'] ?? 0 }}</span>
+            <span class="stat-meta-item"><span class="stat-dot tone-green"></span>Done {{ $todayCounts['completed'] ?? 0 }}</span>
+        </x-ui.stat-card>
+        <x-ui.stat-card label="Online requests" :value="$onlinePending" tone="appointments" icon="globe2"
+            :href="route('appointments.index', ['source' => 'online', 'status' => 'pending'])">Pending requests from the public form</x-ui.stat-card>
+        <x-ui.stat-card label="Not linked" :value="$unlinkedCount" :tone="$unlinkedCount ? 'warning' : 'appointments'" icon="link-45deg"
+            :href="route('appointments.index', ['source' => 'unlinked'])">
+            @if ($unlinkedCount)<span class="stat-mark mark-warn">Link to a patient</span> before approving @else All requests are linked @endif
+        </x-ui.stat-card>
+    </x-ui.stat-cards>
+
+    <x-ui.filters :action="route('appointments.index')" search-placeholder="Patient name or number" :keep="['status']"
+        :labels="['date' => 'Date', 'source' => 'Source', 'provider' => 'With']"
+        :options="['source' => $sourceOptions]">
+        <x-slot:inline>
+            <x-ui.input type="date" name="date" size="sm" aria-label="Date" :value="$filters['date']" />
+        </x-slot:inline>
+        <x-ui.select name="source" label="Source" size="sm" :options="$sourceOptions" placeholder="All" :selected="$filters['source']" />
+        @if ($providerOptions)
+            <x-ui.select name="provider" label="With" size="sm" :options="$providerOptions" placeholder="Anyone" :selected="$filters['provider']" />
         @endif
-    </a>
-    @endforeach
-</div>
+        <x-slot:pills>
+            <x-ui.tabs :items="$statusItems" :active="$filters['status']" param="status" label="Appointment status" />
+        </x-slot:pills>
+    </x-ui.filters>
 
-{{-- Filters --}}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body py-3">
-        <form method="GET" action="{{ route('appointments.index') }}" class="row g-2 align-items-end">
-            @if ($filters['status'])
-                <input type="hidden" name="status" value="{{ $filters['status'] }}">
-            @endif
+    <x-ui.card flush>
+        <x-ui.table :paginator="$appointments" noun="appointments" caption="Appointments" responsive="stack">
+            <x-slot:head>
+                <x-ui.th>Patient</x-ui.th>
+                <x-ui.th>Date and time</x-ui.th>
+                <x-ui.th priority="md">Purpose</x-ui.th>
+                <x-ui.th priority="xl">With</x-ui.th>
+                <x-ui.th>Status</x-ui.th>
+                <x-ui.th priority="lg">Source</x-ui.th>
+                <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
+            </x-slot:head>
 
-            <div class="col-md-5">
-                <label class="form-label small mb-1">Search Patient</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" name="search" class="form-control border-start-0"
-                           placeholder="Name or patient number…"
-                           value="{{ $filters['search'] }}">
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label small mb-1">Date</label>
-                <input type="date" name="date" class="form-control"
-                       value="{{ $filters['date'] }}">
-            </div>
-
-            <div class="col-md-2 d-flex gap-1">
-                <button type="submit" class="btn btn-primary flex-fill">
-                    <i class="bi bi-funnel-fill"></i>
-                </button>
-                @if ($filters['search'] || $filters['date'])
-                <a href="{{ route('appointments.index', ['status' => $filters['status']]) }}"
-                   class="btn btn-outline-secondary" title="Clear">
-                    <i class="bi bi-x-lg"></i>
-                </a>
-                @endif
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- Table --}}
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        @if ($appointments->isEmpty())
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-calendar-x" style="font-size:3rem;"></i>
-                <p class="mt-2 mb-0">No appointments found.</p>
-                @can('create-appointments')
-                <a href="{{ route('appointments.create') }}" class="btn btn-sm btn-primary mt-3">
-                    <i class="bi bi-calendar-plus-fill me-1"></i>Book Appointment
-                </a>
-                @endcan
-            </div>
-        @else
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-4">#</th>
-                        <th>Patient</th>
-                        <th>Date & Time</th>
-                        <th>Purpose</th>
-                        <th>Status</th>
-                        <th>Booked By</th>
-                        <th class="text-end pe-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach ($appointments as $appt)
+            @foreach ($appointments as $appt)
+                @php $name = $appt->patient?->full_name ?? ($appt->requester_name ?: 'Unknown'); @endphp
                 <tr>
-                    <td class="ps-4 text-muted small">{{ $appt->id }}</td>
-                    <td>
-                        <a href="{{ route('patients.show', $appt->patient) }}"
-                           class="fw-semibold text-decoration-none">
-                            {{ $appt->patient->full_name }}
-                        </a>
-                        <div class="small text-muted font-monospace">{{ $appt->patient->patient_number }}</div>
-                    </td>
-                    <td>
-                        <div class="fw-semibold">{{ $appt->appointment_date->format('M d, Y') }}</div>
-                        <div class="small text-muted">
-                            {{ \Carbon\Carbon::parse($appt->appointment_time)->format('h:i A') }}
+                    <x-ui.td identity>
+                        <div class="identity">
+                            <x-ui.avatar :name="$name" size="sm" />
+                            <div class="identity-text">
+                                @if ($appt->patient)
+                                    @can('view-patients')
+                                        <a href="{{ route('patients.show', $appt->patient->id) }}" class="identity-title">{{ $appt->patient->full_name }}</a>
+                                    @else
+                                        <span class="identity-title">{{ $appt->patient->full_name }}</span>
+                                    @endcan
+                                    <span class="identity-sub tabular">{{ $appt->patient->patient_number }}@if ($appt->patient->trashed()), archived @endif</span>
+                                @else
+                                    <a href="{{ route('appointments.show', $appt) }}" class="identity-title">{{ $name }}</a>
+                                    <span class="identity-sub text-warning-emphasis">Not linked to a patient</span>
+                                @endif
+                            </div>
                         </div>
-                    </td>
-                    <td>
-                        <span title="{{ $appt->purpose }}">
-                            {{ \Illuminate\Support\Str::limit($appt->purpose, 50) }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge bg-{{ $appt->status_badge }}-subtle text-{{ $appt->status_badge }}-emphasis rounded-pill">
-                            {{ $statusLabels[$appt->status] ?? $appt->status }}
-                        </span>
-                    </td>
-                    <td class="small text-muted">{{ $appt->createdBy->name ?? '—' }}</td>
-                    <td class="text-end pe-4">
-                        <div class="btn-group btn-group-sm">
-                            <a href="{{ route('appointments.show', $appt) }}"
-                               class="btn btn-outline-primary" title="View">
-                                <i class="bi bi-eye"></i>
-                            </a>
+                    </x-ui.td>
+                    <x-ui.td label="Date and time">
+                        <a href="{{ route('appointments.show', $appt) }}" class="text-reset">{{ $appt->appointment_date->format('M d, Y') }}</a>
+                        <span class="text-muted">{{ \Carbon\Carbon::parse($appt->appointment_time)->format('h:i A') }}</span>
+                    </x-ui.td>
+                    <x-ui.td priority="md" label="Purpose" truncate>{{ $appt->purpose }}</x-ui.td>
+                    <x-ui.td priority="xl" label="With" muted truncate>{{ $appt->provider ?: '-' }}</x-ui.td>
+                    <x-ui.td label="Status"><x-ui.status-badge :status="$appt->status" type="appointment" :label="$statusLabels[$appt->status] ?? null" /></x-ui.td>
+                    <x-ui.td priority="lg" label="Source">
+                        @if ($appt->isOnlineRequest())
+                            <x-ui.badge color="info" icon="globe2" :dot="false">Online request</x-ui.badge>
+                        @else
+                            <span class="text-muted" title="Booked by {{ $appt->createdBy?->name ?? 'a deleted user' }}">Staff</span>
+                        @endif
+                    </x-ui.td>
+                    <x-ui.td actions>
+                        <x-ui.action-menu :for="$name.', '.$appt->appointment_date->format('M d')">
+                            <x-ui.action-menu.item :href="route('appointments.show', $appt)" icon="eye">View</x-ui.action-menu.item>
+                            @can('update', $appt)
+                                <x-ui.action-menu.item :href="route('appointments.edit', $appt)" icon="pencil">Edit</x-ui.action-menu.item>
+                            @endcan
                             @can('approve', $appt)
-                            <form method="POST" action="{{ route('appointments.approve', $appt) }}" class="d-inline">
-                                @csrf @method('PATCH')
-                                <button type="submit" class="btn btn-outline-success" title="Approve">
-                                    <i class="bi bi-check-lg"></i>
-                                </button>
-                            </form>
+                                <x-ui.action-menu.item :action="route('appointments.approve', $appt)" method="PATCH" icon="check-circle">Approve</x-ui.action-menu.item>
                             @endcan
                             @can('cancel', $appt)
-                            <button type="button" class="btn btn-outline-danger btn-cancel"
-                                    data-action="{{ route('appointments.cancel', $appt) }}"
-                                    title="Cancel">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
+                                <x-ui.action-menu.divider />
+                                <x-ui.action-menu.item icon="x-circle" danger class="btn-cancel" :data-action="route('appointments.cancel', $appt)">
+                                    {{ $appt->isOnlineRequest() && $appt->isPending() ? 'Decline request' : 'Cancel appointment' }}
+                                </x-ui.action-menu.item>
                             @endcan
-                        </div>
-                    </td>
+                        </x-ui.action-menu>
+                    </x-ui.td>
                 </tr>
-                @endforeach
-                </tbody>
-            </table>
-        </div>
+            @endforeach
 
-        <div class="d-flex align-items-center justify-content-between px-4 py-3 border-top">
-            <div class="text-muted small">
-                Showing {{ $appointments->firstItem() }}–{{ $appointments->lastItem() }}
-                of {{ $appointments->total() }} appointments
-            </div>
-            {{ $appointments->links() }}
-        </div>
-        @endif
-    </div>
+            <x-slot:empty>
+                @if ($filtered)
+                    <x-ui.empty-state icon="search" title="No appointments match these filters" description="Try another date or clear the filters." compact>
+                        <x-ui.button variant="secondary" size="sm" :href="route('appointments.index')">Clear filters</x-ui.button>
+                    </x-ui.empty-state>
+                @else
+                    <x-ui.empty-state module="appointments" title="No appointments yet" description="Booked and requested appointments show up here." compact>
+                        @can('create-appointments')
+                            <x-ui.button size="sm" icon="calendar-plus" :href="route('appointments.create')">Book appointment</x-ui.button>
+                        @endcan
+                    </x-ui.empty-state>
+                @endif
+            </x-slot:empty>
+        </x-ui.table>
+    </x-ui.card>
 </div>
 
-{{-- Cancel Modal --}}
-<div class="modal fade" id="cancelModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title text-danger">
-                    <i class="bi bi-x-circle-fill me-2"></i>Cancel Appointment
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="cancelForm" method="POST">
-                @csrf @method('PATCH')
-                <div class="modal-body">
-                    <label class="form-label fw-semibold">Reason for Cancellation <span class="text-danger">*</span></label>
-                    <textarea name="cancelled_reason" class="form-control" rows="3"
-                              placeholder="Provide a reason…" required></textarea>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-x-circle me-1"></i>Cancel Appointment
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+@include('appointments.partials.cancel-modal', ['reasonRequired' => $reasonRequired])
 @endsection
-
-@push('scripts')
-<script>
-document.querySelectorAll('.btn-cancel').forEach(btn => {
-    btn.addEventListener('click', function () {
-        document.getElementById('cancelForm').action = this.dataset.action;
-        new bootstrap.Modal(document.getElementById('cancelModal')).show();
-    });
-});
-</script>
-@endpush

@@ -1,0 +1,76 @@
+// =============================================================================
+// Page header: breadcrumbs / back link, title, description, actions.
+// `.page-header` is also used by ~30 legacy views (with d-flex utilities or a
+// bare <h1 class="page-title">); the rules below work for both.
+// =============================================================================
+
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem 1rem;
+    margin-bottom: 1.5rem;
+
+    > :first-child { min-width: 0; }
+    .page-header-main { flex: 1 1 18rem; min-width: 0; }
+}
+.page-title {
+    font-family: $font-display;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    color: var(--c-ink);
+    margin: 0;
+    @include media-breakpoint-up(lg) { font-size: 1.75rem; }
+}
+.page-subtitle {
+    font-size: .9375rem;
+    color: var(--c-ink-2);
+    margin: .375rem 0 0;
+    max-width: 60rem;
+}
+.page-header-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .625rem; }
+.page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    flex-shrink: 0;
+}
+.page-back {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    min-height: 2rem;
+    font-family: $font-ui;
+    font-size: .875rem;
+    font-weight: 600;
+    color: var(--c-ink-2);
+    text-decoration: none;
+    margin-bottom: .25rem;
+    .c-icon { font-size: .875rem; transition: transform $dur-fast ease-out; }
+    &:hover { color: var(--c-ink); text-decoration: none; .c-icon { transform: translateX(-2px); } }
+}
+@include media-breakpoint-down(sm) {
+    .page-header .page-actions { width: 100%; }
+    .page-header .page-actions > .btn { flex: 1 1 auto; }
+}
+
+// Breadcrumbs (chevron divider)
+.breadcrumb {
+    --bs-breadcrumb-divider: '';
+    flex-wrap: nowrap;
+    overflow: hidden;
+    margin-bottom: .375rem;
+    .breadcrumb-item { white-space: nowrap; display: flex; align-items: center; }
+    .breadcrumb-item + .breadcrumb-item::before {
+        font-family: "bootstrap-icons";
+        content: "\F285";
+        font-size: .625rem;
+        color: var(--c-faint);
+    }
+    a { color: var(--c-ink-2); font-weight: 500; text-decoration: none; &:hover { color: var(--c-ink); text-decoration: underline; } }
+    .active { color: var(--c-ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+}

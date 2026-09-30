@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MedicineCategory;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 
 class MedicineCategoryController extends Controller
@@ -27,7 +28,8 @@ class MedicineCategoryController extends Controller
             'description' => 'nullable|string|max:255',
         ]);
 
-        MedicineCategory::create($data);
+        $category = MedicineCategory::create($data);
+        AuditLogService::log('created', 'medicines', "Medicine category '{$category->name}' created");
 
         return redirect()
             ->route('medicine-categories.index')
@@ -50,7 +52,9 @@ class MedicineCategoryController extends Controller
             'description' => 'nullable|string|max:255',
         ]);
 
+        $oldName = $medicineCategory->name;
         $medicineCategory->update($data);
+        AuditLogService::log('updated', 'medicines', "Medicine category '{$oldName}' updated", ['name' => $oldName], ['name' => $medicineCategory->name]);
 
         return redirect()
             ->route('medicine-categories.index')
@@ -61,12 +65,14 @@ class MedicineCategoryController extends Controller
     {
         $this->authorize('delete-medicines');
 
-        if ($medicineCategory->medicines()->count() > 0) {
-            return back()->with('error', 'Cannot delete "' . $medicineCategory->name . '" — it has medicines assigned to it. Reassign them first.');
+        // Include removed (soft-deleted) medicines: their history still references the category.
+        if ($medicineCategory->medicines()->withTrashed()->count() > 0) {
+            return back()->with('error', 'Cannot delete "' . $medicineCategory->name . '". It still has medicines in it. Move them to another category first.');
         }
 
         $name = $medicineCategory->name;
         $medicineCategory->delete();
+        AuditLogService::log('deleted', 'medicines', "Medicine category '{$name}' deleted");
 
         return redirect()
             ->route('medicine-categories.index')

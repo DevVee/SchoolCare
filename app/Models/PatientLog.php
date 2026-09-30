@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\PatientLogObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+#[ObservedBy(PatientLogObserver::class)]
 class PatientLog extends Model
 {
     use HasFactory, SoftDeletes;
@@ -14,6 +18,7 @@ class PatientLog extends Model
     protected $fillable = [
         'patient_id', 'logged_by',
         'log_date', 'time_in', 'time_out',
+        'severity', 'reasons', 'other_reason',
         'chief_complaint', 'vital_signs',
         'assessment', 'treatment',
         'disposition',
@@ -26,6 +31,7 @@ class PatientLog extends Model
         return [
             'log_date'     => 'date',
             'vital_signs'  => 'array',
+            'reasons'      => 'array',
             'sms_guardian' => 'boolean',
             'sms_sent'     => 'boolean',
         ];
@@ -33,15 +39,10 @@ class PatientLog extends Model
 
     // ─── Disposition options ──────────────────────────────────────────────────
 
+    /** [value => label], editable in Admin → Settings → Clinic (dispositions). */
     public static function dispositions(): array
     {
-        return [
-            'rest_in_clinic'       => 'Rest in Clinic',
-            'returned_to_class'    => 'Returned to Class / Work',
-            'sent_home'            => 'Sent Home',
-            'referred_to_hospital' => 'Referred to Hospital',
-            'further_observation'  => 'Under Observation',
-        ];
+        return settings()->options('dispositions');
     }
 
     public static function dispositionIcons(): array
@@ -66,6 +67,59 @@ class PatientLog extends Model
         ];
     }
 
+    // ─── Severity & reasons ───────────────────────────────────────────────────
+
+    /** Severity choices, editable in Admin > Settings > Clinic (visit_severity_levels). */
+    public static function severities(): array
+    {
+        return settings()->list('visit_severity_levels');
+    }
+
+    /** Reason choices, editable in Admin > Settings > Clinic (visit_reasons). */
+    public static function reasonOptions(): array
+    {
+        return settings()->list('visit_reasons');
+    }
+
+    public const MAX_ATTACHMENTS = 5;
+
+    public function getSeverityColorAttribute(): string
+    {
+        return match (mb_strtolower((string) $this->severity)) {
+            'mild'     => 'success',
+            'moderate' => 'warning',
+            'severe'   => 'danger',
+            default    => 'secondary',
+        };
+    }
+
+    /** Structured reasons plus the "Other" text, in display order. */
+    public function getReasonListAttribute(): array
+    {
+        $list = array_values(array_filter(array_map('trim', (array) ($this->reasons ?? [])), 'strlen'));
+        if (filled($this->other_reason)) {
+            $list[] = trim($this->other_reason);
+        }
+
+        return $list;
+    }
+
+    /**
+     * One-line "why did they visit" text: structured reasons, else the free
+     * text chief complaint (older entries only have the free text).
+     */
+    public function getComplaintSummaryAttribute(): string
+    {
+        $reasons = $this->reason_list;
+
+        return $reasons !== [] ? implode(', ', $reasons) : trim((string) $this->chief_complaint);
+    }
+
+    public function getIsInClinicAttribute(): bool
+    {
+        return $this->time_out === null;
+    }
+
     // ─── Accessors ────────────────────────────────────────────────────────────
 
     public function getDispositionLabelAttribute(): string
@@ -85,17 +139,41 @@ class PatientLog extends Model
 
     // ─── Relationships ────────────────────────────────────────────────────────
 
+    /**
+     * Includes soft-deleted (archived) patients so clinical history never
+     * renders a null patient. Use $model->patient->trashed() to badge it.
+     */
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(Patient::class)->withTrashed();
     }
 
     public function loggedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'logged_by');
+        return $this->belongsTo(User::class, 'logged_by')->withDefault(['name' => 'Deleted user']);
+    }
+
+    /** Medicines given during this visit (deducted from stock). */
+    public function dispensingRecords(): HasMany
+    {
+        return $this->hasMany(DispensingRecord::class);
+    }
+
+    /** Photos attached to this visit (private disk). */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(PatientLogAttachment::class);
     }
 
     // ─── Scopes ───────────────────────────────────────────────────────────────
+
+    /** "Currently in clinic": today's visits with a time in and no time out. */
+    public function scopeInClinic($query)
+    {
+        return $query->whereDate('log_date', today())
+                     ->whereNotNull('time_in')
+                     ->whereNull('time_out');
+    }
 
     public function scopeToday($query)
     {

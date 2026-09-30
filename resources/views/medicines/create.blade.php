@@ -1,184 +1,58 @@
 @extends('layouts.app')
 
-@section('title', 'Add Medicine')
+@section('title', 'Add medicine')
+
+@php
+    $unitOptions = collect(settings()->list('medicine_units'))->mapWithKeys(fn ($u) => [$u => ucfirst($u)])->all();
+    $categoryOptions = $categories->pluck('name', 'id')->all();
+@endphp
 
 @section('content')
-<div class="page-header d-flex align-items-center justify-content-between mb-4">
-    <div>
-        <h4 class="mb-0"><i class="bi bi-plus-circle-fill me-2 text-primary"></i>Add Medicine</h4>
-        <p class="text-muted mb-0 small">Add a new medicine to the inventory</p>
-    </div>
-    <a href="{{ route('medicines.index') }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i>Back
-    </a>
+<div class="vstack gap-4">
+    <x-ui.page-header :title="'Add medicine'" description="Add a medicine to the clinic list with its opening stock."
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Medicines' => route('medicines.index'), 'Add medicine' => null]" />
+
+    @if ($errors->any())
+        <x-ui.alert variant="danger" title="Please fix the errors below">Check the highlighted fields and try again.</x-ui.alert>
+    @endif
+
+    <form method="POST" action="{{ route('medicines.store') }}">
+        @csrf
+        <x-ui.card>
+            <x-ui.section title="Medicine" description="How the medicine appears in lists, searches and reports.">
+                <div class="row g-3">
+                    <x-ui.input wrapper-class="col-12" name="name" label="Medicine name" required placeholder="For example: Paracetamol 500mg" />
+                    <x-ui.input wrapper-class="col-12 col-sm-6" name="generic_name" label="Generic name" maxlength="200" placeholder="For example: Paracetamol" />
+                    <x-ui.input wrapper-class="col-12 col-sm-6" name="barcode" label="Barcode" maxlength="100" autocomplete="off" class="font-monospace"
+                        placeholder="Scan or type" help="Optional. Used to find this medicine with a scanner." />
+                    <x-ui.select wrapper-class="col-12 col-sm-6" name="category_id" label="Category" :options="$categoryOptions" placeholder="Select category" required />
+                    <x-ui.input wrapper-class="col-12 col-sm-6" name="supplier" label="Supplier or manufacturer" placeholder="For example: PharmaCorp Inc." />
+                    <x-ui.textarea wrapper-class="col-12" name="description" label="Description" rows="3" placeholder="Strength, form, notes" />
+                </div>
+            </x-ui.section>
+
+            <x-ui.section title="Stock" description="The starting quantity is recorded in the stock ledger as the opening batch.">
+                <div class="row g-3">
+                    <x-ui.input wrapper-class="col-12 col-sm-6" name="quantity" type="number" label="Quantity" :value="0" min="0" required />
+                    <x-ui.select wrapper-class="col-12 col-sm-6" name="unit" label="Unit" :options="$unitOptions" placeholder="Select unit" required />
+                    <x-ui.input wrapper-class="col-12 col-sm-6" name="low_stock_threshold" type="number" label="Low stock alert at" min="0" required
+                        :value="settings('low_stock_threshold', 10)" help="You are alerted when stock drops to this number or below." />
+                    <x-ui.input wrapper-class="col-12 col-sm-6" name="purchase_price" type="number" label="Purchase price per unit" min="0" step="0.01"
+                        help="Optional. Pre-fills the cost when stocking in and values disposals." />
+                    <x-ui.input wrapper-class="col-12 col-sm-6" name="expiration_date" type="date" label="Expiry date (opening batch)" />
+                    <x-ui.input wrapper-class="col-12 col-sm-6" name="batch_number" label="Batch or lot number (opening batch)" placeholder="For example: LOT-2025-001" />
+                </div>
+            </x-ui.section>
+
+            <x-ui.section title="Availability">
+                <x-ui.switch name="is_active" label="Active" description="Active medicines can be stocked in and given out." :checked="true" />
+            </x-ui.section>
+
+            <x-slot:footer>
+                <x-ui.button variant="secondary" :href="route('medicines.index')">Cancel</x-ui.button>
+                <x-ui.button type="submit" icon="check-lg">Add medicine</x-ui.button>
+            </x-slot:footer>
+        </x-ui.card>
+    </form>
 </div>
-
-<form method="POST" action="{{ route('medicines.store') }}">
-    @csrf
-    <div class="row g-4">
-
-        {{-- ── Left: Basic Info ────────────────────────────────────────────── --}}
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header">
-                    <i class="bi bi-info-circle-fill me-2 text-primary"></i>Medicine Details
-                </div>
-                <div class="card-body">
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">
-                            Medicine Name <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" name="name"
-                               class="form-control @error('name') is-invalid @enderror"
-                               placeholder="e.g. Paracetamol 500mg"
-                               value="{{ old('name') }}" required>
-                        @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">
-                            Category <span class="text-danger">*</span>
-                        </label>
-                        <select name="category_id"
-                                class="form-select @error('category_id') is-invalid @enderror" required>
-                            <option value="">Select category…</option>
-                            @foreach ($categories as $cat)
-                                <option value="{{ $cat->id }}"
-                                    {{ old('category_id') == $cat->id ? 'selected' : '' }}>
-                                    {{ $cat->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('category_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Description</label>
-                        <textarea name="description" rows="3"
-                                  class="form-control @error('description') is-invalid @enderror"
-                                  placeholder="Generic name, strength, form…"
-                                  >{{ old('description') }}</textarea>
-                        @error('description')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-0">
-                        <label class="form-label fw-semibold">Supplier / Manufacturer</label>
-                        <input type="text" name="supplier"
-                               class="form-control @error('supplier') is-invalid @enderror"
-                               placeholder="e.g. PharmaCorp Inc."
-                               value="{{ old('supplier') }}">
-                        @error('supplier')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        {{-- ── Right: Stock Info ───────────────────────────────────────────── --}}
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header">
-                    <i class="bi bi-box-seam-fill me-2 text-primary"></i>Stock Information
-                </div>
-                <div class="card-body">
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">
-                                Quantity <span class="text-danger">*</span>
-                            </label>
-                            <input type="number" name="quantity"
-                                   class="form-control @error('quantity') is-invalid @enderror"
-                                   value="{{ old('quantity', 0) }}" min="0" required>
-                            @error('quantity')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">
-                                Unit <span class="text-danger">*</span>
-                            </label>
-                            <select name="unit"
-                                    class="form-select @error('unit') is-invalid @enderror" required>
-                                <option value="">Select unit…</option>
-                                @foreach (['tablet','capsule','ml','vial','piece','box','bottle','sachet','other'] as $u)
-                                    <option value="{{ $u }}" {{ old('unit') === $u ? 'selected' : '' }}>
-                                        {{ ucfirst($u) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('unit')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">
-                            Low Stock Threshold <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" name="low_stock_threshold"
-                               class="form-control @error('low_stock_threshold') is-invalid @enderror"
-                               value="{{ old('low_stock_threshold', 10) }}" min="0" required>
-                        <div class="form-text">Alert when stock drops to or below this number.</div>
-                        @error('low_stock_threshold')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Expiration Date</label>
-                            <input type="date" name="expiration_date"
-                                   class="form-control @error('expiration_date') is-invalid @enderror"
-                                   value="{{ old('expiration_date') }}">
-                            @error('expiration_date')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Batch / Lot Number</label>
-                            <input type="text" name="batch_number"
-                                   class="form-control @error('batch_number') is-invalid @enderror"
-                                   placeholder="e.g. LOT-2025-001"
-                                   value="{{ old('batch_number') }}">
-                            @error('batch_number')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="mb-0">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox"
-                                   name="is_active" id="isActive" value="1"
-                                   {{ old('is_active', '1') ? 'checked' : '' }}>
-                            <label class="form-check-label fw-semibold" for="isActive">
-                                Active (visible in inventory)
-                            </label>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="d-flex justify-content-end gap-2 mt-4">
-        <a href="{{ route('medicines.index') }}" class="btn btn-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary">
-            <i class="bi bi-floppy-fill me-1"></i>Add to Inventory
-        </button>
-    </div>
-</form>
 @endsection

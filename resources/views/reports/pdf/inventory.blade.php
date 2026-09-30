@@ -1,55 +1,47 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-    body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1a1a2e; margin: 0; padding: 24px; }
-    h1   { font-size: 18px; margin: 0 0 4px; color: #0a3d62; }
-    p    { margin: 0 0 16px; color: #555; font-size: 10px; }
-    .header { border-bottom: 2px solid #0a3d62; padding-bottom: 8px; margin-bottom: 16px; }
-    .meta   { font-size: 10px; color: #777; text-align: right; margin-top: -36px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th    { background: #0a3d62; color: #fff; padding: 5px 6px; text-align: left; font-size: 9px; }
-    td    { padding: 4px 6px; border-bottom: 1px solid #e5e5e5; }
-    tr:nth-child(even) td { background: #f7f9fc; }
-    .badge-danger   { color: #dc3545; font-weight: bold; }
-    .badge-warning  { color: #c97a00; font-weight: bold; }
-    .badge-success  { color: #198754; }
-</style>
-</head>
-<body>
-<div class="header">
-    <h1>Clinovia — Inventory Snapshot</h1>
-    <p>As of {{ now()->format('F d, Y h:i A') }}</p>
-</div>
-<div class="meta">
-    Total: {{ $medicines->count() }} &nbsp;|&nbsp;
-    Low Stock: {{ $lowStock }} &nbsp;|&nbsp;
-    Out of Stock: {{ $outOfStock }} &nbsp;|&nbsp;
-    Expiring: {{ $expiring }}
-</div>
-<br>
-<table>
+@extends('reports.pdf._layout')
+
+@use('App\Support\DisplayFormat')
+
+@php
+    $reportTitle  = 'Inventory snapshot';
+    $reportPeriod = 'Stock as of '.DisplayFormat::date(now()).' '.DisplayFormat::time(now());
+@endphp
+
+@section('content')
+<table class="summary">
+    <tr>
+        <td><div class="n">{{ number_format($medicines->count()) }}</div><div class="l">Active medicines</div></td>
+        <td><div class="n">{{ number_format($lowStock) }}</div><div class="l">Low stock</div></td>
+        <td><div class="n">{{ number_format($outOfStock) }}</div><div class="l">Out of stock</div></td>
+        <td><div class="n">{{ number_format($expiring) }}</div><div class="l">Expiring soon</div></td>
+        <td><div class="n">{{ number_format($expired ?? 0) }}</div><div class="l">Expired</div></td>
+    </tr>
+</table>
+
+<h2>All medicines</h2>
+<table class="data">
     <thead>
-        <tr><th>Medicine</th><th>Category</th><th>Qty</th><th>Unit</th><th>Threshold</th><th>Expiry</th><th>Status</th></tr>
+        <tr><th>Medicine</th><th>Category</th><th class="num">Quantity</th><th>Unit</th><th class="num">Reorder at</th><th>Expiry</th><th>Status</th></tr>
     </thead>
     <tbody>
-        @foreach($medicines as $m)
+        @forelse($medicines as $m)
         @php
-            $status = $m->quantity === 0 ? 'Out of Stock' : ($m->is_low_stock ? 'Low Stock' : 'In Stock');
-            $cls    = $m->quantity === 0 ? 'badge-danger' : ($m->is_low_stock ? 'badge-warning' : 'badge-success');
+            $status = $m->quantity == 0 ? 'Out of stock' : ($m->is_low_stock ? 'Low stock' : 'In stock');
+            $expiry = $m->is_expired ? ' (expired)' : ($m->is_expiring_soon ? ' (expiring soon)' : '');
+            $flag   = $m->quantity == 0 || $m->is_low_stock || $m->is_expired || $m->is_expiring_soon;
         @endphp
         <tr>
             <td>{{ $m->name }}</td>
-            <td>{{ $m->category->name ?? '—' }}</td>
-            <td>{{ $m->quantity }}</td>
+            <td>{{ $m->category->name ?? '-' }}</td>
+            <td class="num">{{ number_format($m->quantity) }}</td>
             <td>{{ $m->unit }}</td>
-            <td>{{ $m->low_stock_threshold }}</td>
-            <td>{{ $m->expiration_date ? $m->expiration_date->format('M d, Y') : '—' }}</td>
-            <td class="{{ $cls }}">{{ $status }}</td>
+            <td class="num">{{ number_format($m->low_stock_threshold) }}</td>
+            <td class="nowrap">{{ DisplayFormat::date($m->expiration_date, '-') }}{{ $expiry }}</td>
+            <td @if($flag) style="font-weight:bold;" @endif>{{ $status }}</td>
         </tr>
-        @endforeach
+        @empty
+        <tr><td colspan="7" class="empty">No active medicines.</td></tr>
+        @endforelse
     </tbody>
 </table>
-</body>
-</html>
+@endsection

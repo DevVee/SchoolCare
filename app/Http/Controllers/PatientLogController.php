@@ -2,150 +2,159 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\StockException;
+use App\Http\Requests\PatientLog\SavePatientLogRequest;
+use App\Models\Medicine;
 use App\Models\Patient;
 use App\Models\PatientLog;
-use App\Models\Setting;
+use App\Services\PatientLogService;
 use App\Services\SmsService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PatientLogController extends Controller
 {
-    public function __construct(private readonly SmsService $sms) {}
+    public function __construct(
+        private readonly SmsService $sms,
+        private readonly PatientLogService $logs,
+    ) {}
 
     /* ------------------------------------------------------------------ */
-    /*  INDEX — Clinic Logbook                                              */
+    /*  INDEX: Clinic Logbook                                              */
     /* ------------------------------------------------------------------ */
     public function index(Request $request)
     {
-        $this->authorize('view-consultations');
+        $this->authorize('view-patient-logs');
 
-        $date   = $request->input('date', today()->toDateString());
-        $search = $request->input('search', '');
+        // Date range. The legacy single ?date= still works (from = to = date).
+        $single   = $this->validDate($request->input('date'));
+        $dateFrom = $this->validDate($request->input('date_from')) ?? $single;
+        $dateTo   = $this->validDate($request->input('date_to')) ?? $single;
+        if (! $dateFrom && ! $dateTo) {
+            $dateFrom = $dateTo = today()->toDateString();
+        }
+        $dateFrom ??= $dateTo;
+        $dateTo   ??= $dateFrom;
+        if ($dateFrom > $dateTo) {
+            [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
+        }
 
-        $query = PatientLog::with(['patient', 'loggedBy'])
-            ->whereDate('log_date', $date);
+        $search      = trim((string) $request->input('search', ''));
+        $disposition = (string) $request->input('disposition', '');
+        $severity    = (string) $request->input('severity', '');
+        $reason      = (string) $request->input('reason', '');
+        $category    = (string) $request->input('category', '');
+        $status      = (string) $request->input('status', '');
 
-        if ($search) {
-            $query->whereHas('patient', fn ($q) => $q
-                ->where('first_name', 'like', "%{$search}%")
-                ->orWhere('last_name',  'like', "%{$search}%")
-                ->orWhere('patient_number', 'like', "%{$search}%")
+        if (! array_key_exists($disposition, PatientLog::dispositions())) {
+            $disposition = '';
+        }
+        if (! in_array($severity, PatientLog::severities(), true)) {
+            $severity = '';
+        }
+        if (! in_array($reason, PatientLog::reasonOptions(), true)) {
+            $reason = '';
+        }
+        if (! array_key_exists($category, Patient::categoryLabels())) {
+            $category = '';
+        }
+        if (! in_array($status, ['in_clinic', 'discharged'], true)) {
+            $status = '';
+        }
+
+        $query = PatientLog::with(['patient', 'loggedBy', 'dispensingRecords.medicine'])
+            ->withCount('attachments')
+            ->whereDate('log_date', '>=', $dateFrom)
+            ->whereDate('log_date', '<=', $dateTo)
+            ->when($disposition, fn ($q) => $q->where('disposition', $disposition))
+            ->when($severity, fn ($q) => $q->where('severity', $severity))
+            ->when($reason, fn ($q) => $q->whereJsonContains('reasons', $reason))
+            ->when($category, fn ($q) => $q->whereHas('patient', fn ($p) => $p->withTrashed()->where('category', $category)))
+            ->when($status === 'in_clinic', fn ($q) => $q->whereNull('time_out'))
+            ->when($status === 'discharged', fn ($q) => $q->whereNotNull('time_out'));
+
+        if ($search !== '') {
+            // Grouped so the OR never bypasses the other filters.
+            $query->where(fn ($w) => $w
+                ->whereHas('patient', fn ($q) => $q->withTrashed()->where(fn ($q2) => $q2
+                    ->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('patient_number', 'like', "%{$search}%")))
+                ->orWhere('chief_complaint', 'like', "%{$search}%")
+                ->orWhere('other_reason', 'like', "%{$search}%")
+                ->orWhere('reasons', 'like', '%'.trim(json_encode($search), '"').'%')
             );
         }
 
-        $logs = $query->orderBy('time_in', 'desc')->paginate(25)->withQueryString();
+        $logs = $query->orderByDesc('log_date')->orderByDesc('time_in')->paginate(25)->withQueryString();
 
         $stats = [
             'today' => PatientLog::today()->count(),
-            'week'  => PatientLog::whereBetween('log_date', [
-                today()->startOfWeek(), today()->endOfWeek(),
-            ])->count(),
+            'week'  => PatientLog::whereDate('log_date', '>=', today()->startOfWeek()->toDateString())
+                ->whereDate('log_date', '<=', today()->endOfWeek()->toDateString())
+                ->count(),
             'month' => PatientLog::whereMonth('log_date', today()->month)
                 ->whereYear('log_date', today()->year)
                 ->count(),
         ];
 
-        return view('patient-logs.index', compact('logs', 'date', 'search', 'stats'));
+        $inClinic = PatientLog::inClinic()->with('patient')->orderBy('time_in')->get();
+
+        $filters = compact('dateFrom', 'dateTo', 'search', 'disposition', 'severity', 'reason', 'category', 'status');
+
+        return view('patient-logs.index', compact('logs', 'filters', 'stats', 'inClinic') + [
+            // Kept for older partials that still read these.
+            'date'        => $dateFrom === $dateTo ? $dateFrom : '',
+            'search'      => $search,
+            'disposition' => $disposition,
+        ]);
     }
 
     /* ------------------------------------------------------------------ */
-    /*  CREATE                                                              */
+    /*  CREATE / STORE                                                      */
     /* ------------------------------------------------------------------ */
     public function create(Request $request)
     {
-        $this->authorize('create-consultations');
+        $this->authorize('create-patient-logs');
 
-        $patients = Patient::active()
-            ->orderBy('last_name')
-            ->get(['id', 'first_name', 'last_name', 'middle_name', 'patient_number',
-                   'guardian_name', 'guardian_contact', 'category',
-                   'section', 'year_level', 'program_strand']);
-
-        $selectedPatient = $request->input('patient_id');
-
-        return view('patient-logs.create', compact('patients', 'selectedPatient'));
+        return view('patient-logs.create', [
+            'patients'        => $this->patientOptions(),
+            'medicines'       => $this->medicineOptions(),
+            'selectedPatient' => $request->input('patient_id'),
+        ]);
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  STORE                                                               */
-    /* ------------------------------------------------------------------ */
-    public function store(Request $request)
+    public function store(SavePatientLogRequest $request)
     {
-        $this->authorize('create-consultations');
+        $attributes = $request->logAttributes() + [
+            'logged_by'    => auth()->id(),
+            'sms_guardian' => $request->boolean('sms_guardian'),
+            'sms_sent'     => false,
+        ];
 
-        $validated = $request->validate([
-            'patient_id'      => ['required', 'exists:patients,id'],
-            'log_date'        => ['required', 'date'],
-            'time_in'         => ['required', 'date_format:H:i'],
-            'time_out'        => ['nullable', 'date_format:H:i'],
-            'chief_complaint' => ['required', 'string', 'max:500'],
-            'vital_temp'      => ['nullable', 'numeric', 'between:30,45'],
-            'vital_bp'        => ['nullable', 'string', 'max:20'],
-            'vital_pulse'     => ['nullable', 'integer', 'between:1,300'],
-            'vital_weight'    => ['nullable', 'numeric', 'between:1,300'],
-            'vital_height'    => ['nullable', 'numeric', 'between:1,300'],
-            'assessment'      => ['nullable', 'string', 'max:1000'],
-            'treatment'       => ['nullable', 'string', 'max:500'],
-            'disposition'     => ['required', 'in:rest_in_clinic,returned_to_class,sent_home,referred_to_hospital,further_observation'],
-            'sms_guardian'    => ['nullable'],
-            'notes'           => ['nullable', 'string', 'max:500'],
-        ]);
-
-        // Build vitals JSON from individual fields
-        $vitals = array_filter([
-            'temperature'   => $request->filled('vital_temp')   ? $request->vital_temp   : null,
-            'blood_pressure'=> $request->filled('vital_bp')     ? $request->vital_bp     : null,
-            'pulse'         => $request->filled('vital_pulse')  ? $request->vital_pulse  : null,
-            'weight'        => $request->filled('vital_weight') ? $request->vital_weight : null,
-            'height'        => $request->filled('vital_height') ? $request->vital_height : null,
-        ], fn ($v) => ! is_null($v));
-
-        $log = PatientLog::create([
-            'patient_id'      => $validated['patient_id'],
-            'logged_by'       => auth()->id(),
-            'log_date'        => $validated['log_date'],
-            'time_in'         => $validated['time_in'],
-            'time_out'        => $validated['time_out'] ?? null,
-            'chief_complaint' => $validated['chief_complaint'],
-            'vital_signs'     => $vitals ?: null,
-            'assessment'      => $validated['assessment'] ?? null,
-            'treatment'       => $validated['treatment'] ?? null,
-            'disposition'     => $validated['disposition'],
-            'sms_guardian'    => $request->boolean('sms_guardian'),
-            'sms_sent'        => false,
-            'notes'           => $validated['notes'] ?? null,
-        ]);
-
-        $smsSent = false;
-
-        // ── Optionally notify guardian ────────────────────────────────────
-        if ($request->boolean('sms_guardian')) {
-            $patient = Patient::find($validated['patient_id']);
-            $number  = $patient->guardian_contact ?? $patient->contact_number;
-
-            if ($number) {
-                $template = Setting::get(
-                    'sms_template_clinic_log',
-                    'Dear {guardian}, your ward {name} visited the school clinic at {time} for {complaint}. Action taken: {treatment}. - Clinovia'
-                );
-
-                $message = str_replace(
-                    ['{guardian}', '{name}',              '{time}',                                                    '{complaint}',          '{treatment}'],
-                    [$patient->guardian_name ?? 'Parent', $patient->first_name, Carbon::parse($log->time_in)->format('h:i A'), $log->chief_complaint, $log->treatment ?? 'Attended by clinic staff'],
-                    $template
-                );
-
-                $smsLog  = $this->sms->send($number, $message, $patient->guardian_name ?? $patient->full_name, $log);
-                $smsSent = $smsLog->status === 'sent';
-                $log->update(['sms_sent' => $smsSent]);
-            }
+        try {
+            $log = $this->logs->create($attributes, $request->medicineRows());
+        } catch (StockException $e) {
+            return back()->withInput()->withErrors([$e->field => $e->getMessage()]);
         }
 
-        $msg = "Patient log for {$log->patient->full_name} saved.";
-        if ($smsSent) $msg .= ' SMS sent to guardian ✓';
+        $given = $log->dispensingRecords()->count();
+        $msg   = "Patient log for {$log->patient->full_name} saved."
+            .($given ? " {$given} ".str('medicine')->plural($given).' deducted from stock.' : '');
 
-        return redirect()->route('patient-logs.index')->with('success', $msg);
+        // Optionally notify guardian (queued; outcome in the SMS log).
+        if ($request->boolean('sms_guardian')) {
+            $smsLog = $this->sms->sendClinicLogNotice($log);
+            $msg .= match ($smsLog?->status) {
+                'sent'    => ' SMS sent to guardian.',
+                'pending' => ' SMS to guardian queued.',
+                'skipped', 'failed' => ' Guardian SMS not sent: '.$smsLog->error_message,
+                default   => '',
+            };
+        }
+
+        return redirect()->route('patient-logs.show', $log)->with('success', $msg);
     }
 
     /* ------------------------------------------------------------------ */
@@ -153,74 +162,47 @@ class PatientLogController extends Controller
     /* ------------------------------------------------------------------ */
     public function show(PatientLog $patientLog)
     {
-        $this->authorize('view-consultations');
-        $patientLog->load(['patient', 'loggedBy']);
+        $this->authorize('view-patient-logs');
+
+        $patientLog->load([
+            'patient', 'loggedBy',
+            'dispensingRecords.medicine', 'dispensingRecords.dispensedBy', 'dispensingRecords.transactions.batch',
+            'attachments.uploadedBy',
+        ]);
 
         return view('patient-logs.show', ['log' => $patientLog]);
     }
 
     /* ------------------------------------------------------------------ */
-    /*  EDIT                                                                */
+    /*  EDIT / UPDATE                                                       */
     /* ------------------------------------------------------------------ */
     public function edit(PatientLog $patientLog)
     {
-        $this->authorize('update-consultations');
+        $this->authorize('update-patient-logs');
 
-        $patientLog->load('patient');
+        $patientLog->load(['patient', 'dispensingRecords.medicine']);
 
-        $patients = Patient::active()
-            ->orderBy('last_name')
-            ->get(['id', 'first_name', 'last_name', 'middle_name', 'patient_number',
-                   'guardian_name', 'guardian_contact', 'category',
-                   'section', 'year_level', 'program_strand']);
+        $patients = $this->patientOptions();
 
-        return view('patient-logs.edit', compact('patientLog', 'patients'));
+        // Keep the current patient selectable even if inactive / archived.
+        if (! $patients->contains('id', $patientLog->patient_id) && $patientLog->patient) {
+            $patients->prepend($patientLog->patient);
+        }
+
+        return view('patient-logs.edit', [
+            'patientLog' => $patientLog,
+            'patients'   => $patients,
+            'medicines'  => $this->medicineOptions(),
+        ]);
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  UPDATE                                                              */
-    /* ------------------------------------------------------------------ */
-    public function update(Request $request, PatientLog $patientLog)
+    public function update(SavePatientLogRequest $request, PatientLog $patientLog)
     {
-        $this->authorize('update-consultations');
-
-        $validated = $request->validate([
-            'patient_id'      => ['required', 'exists:patients,id'],
-            'log_date'        => ['required', 'date'],
-            'time_in'         => ['required', 'date_format:H:i'],
-            'time_out'        => ['nullable', 'date_format:H:i'],
-            'chief_complaint' => ['required', 'string', 'max:500'],
-            'vital_temp'      => ['nullable', 'numeric', 'between:30,45'],
-            'vital_bp'        => ['nullable', 'string', 'max:20'],
-            'vital_pulse'     => ['nullable', 'integer', 'between:1,300'],
-            'vital_weight'    => ['nullable', 'numeric', 'between:1,300'],
-            'vital_height'    => ['nullable', 'numeric', 'between:1,300'],
-            'assessment'      => ['nullable', 'string', 'max:1000'],
-            'treatment'       => ['nullable', 'string', 'max:500'],
-            'disposition'     => ['required', 'in:rest_in_clinic,returned_to_class,sent_home,referred_to_hospital,further_observation'],
-            'notes'           => ['nullable', 'string', 'max:500'],
-        ]);
-
-        $vitals = array_filter([
-            'temperature'    => $request->filled('vital_temp')   ? $request->vital_temp   : null,
-            'blood_pressure' => $request->filled('vital_bp')     ? $request->vital_bp     : null,
-            'pulse'          => $request->filled('vital_pulse')  ? $request->vital_pulse  : null,
-            'weight'         => $request->filled('vital_weight') ? $request->vital_weight : null,
-            'height'         => $request->filled('vital_height') ? $request->vital_height : null,
-        ], fn ($v) => ! is_null($v));
-
-        $patientLog->update([
-            'patient_id'      => $validated['patient_id'],
-            'log_date'        => $validated['log_date'],
-            'time_in'         => $validated['time_in'],
-            'time_out'        => $validated['time_out'] ?? null,
-            'chief_complaint' => $validated['chief_complaint'],
-            'vital_signs'     => $vitals ?: null,
-            'assessment'      => $validated['assessment'] ?? null,
-            'treatment'       => $validated['treatment'] ?? null,
-            'disposition'     => $validated['disposition'],
-            'notes'           => $validated['notes'] ?? null,
-        ]);
+        try {
+            $this->logs->update($patientLog, $request->logAttributes(), $request->medicineRows());
+        } catch (StockException $e) {
+            return back()->withInput()->withErrors([$e->field => $e->getMessage()]);
+        }
 
         return redirect()
             ->route('patient-logs.show', $patientLog)
@@ -228,13 +210,81 @@ class PatientLogController extends Controller
     }
 
     /* ------------------------------------------------------------------ */
+    /*  DISCHARGE: patient leaves the clinic                               */
+    /* ------------------------------------------------------------------ */
+    public function discharge(Request $request, PatientLog $patientLog)
+    {
+        $this->authorize('update-patient-logs');
+
+        $data = $request->validate([
+            'disposition'     => ['nullable', Rule::in(array_keys(PatientLog::dispositions()))],
+            'notify_guardian' => ['nullable', 'boolean'],
+        ]);
+
+        try {
+            $smsLog = $this->logs->discharge(
+                $patientLog,
+                $data['disposition'] ?? null,
+                $request->boolean('notify_guardian', true),
+            );
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $name = $patientLog->patient?->full_name ?? 'Patient';
+        $msg  = "{$name} discharged at ".Carbon::parse($patientLog->time_out)->format('h:i A').'.';
+        $msg .= match ($smsLog?->status) {
+            'sent'    => ' Guardian notified by SMS.',
+            'pending' => ' Guardian SMS queued.',
+            'failed'  => ' Guardian SMS not sent: '.$smsLog->error_message,
+            default   => '',
+        };
+
+        return back()->with('success', $msg);
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  DESTROY                                                             */
     /* ------------------------------------------------------------------ */
     public function destroy(PatientLog $patientLog)
     {
-        $this->authorize('delete-consultations');
+        $this->authorize('delete-patient-logs');
         $patientLog->delete();
 
         return redirect()->route('patient-logs.index')->with('success', 'Log entry removed.');
+    }
+
+    /* ------------------------------------------------------------------ */
+
+    private function validDate(mixed $value): ?string
+    {
+        if (! is_string($value) || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m-d', $value)->toDateString();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function patientOptions()
+    {
+        return Patient::active()
+            ->orderBy('last_name')
+            ->get(['id', 'first_name', 'last_name', 'middle_name', 'patient_number',
+                   'guardian_name', 'guardian_contact', 'category',
+                   'section', 'year_level', 'program_strand', 'deleted_at']);
+    }
+
+    /** Medicines that can be given now, with usable stock and next expiry (FEFO). */
+    private function medicineOptions()
+    {
+        return Medicine::dispensable()
+            ->withSum(['batches as usable_quantity' => fn ($q) => $q->usable()], 'quantity')
+            ->withMin(['batches as next_expiry' => fn ($q) => $q->usable()], 'expiry_date')
+            ->orderBy('name')
+            ->get(['id', 'name', 'generic_name', 'unit', 'quantity', 'expiration_date']);
     }
 }

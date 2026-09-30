@@ -1,112 +1,70 @@
 {{--
-    Philippine Address Picker (PSGC cascade)
+    Philippine address picker (PSGC cascade). Behaviour: patients.partials.address-picker-script.
     Props:
-      $addrField   — form field name  ('address' | 'guardian_address')
-      $addrValue   — current DB value (empty string for create)
-      $addrLabel   — label text
-      $addrPrefix  — unique prefix for DOM IDs (e.g. 'pat' | 'grd')
+      $addrField  : form field name  ('address' | 'guardian_address')
+      $addrValue  : current saved value (empty string on create)
+      $addrLabel  : label text
+      $addrPrefix : unique prefix for DOM ids (e.g. 'pat' | 'grd')
 --}}
 @php
     $addrValue  = old($addrField, $addrValue ?? '');
     $addrLabel  = $addrLabel ?? 'Address';
     $addrPrefix = $addrPrefix ?? 'addr';
+    $addrError  = $errors->has($addrField);
 @endphp
 
-<div class="address-picker-wrap">
+<fieldset class="address-picker-wrap" aria-describedby="{{ $addrPrefix }}-help">
+    <legend class="form-label">{{ $addrLabel }}</legend>
 
-    {{-- Label + existing address hint --}}
-    <label class="form-label fw-semibold">
-        {{ $addrLabel }}
-        <span class="badge bg-primary-subtle text-primary-emphasis ms-1" style="font-size:.65rem;letter-spacing:.02em;">
-            <i class="bi bi-geo-alt-fill me-1"></i>PH Address Picker
-        </span>
-    </label>
-
-    @if($addrValue)
-    <div class="alert alert-light border small py-2 mb-2 d-flex align-items-start gap-2" id="{{ $addrPrefix }}-existing-alert">
-        <i class="bi bi-info-circle text-primary mt-1 flex-shrink-0"></i>
-        <div>
-            <span class="text-muted">Current: </span>
+    @if ($addrValue)
+        <p class="small mb-2" id="{{ $addrPrefix }}-existing-alert">
+            <span class="text-muted">Saved address:</span>
             <strong id="{{ $addrPrefix }}-existing-text">{{ $addrValue }}</strong>
-            <br>
-            <span class="text-muted" style="font-size:.78rem;">Use the picker below to update, or leave dropdowns blank to keep the current address.</span>
-        </div>
-    </div>
+        </p>
     @endif
 
     <div class="row g-2">
-
-        {{-- Street / House No. --}}
         <div class="col-12">
-            <div class="input-group">
-                <span class="input-group-text bg-white text-muted"><i class="bi bi-house-door"></i></span>
-                <input type="text"
-                       id="{{ $addrPrefix }}-street"
-                       class="form-control"
-                       placeholder="House/Block/Lot No., Street Name (optional)"
+            <div class="input-icon">
+                <x-ui.icon name="house-door" />
+                <input type="text" id="{{ $addrPrefix }}-street" class="form-control" aria-label="House number and street"
+                       placeholder="House, block or lot no. and street (optional)"
                        value="{{ $addrValue ? '' : old($addrField . '_street', '') }}">
             </div>
         </div>
-
-        {{-- Region --}}
-        <div class="col-md-6">
-            <div class="input-group">
-                <span class="input-group-text bg-white text-muted" style="font-size:.8rem;padding:.35rem .6rem;">
-                    <i class="bi bi-map"></i>
-                </span>
-                <select id="{{ $addrPrefix }}-region" class="form-select" style="border-left:0;">
-                    <option value="">— Region —</option>
-                </select>
-            </div>
+        <div class="col-sm-6 col-lg-3">
+            <select id="{{ $addrPrefix }}-region" class="form-select" aria-label="Region">
+                <option value="">Region</option>
+            </select>
         </div>
-
-        {{-- Province --}}
-        <div class="col-md-6">
-            <div class="input-group">
-                <span class="input-group-text bg-white text-muted" style="font-size:.8rem;padding:.35rem .6rem;">
-                    <i class="bi bi-building"></i>
-                </span>
-                <select id="{{ $addrPrefix }}-province" class="form-select" style="border-left:0;" disabled>
-                    <option value="">— Province —</option>
-                </select>
-            </div>
+        <div class="col-sm-6 col-lg-3">
+            <select id="{{ $addrPrefix }}-province" class="form-select" aria-label="Province" disabled>
+                <option value="">Province</option>
+            </select>
         </div>
-
-        {{-- City / Municipality --}}
-        <div class="col-md-6">
-            <div class="input-group">
-                <span class="input-group-text bg-white text-muted" style="font-size:.8rem;padding:.35rem .6rem;">
-                    <i class="bi bi-buildings"></i>
-                </span>
-                <select id="{{ $addrPrefix }}-city" class="form-select" style="border-left:0;" disabled>
-                    <option value="">— City / Municipality —</option>
-                </select>
-            </div>
+        <div class="col-sm-6 col-lg-3">
+            <select id="{{ $addrPrefix }}-city" class="form-select" aria-label="City or municipality" disabled>
+                <option value="">City / Municipality</option>
+            </select>
         </div>
-
-        {{-- Barangay --}}
-        <div class="col-md-6">
-            <div class="input-group">
-                <span class="input-group-text bg-white text-muted" style="font-size:.8rem;padding:.35rem .6rem;">
-                    <i class="bi bi-geo"></i>
-                </span>
-                <select id="{{ $addrPrefix }}-barangay" class="form-select" style="border-left:0;" disabled>
-                    <option value="">— Barangay —</option>
-                </select>
-            </div>
+        <div class="col-sm-6 col-lg-3">
+            <select id="{{ $addrPrefix }}-barangay" class="form-select" aria-label="Barangay" disabled>
+                <option value="">Barangay</option>
+            </select>
         </div>
-
-        {{-- Composed preview --}}
-        <div class="col-12">
-            <div id="{{ $addrPrefix }}-preview" class="form-text text-muted d-none">
-                <i class="bi bi-check-circle-fill text-success me-1"></i>
-                <span id="{{ $addrPrefix }}-preview-text"></span>
-            </div>
-        </div>
-
     </div>
+
+    <div id="{{ $addrPrefix }}-preview" class="form-text d-none">
+        <x-ui.icon name="check-circle-fill" class="text-success me-1" />
+        <span id="{{ $addrPrefix }}-preview-text"></span>
+    </div>
+    <div class="form-text" id="{{ $addrPrefix }}-help">
+        {{ $addrValue ? 'Pick a new region to barangay to replace the saved address, or leave them blank to keep it.' : 'Pick the region first, then province, city and barangay.' }}
+    </div>
+    @if ($addrError)
+        <div class="invalid-feedback d-block">{{ $errors->first($addrField) }}</div>
+    @endif
 
     {{-- Hidden field submitted with the form --}}
     <input type="hidden" name="{{ $addrField }}" id="{{ $addrPrefix }}-hidden" value="{{ $addrValue }}">
-
-</div>
+</fieldset>

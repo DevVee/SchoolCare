@@ -18,6 +18,7 @@ class PatientObserver
         'guardian_name', 'guardian_relationship', 'guardian_contact', 'guardian_address',
         'emergency_contact_name', 'emergency_contact_number',
         'contact_number', 'email', 'address',
+        'other_contact', 'guardian_facebook', 'pediatrician_name', 'pediatrician_contact', 'current_medications',
     ];
 
     private function sanitize(array $data): array
