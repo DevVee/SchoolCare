@@ -73,41 +73,77 @@ class DashboardController extends Controller
             ? AuditLog::with('user')->latest()->limit(6)->get()
             : collect();
 
-        // Visits trend: clinic visits (logbook) and consultations per day over the
-        // last TREND_DAYS days. Two queries, bucketed in PHP (portable across DBs).
+        // Visits trend: clinic visits (logbook) and consultations, per day over the last
+        // TREND_DAYS days or per month over the last 12 months (?range=30d|12m). With no
+        // range picked and a quiet 30 days, it shows the 12 months so the card is a graph
+        // of real history, not an empty message (owner: "can we make this graphs").
         $trend = null;
         if ($canLogs || $canConsults) {
-            $start  = today()->subDays(self::TREND_DAYS - 1);
-            $bucket = fn ($dates) => collect($dates)->countBy(fn ($d) => Carbon::parse($d)->toDateString());
-            $visitCounts   = $canLogs ? $bucket(PatientLog::whereDate('log_date', '>=', $start->toDateString())->pluck('log_date')) : collect();
-            $consultCounts = $canConsults ? $bucket(Consultation::whereDate('visit_date', '>=', $start->toDateString())->pluck('visit_date')) : collect();
-
-            $categories = $visits = $consults = [];
-            for ($i = 0; $i < self::TREND_DAYS; $i++) {
-                $day = $start->copy()->addDays($i);
-                $key = $day->toDateString();
-                $categories[] = $day->format('M j');
-                $visits[]     = (int) ($visitCounts[$key] ?? 0);
-                $consults[]   = (int) ($consultCounts[$key] ?? 0);
+            $picked = in_array(request('range'), ['30d', '12m'], true) ? request('range') : null;
+            $trend  = $this->trend($canLogs, $canConsults, $picked ?? '30d');
+            if ($picked === null && $trend['total'] === 0) {
+                $yearly = $this->trend($canLogs, $canConsults, '12m');
+                $trend  = $yearly['total'] > 0 ? $yearly : $trend;
             }
-
-            $series = [];
-            if ($canLogs) {
-                $series[] = ['name' => 'Clinic visits', 'data' => $visits];
-            }
-            if ($canConsults) {
-                $series[] = ['name' => 'Consultations', 'data' => $consults];
-            }
-            $trend = ['categories' => $categories, 'series' => $series, 'days' => self::TREND_DAYS];
         }
 
-        // Top reasons for visit this month (horizontal bar).
-        $topReasons = $canLogs
-            ? $reports->topReasons(now()->startOfMonth()->toDateString(), today()->toDateString(), 6)
-            : collect();
+        // Top reasons for visit (horizontal bar): this month, or the last 12 months when
+        // nothing was logged this month yet.
+        $topReasons = collect();
+        $reasonsPeriod = 'This month ('.now()->format('F').')';
+        if ($canLogs) {
+            $topReasons = $reports->topReasons(now()->startOfMonth()->toDateString(), today()->toDateString(), 6);
+            if ($topReasons->isEmpty()) {
+                $topReasons = $reports->topReasons(today()->subMonths(12)->toDateString(), today()->toDateString(), 6);
+                $reasonsPeriod = 'Last 12 months (none logged this month yet)';
+            }
+        }
 
         return view('dashboard.index', compact(
-            'stats', 'todayAppointments', 'inventoryAlerts', 'recentActivity', 'trend', 'topReasons'
+            'stats', 'todayAppointments', 'inventoryAlerts', 'recentActivity', 'trend', 'topReasons', 'reasonsPeriod'
         ));
+    }
+
+    /**
+     * Visits and consultations bucketed per day (30d) or per month (12m).
+     * Two queries, bucketed in PHP (portable across DBs).
+     *
+     * @return array{categories: list<string>, series: list<array{name: string, data: list<int>}>, range: string, label: string, total: int}
+     */
+    private function trend(bool $canLogs, bool $canConsults, string $range): array
+    {
+        $monthly = $range === '12m';
+        $start   = $monthly ? today()->startOfMonth()->subMonths(11) : today()->subDays(self::TREND_DAYS - 1);
+        $keyOf   = fn ($d) => Carbon::parse($d)->format($monthly ? 'Y-m' : 'Y-m-d');
+        $bucket  = fn ($dates) => collect($dates)->countBy($keyOf);
+
+        $visitCounts   = $canLogs ? $bucket(PatientLog::whereDate('log_date', '>=', $start->toDateString())->pluck('log_date')) : collect();
+        $consultCounts = $canConsults ? $bucket(Consultation::whereDate('visit_date', '>=', $start->toDateString())->pluck('visit_date')) : collect();
+
+        $categories = $visits = $consults = [];
+        $steps = $monthly ? 12 : self::TREND_DAYS;
+        for ($i = 0; $i < $steps; $i++) {
+            $point = $monthly ? $start->copy()->addMonths($i) : $start->copy()->addDays($i);
+            $key = $point->format($monthly ? 'Y-m' : 'Y-m-d');
+            $categories[] = $point->format($monthly ? 'M Y' : 'M j');
+            $visits[]     = (int) ($visitCounts[$key] ?? 0);
+            $consults[]   = (int) ($consultCounts[$key] ?? 0);
+        }
+
+        $series = [];
+        if ($canLogs) {
+            $series[] = ['name' => 'Clinic visits', 'data' => $visits];
+        }
+        if ($canConsults) {
+            $series[] = ['name' => 'Consultations', 'data' => $consults];
+        }
+
+        return [
+            'categories' => $categories,
+            'series'     => $series,
+            'range'      => $range,
+            'label'      => $monthly ? 'Last 12 months, by month' : 'Last '.self::TREND_DAYS.' days',
+            'total'      => array_sum($visits) + array_sum($consults),
+        ];
     }
 }

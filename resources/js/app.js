@@ -19,6 +19,7 @@ import './ui/list-editor'; // [data-list-editor] friendly editor for one-per-lin
 import './ui/combobox';  // [data-combobox] type-to-search pickers (x-ui.patient-picker)
 import './ui/life';      // reveal on scroll, count up, pointer spotlight, word rise
 import './ui/brief';     // dashboard: Coco's brief of what is happening today
+import './ui/spotlight'; // Ctrl K / "/": find a patient, jump to a page, or ask the assistant
 
 window.axios = axios;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';

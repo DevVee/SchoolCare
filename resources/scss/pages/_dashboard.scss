@@ -155,7 +155,7 @@
     background: #fff;
     box-shadow: 0 18px 40px -22px rgba(var(--brand-rgb), .55);
     // The ring: a 2px frame whose light turns slowly (one rotating layer, cheap)
-    @at-root :is(.c-ask, .coco-input) .c-ask-ring {
+    @at-root :is(.c-ask, .coco-input, .btn-cobi-pill) .c-ask-ring {
         position: absolute;
         inset: 0;
         z-index: -1;
@@ -286,9 +286,32 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    :is(.c-ask, .coco-input) .c-ask-ring::before { animation: none; }
+    :is(.c-ask, .coco-input, .btn-cobi-pill) .c-ask-ring::before { animation: none; }
     .c-brief-line.is-ticking { transform: none; animation-name: c-fade-in; }
 }
 @media (prefers-contrast: more) {
-    :is(.c-ask, .coco-input) .c-ask-ring { background: $gray-500; &::before { display: none; } }
+    :is(.c-ask, .coco-input, .btn-cobi-pill) .c-ask-ring { background: $gray-500; &::before { display: none; } }
+}
+
+// Capsule segmented control (ServiceCo): the chosen option is a raised white pill
+.c-segmented {
+    display: inline-flex;
+    padding: .1875rem;
+    border-radius: $border-radius-pill;
+    background: var(--c-surface-2);
+    a {
+        padding: .3125rem .875rem;
+        border-radius: $border-radius-pill;
+        font-size: .8125rem;
+        font-weight: 560;
+        letter-spacing: -.008em;
+        color: var(--c-muted);
+        text-decoration: none;
+        white-space: nowrap;
+        transition: color $dur-fast ease-out, background-color $dur-fast ease-out, box-shadow $dur-fast ease-out;
+        &:hover { color: var(--c-ink); }
+        &.is-on { background: #fff; color: var(--c-ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .1), 0 0 0 .5px rgba(0, 0, 0, .04); }
+        &:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .35); }
+    }
+    @media (pointer: coarse) { a { padding: .5rem 1rem; } }
 }
