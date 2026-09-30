@@ -48,9 +48,14 @@
                             <x-ui.dropdown-item :action="route('admin.users.toggle-active', $user)" method="PATCH" icon="person-check"
                                 confirm="They will be able to sign in again." :confirm-title="'Activate '.$user->name.'?'" confirm-button="Activate">Activate</x-ui.dropdown-item>
                         @endif
+                        @if ($user->last_login_at === null)
+                            <x-ui.dropdown-item :action="route('admin.users.resend-invitation', $user)" icon="envelope"
+                                confirm="They will get a new invitation email with a link to choose their password. Any earlier invitation link stops working."
+                                :confirm-title="'Resend invitation to '.$user->name.'?'" confirm-button="Resend invitation">Resend invitation</x-ui.dropdown-item>
+                        @endif
                         <x-ui.dropdown-item :action="route('admin.users.reset-password', $user)" icon="key"
-                            confirm="A temporary password will be shown to you once. Their current password stops working and they are signed out."
-                            :confirm-title="'Reset password for '.$user->name.'?'" confirm-button="Reset password">Reset password</x-ui.dropdown-item>
+                            confirm="They will get an email with a link to set a new password."
+                            :confirm-title="'Reset password for '.$user->name.'?'" confirm-button="Send reset link">Reset password</x-ui.dropdown-item>
                         @if ($clinicalRecords === 0)
                             <x-ui.dropdown-divider />
                             <x-ui.dropdown-item :action="route('admin.users.destroy', $user)" method="DELETE" icon="trash" tone="danger"
@@ -64,14 +69,8 @@
         @endif
     </x-ui.page-header>
 
-    @if (session('temp_password'))
-        <x-ui.alert variant="warning" :title="'Temporary password for '.$user->name">
-            <div class="d-flex align-items-center gap-2 flex-wrap my-2">
-                <code class="fs-5 px-2 py-1 bg-body border rounded-1 user-select-all text-ink" id="tempPassword">{{ session('temp_password') }}</code>
-                <x-ui.button variant="secondary" size="sm" icon="clipboard" id="copyTempPassword">Copy</x-ui.button>
-            </div>
-            Give it to the user in person or through a private message. It is shown only once, and they must choose a new password when they next sign in.
-        </x-ui.alert>
+    @if ($user->last_login_at === null)
+        <x-ui.alert variant="info" icon="envelope">Invitation pending: {{ $user->name }} has not signed in yet. Use Resend invitation if the email was missed or the link expired.</x-ui.alert>
     @endif
 
     @if ($user->must_change_password)
@@ -168,22 +167,3 @@
     </div>
 </div>
 @endsection
-
-@if (session('temp_password'))
-    @push('scripts')
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var btn = document.getElementById('copyTempPassword');
-        if (!btn) return;
-        btn.addEventListener('click', function () {
-            var text = document.getElementById('tempPassword').textContent.trim();
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(function () {
-                    if (window.toast) window.toast('Temporary password copied.');
-                });
-            }
-        });
-    });
-    </script>
-    @endpush
-@endif

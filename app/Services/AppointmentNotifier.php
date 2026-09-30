@@ -64,8 +64,9 @@ class AppointmentNotifier
 
             if (settings('notify_email_appointments', false) && filled($recipient['email'])
                 && filter_var($recipient['email'], FILTER_VALIDATE_EMAIL)) {
+                // Sent now (not queued) so it goes out without a queue worker.
                 Notification::route('mail', [$recipient['email'] => $recipient['full']])
-                    ->notify(new AppointmentStatusNotification($appointment, $event));
+                    ->notifyNow(new AppointmentStatusNotification($appointment, $event));
             }
         } catch (\Throwable $e) {
             Log::warning("Appointment notification [{$event}] failed", [

@@ -15,9 +15,13 @@ use App\Repositories\PatientRepository;
 use Composer\CaBundle\CaBundle;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\ServiceProvider;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory;
+use Symfony\Component\Mailer\Transport\Dsn;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -70,6 +74,19 @@ class AppServiceProvider extends ServiceProvider
 
         $this->bootAuthorization();
         $this->bootSettings();
+        $this->bootMail();
+    }
+
+    /**
+     * MAIL_MAILER=brevo sends through the Brevo HTTP API (services.brevo.key),
+     * verifying TLS against the same CA bundle as the Http client above.
+     */
+    private function bootMail(): void
+    {
+        Mail::extend('brevo', fn () => (new BrevoTransportFactory(
+            null,
+            HttpClient::create(['cafile' => CaBundle::getSystemCaRootBundlePath()])
+        ))->create(new Dsn('brevo+api', 'default', (string) config('services.brevo.key'))));
     }
 
     /**

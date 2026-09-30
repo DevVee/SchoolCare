@@ -57,6 +57,7 @@ class AdminAccessTest extends TestCase
             ['delete', route('admin.users.destroy', $target)],
             ['patch',  route('admin.users.toggle-active', $target)],
             ['post',   route('admin.users.reset-password', $target)],
+            ['post',   route('admin.users.resend-invitation', $target)],
             ['get',    route('admin.roles.index')],
             ['get',    route('admin.roles.create')],
             ['post',   route('admin.roles.store')],
@@ -240,14 +241,13 @@ class AdminAccessTest extends TestCase
         $this->actingAs($manager)->get(route('admin.users.edit', $admin))->assertForbidden();
         $this->actingAs($manager)->patch(route('admin.users.toggle-active', $admin))->assertForbidden();
         $this->actingAs($manager)->post(route('admin.users.reset-password', $admin))->assertForbidden();
+        $this->actingAs($manager)->post(route('admin.users.resend-invitation', $admin))->assertForbidden();
 
         $this->actingAs($manager)->post(route('admin.users.store'), [
-            'name'                  => 'Sneaky',
-            'email'                 => 'sneaky@example.com',
-            'password'              => 'Str0ng!Passw0rd',
-            'password_confirmation' => 'Str0ng!Passw0rd',
-            'role'                  => 'administrator',
-            'is_active'             => '1',
+            'name'      => 'Sneaky',
+            'email'     => 'sneaky@example.com',
+            'role'      => 'administrator',
+            'is_active' => '1',
         ])->assertForbidden();
 
         $this->assertDatabaseMissing('users', ['email' => 'sneaky@example.com']);

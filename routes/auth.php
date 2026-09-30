@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\InvitationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 
 // ── Self-registration: disabled by default for this closed-staff system. ──────
 // SECURITY FIX: Public registration is a critical risk for a healthcare MIS.
-// New accounts are created by administrators via Admin → Users → Create.
+// New accounts are invited by administrators via Admin → Users → Create.
 // Set ALLOW_REGISTRATION=true in .env ONLY for a controlled onboarding flow.
 if (config('auth.allow_registration', false)) {
     Route::middleware('guest')->group(function () {
@@ -31,6 +32,12 @@ Route::middleware('guest')->group(function () {
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
     Route::post('reset-password',        [NewPasswordController::class, 'store'])->name('password.store');
+
+    // Invitations for admin-created accounts (InviteUserNotification).
+    Route::get('invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show');
+    Route::post('invitation',        [InvitationController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('invitation.store');
 });
 
 Route::middleware('auth')->group(function () {

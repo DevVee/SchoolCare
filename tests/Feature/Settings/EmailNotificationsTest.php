@@ -6,35 +6,41 @@ use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\User;
 use App\Notifications\AppointmentStatusNotification;
-use App\Notifications\WelcomeUserNotification;
+use App\Notifications\InviteUserNotification;
 use App\Services\AppointmentNotifier;
 use App\Services\SettingsService;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
+use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoApiTransport;
 use Tests\TestCase;
 
 class EmailNotificationsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_welcome_email_helper_respects_setting(): void
+    public function test_invitation_email_links_to_the_invitation_page(): void
     {
         Notification::fake();
         $user = User::factory()->create();
 
-        $this->assertTrue(WelcomeUserNotification::sendTo($user));
-        Notification::assertSentTo($user, WelcomeUserNotification::class, function ($n) use ($user) {
+        InviteUserNotification::sendTo($user);
+
+        Notification::assertSentTo($user, InviteUserNotification::class, function ($n) use ($user) {
             $mail = $n->toMail($user);
 
-            return str_contains($mail->subject, 'Welcome to SchoolCare')
-                && str_contains($mail->actionUrl, '/reset-password/');
+            return str_contains($mail->subject, "You're invited to SchoolCare")
+                && str_contains($mail->actionUrl, '/invitation/'.$n->token)
+                && str_contains(implode(' ', $mail->outroLines), '3 days');
         });
+    }
 
-        app(SettingsService::class)->setMany(['notify_email_user_created' => false]);
-        $other = User::factory()->create();
-        $this->assertFalse(WelcomeUserNotification::sendTo($other));
-        Notification::assertNotSentTo($other, WelcomeUserNotification::class);
+    public function test_brevo_mailer_uses_the_brevo_api_transport(): void
+    {
+        config(['services.brevo.key' => 'xkeysib-test']);
+
+        $this->assertInstanceOf(BrevoApiTransport::class, Mail::mailer('brevo')->getSymfonyTransport());
     }
 
     public function test_appointment_email_only_when_enabled_and_patient_has_email(): void

@@ -33,7 +33,7 @@
                 </div>
             </x-ui.section>
 
-            <x-ui.section title="Password" description="Leave both fields empty to keep the current password. To give a one-time temporary password instead, use Reset password on the user's profile.">
+            <x-ui.section title="Password" description="Leave both fields empty to keep the current password. To email them a link to choose a new password instead, use Reset password on the user's profile.">
                 <div class="row g-3">
                     <x-ui.input wrapper-class="col-12 col-md-6" name="password" type="password" label="New password" optional autocomplete="new-password"
                         help="At least 10 characters with upper and lowercase letters, a number and a symbol." />

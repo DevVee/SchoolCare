@@ -472,10 +472,7 @@ return [
                     'type' => 'boolean', 'label' => 'Email: appointment updates to patient', 'default' => false,
                     'help' => 'Booked, approved, moved, cancelled and reminder emails, when the patient has an email address on file.', 'rules' => ['boolean'],
                 ],
-                'notify_email_user_created' => [
-                    'type' => 'boolean', 'label' => 'Email: welcome message and set-password link to new users', 'default' => true,
-                    'help' => 'Sent when an administrator creates a user account.', 'rules' => ['boolean'],
-                ],
+                // Invitation and password-reset emails always send: accounts cannot be set up without them.
             ],
         ],
 

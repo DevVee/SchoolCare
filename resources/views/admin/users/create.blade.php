@@ -9,7 +9,7 @@
 @section('content')
 <div class="vstack gap-3">
 
-    <x-ui.page-header title="Add user" :description="'Create a sign-in account for a staff member and choose what they can do in '.settings('app_name').'.'"
+    <x-ui.page-header title="Add user" :description="'Invite a staff member and choose what they can do in '.settings('app_name').'. They get an email to choose their own password.'"
         :breadcrumbs="['Dashboard' => route('dashboard'), 'Users' => route('admin.users.index'), 'Add user' => null]" />
 
     @if ($errors->any())
@@ -19,18 +19,10 @@
     <form method="POST" action="{{ route('admin.users.store') }}">
         @csrf
         <x-ui.card>
-            <x-ui.section title="Account" description="The name staff will see, and the email used to sign in.">
+            <x-ui.section title="Account" description="The name staff will see, and the email used to sign in. The invitation is sent to this email.">
                 <div class="row g-3">
                     <x-ui.input wrapper-class="col-12" name="name" label="Full name" required autofocus autocomplete="off" placeholder="Juan Dela Cruz" />
                     <x-ui.input wrapper-class="col-12" name="email" type="email" label="Email" required autocomplete="off" placeholder="name@school.edu" />
-                </div>
-            </x-ui.section>
-
-            <x-ui.section title="Password" description="Give this password to the user. They can change it after signing in.">
-                <div class="row g-3">
-                    <x-ui.input wrapper-class="col-12 col-md-6" name="password" type="password" label="Password" required autocomplete="new-password"
-                        help="At least 10 characters with upper and lowercase letters, a number and a symbol." />
-                    <x-ui.input wrapper-class="col-12 col-md-6" name="password_confirmation" type="password" label="Confirm password" required autocomplete="new-password" />
                 </div>
             </x-ui.section>
 
@@ -41,15 +33,14 @@
                         <x-ui.alert variant="info"><span id="roleInfoText"></span></x-ui.alert>
                     </div>
                     <div class="col-12 vstack gap-2">
-                        <x-ui.switch name="is_active" label="Active" description="Active users can sign in." :checked="true" />
-                        <x-ui.switch name="must_change_password" label="Ask for a new password at first sign in" description="Recommended. The user picks their own password the first time they sign in." :checked="true" />
+                        <x-ui.switch name="is_active" label="Active" description="Active users can sign in once they accept the invitation." :checked="true" />
                     </div>
                 </div>
             </x-ui.section>
 
             <x-slot:footer>
                 <x-ui.button variant="secondary" :href="route('admin.users.index')">Cancel</x-ui.button>
-                <x-ui.button type="submit" icon="person-plus">Create user</x-ui.button>
+                <x-ui.button type="submit" icon="envelope">Send invitation</x-ui.button>
             </x-slot:footer>
         </x-ui.card>
     </form>

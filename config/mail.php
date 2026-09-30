@@ -65,6 +65,11 @@ return [
             'transport' => 'resend',
         ],
 
+        // Brevo HTTP API (key: services.brevo.key). Registered in AppServiceProvider.
+        'brevo' => [
+            'transport' => 'brevo',
+        ],
+
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),

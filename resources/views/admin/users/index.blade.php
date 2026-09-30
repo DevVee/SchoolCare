@@ -104,9 +104,14 @@
                                             confirm="They will be able to sign in again."
                                             :confirm-title="'Activate '.$user->name.'?'" confirm-button="Activate">Activate</x-ui.action-menu.item>
                                     @endif
+                                    @if ($user->last_login_at === null)
+                                        <x-ui.action-menu.item :action="route('admin.users.resend-invitation', $user)" icon="envelope"
+                                            confirm="They will get a new invitation email with a link to choose their password. Any earlier invitation link stops working."
+                                            :confirm-title="'Resend invitation to '.$user->name.'?'" confirm-button="Resend invitation">Resend invitation</x-ui.action-menu.item>
+                                    @endif
                                     <x-ui.action-menu.item :action="route('admin.users.reset-password', $user)" icon="key"
-                                        confirm="A temporary password will be shown to you once. Their current password stops working and they are signed out."
-                                        :confirm-title="'Reset password for '.$user->name.'?'" confirm-button="Reset password">Reset password</x-ui.action-menu.item>
+                                        confirm="They will get an email with a link to set a new password."
+                                        :confirm-title="'Reset password for '.$user->name.'?'" confirm-button="Send reset link">Reset password</x-ui.action-menu.item>
                                     <x-ui.action-menu.divider />
                                     <x-ui.action-menu.item :action="route('admin.users.destroy', $user)" method="DELETE" icon="trash" danger
                                         confirm="This permanently removes the account. Accounts linked to clinic records cannot be deleted; deactivate them instead."

@@ -42,7 +42,7 @@ class SettingsPartialSaveTest extends TestCase
         $this->assertTrue(settings('sms_enabled'));
         // Other notification toggles were not part of the request and must be unchanged.
         $this->assertTrue(settings('notify_sms_appointment_created'));
-        $this->assertTrue(settings('notify_email_user_created'));
+        $this->assertFalse(settings('notify_email_appointments'));
     }
 
     public function test_return_to_ignores_unknown_groups(): void

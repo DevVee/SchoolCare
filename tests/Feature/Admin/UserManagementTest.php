@@ -3,10 +3,14 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use App\Notifications\InviteUserNotification;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -137,25 +141,26 @@ class UserManagementTest extends TestCase
         $this->assertNull($staff->fresh());
     }
 
-    public function test_reset_password_forces_password_change(): void
+    public function test_reset_password_emails_a_reset_link(): void
     {
-        config(['session.driver' => 'database']);
+        Notification::fake();
         $nurse = $this->userWithRole('nurse');
-        $this->insertSession($nurse);
+        $hash  = $nurse->password;
 
-        $response = $this->actingAs($this->admin)
+        $this->actingAs($this->admin)
+            ->from(route('admin.users.show', $nurse))
             ->post(route('admin.users.reset-password', $nurse))
             ->assertRedirect(route('admin.users.show', $nurse))
-            ->assertSessionHas('temp_password');
+            ->assertSessionHas('success');
 
-        $temporary = $response->getSession()->get('temp_password');
-        $nurse->refresh();
+        Notification::assertSentTo($nurse, ResetPassword::class);
+        // The current password keeps working until they choose a new one.
+        $this->assertSame($hash, $nurse->fresh()->password);
+    }
 
-        $this->assertTrue($nurse->must_change_password);
-        $this->assertTrue(Hash::check($temporary, $nurse->password));
-        $this->assertDatabaseMissing('sessions', ['user_id' => $nurse->id]);
-
-        config(['session.driver' => 'array']);
+    public function test_flagged_user_must_change_password_before_using_the_app(): void
+    {
+        $nurse = $this->userWithRole('nurse', ['must_change_password' => true]);
 
         // Every page except the profile redirects until the password is changed.
         $this->actingAs($nurse)->get(route('dashboard'))->assertRedirect(route('profile.edit'));
@@ -163,7 +168,7 @@ class UserManagementTest extends TestCase
         $this->actingAs($nurse)->get(route('profile.edit'))->assertOk()->assertSee('Password change required');
 
         $this->actingAs($nurse)->put(route('profile.password'), [
-            'current_password'      => $temporary,
+            'current_password'      => 'password',
             'password'              => 'N3w!SecurePass',
             'password_confirmation' => 'N3w!SecurePass',
         ])->assertSessionHasNoErrors();
@@ -172,33 +177,109 @@ class UserManagementTest extends TestCase
         $this->actingAs($nurse->fresh())->get(route('dashboard'))->assertOk();
     }
 
-    public function test_create_user_respects_unchecked_active_switch(): void
+    public function test_create_user_sends_invitation_and_respects_unchecked_active_switch(): void
     {
+        Notification::fake();
+
         $this->actingAs($this->admin)->post(route('admin.users.store'), [
-            'name'                  => 'Inactive Nurse',
-            'email'                 => 'inactive@example.com',
-            'password'              => 'Str0ng!Passw0rd',
-            'password_confirmation' => 'Str0ng!Passw0rd',
-            'role'                  => 'nurse',
-            'is_active'             => '0',
-            'must_change_password'  => '1',
-        ])->assertRedirect(route('admin.users.index'));
+            'name'      => 'Inactive Nurse',
+            'email'     => 'inactive@example.com',
+            'role'      => 'nurse',
+            'is_active' => '0',
+        ])->assertRedirect(route('admin.users.index'))->assertSessionHas('success');
 
         $user = User::where('email', 'inactive@example.com')->firstOrFail();
         $this->assertFalse($user->is_active);
-        $this->assertTrue($user->must_change_password);
         $this->assertTrue($user->hasRole('nurse'));
+        Notification::assertSentTo($user, InviteUserNotification::class);
     }
 
-    public function test_weak_password_rejected_for_admin_created_user(): void
+    public function test_invited_user_chooses_a_password_and_can_sign_in(): void
     {
-        $this->actingAs($this->admin)->post(route('admin.users.store'), [
-            'name'                  => 'Weak',
-            'email'                 => 'weak@example.com',
-            'password'              => 'password',
-            'password_confirmation' => 'password',
-            'role'                  => 'nurse',
-        ])->assertSessionHasErrors('password');
+        Notification::fake();
+        $user  = $this->userWithRole('nurse');
+        $token = $this->inviteToken($user);
+
+        $this->get(route('invitation.show', ['token' => $token, 'email' => $user->email]))
+            ->assertOk()
+            ->assertSee('Set up your account');
+
+        $this->post(route('invitation.store'), [
+            'token'                 => $token,
+            'email'                 => $user->email,
+            'password'              => 'N3w!SecurePass',
+            'password_confirmation' => 'N3w!SecurePass',
+        ])->assertRedirect(route('login'))->assertSessionHasNoErrors();
+
+        $user->refresh();
+        $this->assertTrue(Hash::check('N3w!SecurePass', $user->password));
+        $this->assertNotNull($user->email_verified_at);
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'N3w!SecurePass']);
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_invitation_link_expires_after_three_days(): void
+    {
+        Notification::fake();
+        $user  = $this->userWithRole('nurse');
+        $token = $this->inviteToken($user);
+
+        $this->travel(4)->days();
+
+        $this->post(route('invitation.store'), [
+            'token'                 => $token,
+            'email'                 => $user->email,
+            'password'              => 'N3w!SecurePass',
+            'password_confirmation' => 'N3w!SecurePass',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertFalse(Hash::check('N3w!SecurePass', $user->fresh()->password));
+    }
+
+    public function test_password_reset_token_cannot_be_used_as_an_invitation(): void
+    {
+        $user  = $this->userWithRole('nurse');
+        $token = Password::broker()->createToken($user);
+
+        $this->post(route('invitation.store'), [
+            'token'                 => $token,
+            'email'                 => $user->email,
+            'password'              => 'N3w!SecurePass',
+            'password_confirmation' => 'N3w!SecurePass',
+        ])->assertSessionHasErrors('email');
+    }
+
+    public function test_resend_invitation_only_for_users_who_never_signed_in(): void
+    {
+        Notification::fake();
+        $pending = $this->userWithRole('nurse');
+        $active  = $this->userWithRole('nurse', ['last_login_at' => now()]);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.users.resend-invitation', $pending))
+            ->assertSessionHas('success');
+        Notification::assertSentTo($pending, InviteUserNotification::class);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.users.resend-invitation', $active))
+            ->assertSessionHas('error');
+        Notification::assertNotSentTo($active, InviteUserNotification::class);
+    }
+
+    /** Send an invitation (Notification::fake() active) and return its token. */
+    private function inviteToken(User $user): string
+    {
+        InviteUserNotification::sendTo($user);
+
+        $token = null;
+        Notification::assertSentTo($user, InviteUserNotification::class, function ($n) use (&$token) {
+            $token = $n->token;
+
+            return true;
+        });
+
+        return $token;
     }
 
     public function test_update_can_deactivate_user_via_unchecked_switch(): void

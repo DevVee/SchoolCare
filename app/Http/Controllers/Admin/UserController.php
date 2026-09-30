@@ -7,12 +7,15 @@ use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Notifications\InviteUserNotification;
 use App\Services\AuditLogService;
 use App\Support\PermissionCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -77,27 +80,51 @@ class UserController extends Controller
         $this->ensureCanTouchAdmin(null, $data['role']);
 
         $user = User::create([
-            'name'                 => $data['name'],
-            'email'                => $data['email'],
-            'password'             => Hash::make($data['password']),
-            'is_active'            => $request->boolean('is_active'),
-            'must_change_password' => $request->boolean('must_change_password'),
+            'name'      => $data['name'],
+            'email'     => $data['email'],
+            // Unusable until the invitation is accepted and a password chosen.
+            'password'  => Hash::make(Str::random(64)),
+            'is_active' => $request->boolean('is_active'),
         ]);
         $user->assignRole($data['role']);
 
         AuditLogService::log(
             'created',
             'users',
-            "Created user: {$user->name} ({$user->email}) with role {$data['role']}",
+            "Invited user: {$user->name} ({$user->email}) with role {$data['role']}",
             null,
             ['name' => $user->name, 'email' => $user->email, 'role' => $data['role'], 'is_active' => $user->is_active]
         );
 
-        $emailed = \App\Notifications\WelcomeUserNotification::sendTo($user);
+        if (! $this->sendInvitation($user)) {
+            return redirect()->route('admin.users.index')
+                ->with('error', "User {$user->name} was created, but the invitation email could not be sent. Use Resend invitation to try again.");
+        }
 
         return redirect()->route('admin.users.index')
-            ->with('success', "User {$user->name} created successfully."
-                .($emailed ? " A welcome email with a set-password link was sent to {$user->email}." : ''));
+            ->with('success', "Invitation sent to {$user->email}. {$user->name} can sign in after choosing a password.");
+    }
+
+    /**
+     * Send a fresh invitation (the previous link stops working). Only for
+     * accounts that have never signed in; others use Reset password.
+     */
+    public function resendInvitation(User $user): RedirectResponse
+    {
+        $this->authorize('manage-users');
+        $this->ensureCanTouchAdmin($user);
+
+        if ($user->last_login_at !== null) {
+            return back()->with('error', "{$user->name} has already signed in. Use Reset password instead.");
+        }
+
+        if (! $this->sendInvitation($user)) {
+            return back()->with('error', "The invitation email to {$user->email} could not be sent. Please try again later.");
+        }
+
+        AuditLogService::log('updated', 'users', "Resent invitation to: {$user->name} ({$user->email})");
+
+        return back()->with('success', "Invitation sent again to {$user->email}.");
     }
 
     public function show(User $user)
@@ -228,8 +255,8 @@ class UserController extends Controller
     }
 
     /**
-     * Generate a one-time temporary password. It is shown once (flash) and
-     * the user must change it at next sign-in. Existing sessions are ended.
+     * Email the user a password-reset link (same email as "Forgot password").
+     * Their current password keeps working until they choose a new one.
      */
     public function resetPassword(User $user): RedirectResponse
     {
@@ -240,25 +267,28 @@ class UserController extends Controller
             return back()->with('error', 'Use your profile page to change your own password.');
         }
 
-        $temporary = $this->temporaryPassword();
+        try {
+            $status = Password::broker()->sendResetLink(['email' => $user->email]);
+        } catch (\Throwable $e) {
+            Log::warning('Password reset email could not be sent', ['user_id' => $user->id, 'error' => $e->getMessage()]);
 
-        $user->forceFill([
-            'password'             => Hash::make($temporary),
-            'must_change_password' => true,
-            'remember_token'       => Str::random(60),
-        ])->save();
+            return back()->with('error', "The reset email to {$user->email} could not be sent. Please try again later.");
+        }
 
-        $this->terminateSessions($user);
+        if ($status === Password::RESET_THROTTLED) {
+            return back()->with('error', 'A reset link was sent moments ago. Wait a minute before sending another.');
+        }
+        if ($status !== Password::RESET_LINK_SENT) {
+            return back()->with('error', __($status));
+        }
 
         AuditLogService::log(
             'updated',
             'users',
-            "Reset password for user: {$user->name} ({$user->email})"
+            "Sent password reset link to: {$user->name} ({$user->email})"
         );
 
-        return redirect()->route('admin.users.show', $user)
-            ->with('temp_password', $temporary)
-            ->with('success', "Temporary password generated for {$user->name}. It will not be shown again.");
+        return back()->with('success', "Password reset link sent to {$user->email}.");
     }
 
     /**
@@ -343,22 +373,17 @@ class UserController extends Controller
         $user->forceFill(['remember_token' => Str::random(60)])->saveQuietly();
     }
 
-    /** Readable temporary password that satisfies the password policy. */
-    private function temporaryPassword(): string
+    /** Email an invitation; false (and a log entry) when it could not be sent. */
+    private function sendInvitation(User $user): bool
     {
-        $pick = function (string $set, int $n): string {
-            $out = '';
-            for ($i = 0; $i < $n; $i++) {
-                $out .= $set[random_int(0, strlen($set) - 1)];
-            }
-            return $out;
-        };
+        try {
+            InviteUserNotification::sendTo($user);
 
-        // e.g. "Kmrtpa-4821-Zqwh!" (ambiguous characters removed)
-        return $pick('ABCDEFGHJKLMNPQRSTUVWXYZ', 1)
-            . $pick('abcdefghijkmnpqrstuvwxyz', 5) . '-'
-            . $pick('23456789', 4) . '-'
-            . $pick('ABCDEFGHJKLMNPQRSTUVWXYZ', 1)
-            . $pick('abcdefghijkmnpqrstuvwxyz', 3) . '!';
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('Invitation email could not be sent', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+
+            return false;
+        }
     }
 }

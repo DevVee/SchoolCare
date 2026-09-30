@@ -45,7 +45,7 @@
         ],
         'notifications' => [
             'Text messages (SMS)' => ['Which events send a text message. The main switch must be on for any text to go out.', ['sms_enabled', 'notify_sms_appointment_created', 'notify_sms_appointment_approved', 'notify_sms_appointment_rescheduled', 'notify_sms_appointment_cancelled', 'notify_sms_appointment_reminder', 'sms_log_guardian_enabled', 'notify_sms_clinic_discharge', 'notify_sms_intake_approved']],
-            'Email' => ['Which events send an email.', ['notify_email_appointments', 'notify_email_user_created']],
+            'Email' => ['Which events send an email. Invitations and password resets always send.', ['notify_email_appointments']],
         ],
     ];
 

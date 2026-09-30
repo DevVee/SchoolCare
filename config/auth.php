@@ -97,6 +97,15 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+
+        // Invitation links for admin-created accounts (InviteUserNotification):
+        // valid for 3 days, in their own table so reset links cannot be used as invitations.
+        'invites' => [
+            'provider' => 'users',
+            'table' => 'user_invitation_tokens',
+            'expire' => (int) env('AUTH_INVITE_EXPIRE', 4320),
+            'throttle' => 0,
+        ],
     ],
 
     /*

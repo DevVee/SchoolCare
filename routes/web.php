@@ -331,6 +331,9 @@ Route::middleware(['auth', 'check.active', 'password.changed'])->group(function 
             Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])
                  ->name('users.reset-password')
                  ->middleware('throttle:10,1');
+            Route::post('users/{user}/resend-invitation', [UserController::class, 'resendInvitation'])
+                 ->name('users.resend-invitation')
+                 ->middleware('throttle:10,1');
         });
 
         Route::resource('roles', RoleController::class)
