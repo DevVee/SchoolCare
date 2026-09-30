@@ -17,13 +17,9 @@
     $avatarSrc = $user?->avatar ? $user->avatarUrl() : null;
 @endphp
 <aside class="app-sidebar offcanvas-lg offcanvas-start" id="appSidebar" tabindex="-1" aria-label="Main menu">
-    {{-- Header: logo + name; collapse chevron (desktop) or close (drawer) --}}
+    {{-- Header: logo + name; close button in the drawer only (the topbar toggle collapses it on desktop) --}}
     <div class="sidebar-brand">
         <x-ui.logo variant="sidebar" size="38" :href="route('dashboard')" />
-        <button type="button" class="sidebar-collapse-btn d-none d-lg-inline-flex" data-sidebar-toggle
-                aria-controls="appSidebar" aria-expanded="true" aria-label="Collapse sidebar">
-            <x-ui.icon name="chevron-left" />
-        </button>
         <button type="button" class="sidebar-collapse-btn d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#appSidebar" aria-label="Close menu">
             <x-ui.icon name="x-lg" />
         </button>

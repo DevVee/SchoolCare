@@ -5,6 +5,7 @@
 html { scroll-behavior: smooth; }
 
 body {
+    background-color: var(--c-canvas);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;

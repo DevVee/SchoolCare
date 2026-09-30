@@ -84,7 +84,7 @@
     {{-- AI assistant --}}
     @if ($showAi)
         <a href="{{ route('ai-assistant.index') }}" class="btn-cobi-pill" aria-label="Ask {{ $aiName }}">
-            <x-ui.icon name="chat-square-text" />
+            <x-ui.coco-orb size="2xs" still />
             <span class="d-none d-xl-inline">Ask {{ $aiName }}</span>
         </a>
     @endif

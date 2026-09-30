@@ -1,0 +1,383 @@
+// =============================================================================
+// Coco, the AI assistant (ServiceCo Mory pattern).
+//   .coco-orb      the assistant's face (x-ui.coco-orb): glossy brand orb with a
+//                  sparkle and a slowly turning halo; still for reduced motion.
+//   .coco          the chat page (ai-assistant/index): one full-height card with
+//                  a header, the conversation and the composer. No page header.
+//   .coco-history  the History modal (recent questions, jump to, delete).
+// =============================================================================
+
+// -- Orb -------------------------------------------------------------------------
+.coco-orb {
+    --orb: 2.5rem;
+    --halo: 2px;
+    --halo-blur: 2px;
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    width: var(--orb);
+    height: var(--orb);
+    &::before {
+        content: "";
+        position: absolute;
+        inset: calc(var(--halo) * -1);
+        border-radius: 50%;
+        background: conic-gradient(from 0deg, var(--brand-300), var(--brand-600), var(--brand-400), var(--brand-800), var(--brand-300));
+        filter: blur(var(--halo-blur));
+        opacity: .9;
+        animation: c-orb-spin 5s linear infinite;
+    }
+    &.is-still::before { animation: none; opacity: .55; }
+    .coco-orb-core {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        color: #fff;
+        background: radial-gradient(circle at 30% 25%, var(--brand-300) 0%, var(--brand-500) 42%, var(--brand-800) 100%);
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, .55);
+        svg { width: 50%; height: 50%; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .15)); }
+    }
+    .coco-orb-online {
+        position: absolute;
+        right: -1px;
+        bottom: -1px;
+        width: 30%;
+        height: 30%;
+        min-width: .625rem;
+        min-height: .625rem;
+        border-radius: 50%;
+        background: var(--c-online);
+        box-shadow: 0 0 0 2px #fff;
+    }
+    &.coco-orb-2xs { --orb: 1.25rem; --halo: 1px; --halo-blur: 1px; }
+    &.coco-orb-xs  { --orb: 1.75rem; --halo: 1.5px; }
+    &.coco-orb-sm  { --orb: 2.25rem; }
+    &.coco-orb-lg  { --orb: 4rem; --halo: 4px; --halo-blur: 6px; }
+}
+@keyframes c-orb-spin { to { rotate: 1turn; } }
+
+// -- Chat page ---------------------------------------------------------------------
+.coco {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - var(--c-topbar-h) - 3rem);
+    min-height: 32rem;
+    background: var(--c-surface);
+    border: 1px solid var(--c-hairline);
+    border-radius: $radius-xl;
+    box-shadow: var(--c-shadow-card);
+    overflow: hidden;
+    @include media-breakpoint-down(sm) { height: calc(100dvh - var(--c-topbar-h) - 2rem); border-radius: $radius-lg; }
+}
+
+.coco-head {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .875rem 1rem .875rem 1.25rem;
+    border-bottom: 1px solid var(--c-hairline);
+    background: var(--c-material-thick);
+    .coco-head-text { flex: 1; min-width: 0; }
+    .coco-name { margin: 0; font-size: 1rem; font-weight: 650; letter-spacing: -.016em; line-height: 1.2; color: var(--c-ink); }
+    .coco-status { margin: .125rem 0 0; display: flex; align-items: center; gap: .375rem; font-size: .8125rem; color: var(--c-muted); }
+    .coco-status .c-live { width: .375rem; height: .375rem; }
+    .coco-head-actions { display: flex; align-items: center; gap: .375rem; flex-shrink: 0; }
+    .coco-history-btn .count-chip { margin-left: .125rem; }
+}
+
+.coco-messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    padding: 1.5rem 1.5rem 1rem;
+    @include media-breakpoint-down(sm) { padding: 1rem .875rem .75rem; }
+}
+// Who you're talking to, at the top of the conversation
+.coco-intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: .5rem 0 1rem;
+    .coco-intro-name { margin: .875rem 0 0; font-size: 1.125rem; font-weight: 650; letter-spacing: -.02em; color: var(--c-ink); }
+    .coco-intro-text { margin: .25rem 0 0; max-width: 34rem; font-size: .9375rem; line-height: 1.5; color: var(--c-muted); text-wrap: balance; }
+}
+.coco-spacer { margin-top: auto; }
+
+// Messages: iMessage-like bubbles; the assistant's face sits beside its answer
+.coco-row {
+    display: flex;
+    align-items: flex-end;
+    gap: .5rem;
+    max-width: min(80%, 46rem);
+    scroll-margin-top: 1rem;
+    animation: coco-in .45s $ease-out both;
+    &.is-you { align-self: flex-end; flex-direction: row-reverse; }
+    &.is-ai { align-self: flex-start; }
+    .coco-orb { margin-bottom: 1.25rem; }
+    @include media-breakpoint-down(sm) { max-width: 92%; }
+}
+.coco-msg { min-width: 0; display: flex; flex-direction: column; }
+.is-you .coco-msg { align-items: flex-end; }
+.coco-bubble {
+    padding: .625rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    letter-spacing: -.011em;
+    overflow-wrap: anywhere;
+    .is-you & {
+        border-radius: 1.375rem 1.375rem .375rem 1.375rem;
+        background: var(--brand-600);
+        color: var(--brand-contrast);
+        white-space: normal;
+    }
+    .is-ai & {
+        border-radius: 1.375rem 1.375rem 1.375rem .375rem;
+        background: var(--c-canvas);
+        color: var(--c-ink);
+    }
+    .is-error & { background: tone("danger", 50); color: tone("danger", 700); }
+}
+.coco-time {
+    margin-top: .25rem;
+    padding: 0 .5rem;
+    font-size: .75rem;
+    color: var(--c-muted);
+    opacity: 0;
+    transition: opacity $dur-fast ease-out;
+    .coco-row:hover &, .coco-row:focus-within &, .coco-row.is-flash & { opacity: 1; }
+    @media (hover: none) { opacity: 1; }
+}
+.coco-row.is-flash .coco-bubble { animation: coco-flash 1.4s ease-out; }
+
+// Typing: three dots breathing in turn
+.coco-typing {
+    display: inline-flex;
+    align-items: center;
+    gap: .3125rem;
+    padding: .875rem 1.125rem;
+    span:not(.coco-typing-text) {
+        width: .4375rem;
+        height: .4375rem;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, .3);
+        animation: coco-dot 1.2s ease-in-out infinite;
+        &:nth-child(2) { animation-delay: .15s; }
+        &:nth-child(3) { animation-delay: .3s; }
+    }
+    .coco-typing-text { margin-left: .375rem; font-size: .875rem; color: var(--c-muted); }
+}
+
+// Markdown inside answers
+.coco-bubble {
+    > :first-child { margin-top: 0; }
+    > :last-child { margin-bottom: 0; }
+    p { margin: 0 0 .625rem; }
+    :is(h3, h4, h5, h6) { font-size: 1rem; font-weight: 650; line-height: 1.35; margin: .875rem 0 .375rem; letter-spacing: -.012em; }
+    :is(ul, ol) { padding-left: 1.375rem; margin: .375rem 0 .625rem; }
+    li + li { margin-top: .1875rem; }
+    li > p { margin: 0; }
+    li > p + p, li > pre { margin-top: .375rem; }
+    li > :is(ul, ol) { margin: .125rem 0; }
+    blockquote { margin: .5rem 0; padding: .125rem 0 .125rem .75rem; border-left: 3px solid rgba(0, 0, 0, .12); color: var(--c-muted); }
+    hr { margin: .75rem 0; border: 0; border-top: 1px solid rgba(0, 0, 0, .1); opacity: 1; }
+    a { color: var(--brand-700); text-decoration: underline; text-underline-offset: 2px; }
+    .is-you & a { color: inherit; }
+    code { font-size: .8125rem; background: rgba(0, 0, 0, .06); padding: .0625rem .3125rem; border-radius: .3125rem; }
+    pre { white-space: pre; background: #fff; border: 1px solid var(--c-hairline); border-radius: $radius-md; padding: .75rem .875rem; margin: .5rem 0; overflow-x: auto; font-size: .8125rem; }
+    pre code { padding: 0; background: none; font-size: inherit; }
+    .md-table { overflow-x: auto; margin: .5rem 0 .75rem; border-radius: $radius-md; border: 1px solid var(--c-hairline); background: #fff; }
+    .md-table table { width: 100%; border-collapse: collapse; font-size: .875rem; overflow-wrap: normal; }
+    .md-table :is(th, td) { padding: .5rem .75rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--c-hairline); }
+    .md-table tr:last-child td { border-bottom: 0; }
+    .md-table th { background: var(--c-canvas); font-weight: 600; }
+}
+
+// -- Composer ------------------------------------------------------------------------
+.coco-compose {
+    padding: .5rem 1.25rem 1rem;
+    @include media-breakpoint-down(sm) { padding: .5rem .75rem .75rem; }
+}
+// Starters: cards while the chat is empty, one row of chips once it has started
+.coco-starters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+    margin-bottom: .75rem;
+    @include media-breakpoint-up(lg) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.coco-starter {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    min-height: 3rem;
+    padding: .625rem .875rem;
+    border: 1px solid var(--c-hairline);
+    border-radius: $radius-lg;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+    font-size: .875rem;
+    font-weight: 500;
+    letter-spacing: -.008em;
+    line-height: 1.3;
+    color: var(--c-ink);
+    text-align: left;
+    -webkit-tap-highlight-color: transparent;
+    transition: box-shadow $dur-base ease-out, border-color $dur-base ease-out, transform $dur-base $ease-out;
+    .c-icon { flex-shrink: 0; font-size: 1rem; color: var(--brand-600); }
+    &:hover { transform: translateY(-1px); border-color: rgba(var(--brand-rgb), .3); box-shadow: 0 10px 24px -14px rgba(var(--brand-rgb), .5); }
+    &:active { transform: scale(.98); transition-duration: $dur-press; }
+    &:disabled { opacity: .45; transform: none; }
+}
+.coco:not(.is-empty) {
+    .coco-starters {
+        display: flex;
+        overflow-x: auto;
+        gap: .375rem;
+        margin: 0 -1.25rem .625rem;
+        padding: 2px 1.25rem;
+        scrollbar-width: none;
+        &::-webkit-scrollbar { display: none; }
+    }
+    .coco-starter {
+        flex: 0 0 auto;
+        min-height: 2rem;
+        padding: .3125rem .875rem;
+        border-radius: $border-radius-pill;
+        white-space: nowrap;
+        box-shadow: none;
+        .c-icon { display: none; }
+    }
+}
+
+.coco-input {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-end;
+    gap: .5rem;
+    padding: .375rem .375rem .375rem 1.25rem;
+    border-radius: 1.625rem;
+    background: #fff;
+    box-shadow: 0 14px 34px -22px rgba(var(--brand-rgb), .55);
+    transition: box-shadow $dur-base ease-out;
+    &:focus-within { box-shadow: 0 0 0 4px rgba(var(--brand-rgb), .12), 0 14px 34px -22px rgba(var(--brand-rgb), .6); }
+    .c-ask-ring { border-radius: inherit; }
+    textarea {
+        flex: 1;
+        min-width: 0;
+        min-height: 2.75rem;
+        max-height: 10rem;
+        padding: .625rem 0;
+        border: 0;
+        outline: 0;
+        resize: none;
+        background: transparent;
+        font-size: 1rem;
+        line-height: 1.5;
+        letter-spacing: -.011em;
+        color: var(--c-ink);
+        &::placeholder { color: var(--c-muted); }
+    }
+}
+.coco-send {
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    color: var(--brand-contrast);
+    background: var(--brand-600);
+    box-shadow: var(--c-shadow-brand);
+    transition: opacity $dur-fast ease-out, transform $dur-press ease-out, box-shadow $dur-fast ease-out, background-color $dur-fast ease-out;
+    &:hover:not(:disabled) { background: var(--brand-700); }
+    &:active:not(:disabled) { transform: scale(.94); }
+    &:disabled { opacity: .3; box-shadow: none; }
+    &:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(var(--brand-rgb), .35); }
+}
+.coco-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: .75rem;
+    margin: .5rem .75rem 0;
+    font-size: .75rem;
+    color: var(--c-muted);
+    @include media-breakpoint-down(sm) { .coco-foot-keys { display: none; } }
+}
+
+// -- History modal -----------------------------------------------------------------------
+.coco-history {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    margin: -.5rem -.75rem;
+}
+.coco-history-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border-radius: $radius-md;
+    transition: background-color $dur-fast ease-out;
+    &:hover, &:focus-within { background: var(--c-surface-2); }
+}
+.coco-history-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .625rem .75rem;
+    border: 0;
+    background: none;
+    border-radius: inherit;
+    text-align: left;
+    color: var(--c-ink);
+    -webkit-tap-highlight-color: transparent;
+    &:focus-visible { outline: 3px solid rgba(var(--brand-rgb), .35); outline-offset: -1px; }
+    .c-icon { flex-shrink: 0; color: var(--c-faint); }
+}
+.coco-history-text { display: flex; flex-direction: column; min-width: 0; }
+.coco-history-q { font-size: .9375rem; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.coco-history-time { font-size: .75rem; color: var(--c-muted); margin-top: .0625rem; }
+.coco-history-delete {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-right: .375rem;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--c-muted);
+    opacity: 0;
+    transition: opacity $dur-fast ease-out, color $dur-fast ease-out, background-color $dur-fast ease-out;
+    .coco-history-row:hover &, .coco-history-row:focus-within & { opacity: 1; }
+    &:hover { color: tone("danger", 600); background: tone("danger", 50); }
+    &:focus-visible { opacity: 1; outline: 3px solid rgba(var(--brand-rgb), .35); outline-offset: -1px; }
+    @media (hover: none) { opacity: 1; }
+}
+.coco-history-empty { padding: 1.5rem .75rem; text-align: center; color: var(--c-muted); font-size: .9375rem; }
+
+@keyframes coco-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+@keyframes coco-dot { 0%, 60%, 100% { opacity: .35; transform: none; } 30% { opacity: 1; transform: translateY(-2px); } }
+@keyframes coco-flash { 0% { box-shadow: 0 0 0 0 rgba(var(--brand-rgb), .45); } 100% { box-shadow: 0 0 0 10px rgba(var(--brand-rgb), 0); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .coco-orb::before { animation: none; }
+    .coco-row { animation-name: c-fade-in; }
+    .coco-typing span:not(.coco-typing-text) { animation: none; opacity: .5; }
+}

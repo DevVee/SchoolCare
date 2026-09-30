@@ -47,10 +47,12 @@ $gray-900: #1D1D1F;   // ink
 // stay so markup and config keep their meaning; at runtime they all chain to
 // --brand-* (see _root.scss), so a brand colour set in Settings recolours them.
 $brand-tone: (50: $brand-50, 100: $brand-100, 200: $brand-200, 600: $brand-600, 700: $brand-700, text: $brand-700);
-$brand-tone-names: ("brand", "success", "warning", "info", "orange", "teal", "cobi");
+$brand-tone-names: ("brand", "warning", "info", "orange", "teal", "cobi");
 $tones: (
   "brand":   $brand-tone,
-  "success": $brand-tone,
+  // Owner (2026-09-30): "for things like active use green". Green marks live / active /
+  // done states only (dots, status pills, success toasts); buttons and links stay blue.
+  "success": (50: #F0FDF4, 100: #DCFCE7, 200: #BBF7D0, 600: #16A34A, 700: #15803D, text: #15803D),
   "warning": $brand-tone,
   "danger":  (50: #FEF2F2, 100: #FEE2E2, 200: #FECACA, 600: #DC2626, 700: #B91C1C, text: #B91C1C),
   "info":    $brand-tone,
@@ -105,7 +107,7 @@ $font-display: $font-ui;
 // -- Theme colours (compile-time; runtime brand comes from --brand-*) ----------
 $primary:   $brand-600;
 $secondary: $gray-500;
-$success:   $brand-600;   // one colour theme: success / info / warning are the brand blue
+$success:   #16A34A;      // green: active / live / done states (buttons stay blue, see _brand-runtime)
 $info:      $brand-600;
 $warning:   $brand-600;
 $danger:    #DC2626;   // white text 4.83:1
@@ -125,7 +127,7 @@ $theme-colors: (
 
 // 5.3 subtle maps: every `bg-*-subtle text-*-emphasis border-*-subtle` adopts the tones
 $primary-bg-subtle:   #DBEAFE;  $primary-border-subtle:   #BFDBFE;  $primary-text-emphasis:   #1D4ED8;
-$success-bg-subtle:   #DBEAFE;  $success-border-subtle:   #BFDBFE;  $success-text-emphasis:   #1D4ED8;
+$success-bg-subtle:   #DCFCE7;  $success-border-subtle:   #BBF7D0;  $success-text-emphasis:   #15803D;
 $warning-bg-subtle:   #DBEAFE;  $warning-border-subtle:   #BFDBFE;  $warning-text-emphasis:   #1D4ED8;
 $danger-bg-subtle:    #FEE2E2;  $danger-border-subtle:    #FECACA;  $danger-text-emphasis:    #B91C1C;
 $info-bg-subtle:      #DBEAFE;  $info-border-subtle:      #BFDBFE;  $info-text-emphasis:      #1D4ED8;
@@ -134,7 +136,10 @@ $light-bg-subtle:     #F8FAFC;  $light-border-subtle:     #E2E8F0;  $light-text-
 $dark-bg-subtle:      #CBD5E1;  $dark-border-subtle:      #94A3B8;  $dark-text-emphasis:      #1E293B;
 
 // -- Body / text / borders -----------------------------------------------------
-$body-bg:               $gray-50;    // app background #F8FAFC
+// Bootstrap paints cards, tables, modals and list groups with --bs-body-bg, so it stays
+// white; the grey app canvas is set on <body> itself (--c-canvas, _base.scss).
+$body-bg:               #fff;
+$canvas:                $gray-50;    // app background #F5F5F7
 $body-color:            $gray-800;
 $headings-color:        $gray-900;
 $emphasis-color:        $gray-900;

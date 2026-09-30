@@ -34,7 +34,7 @@
         display: flex;
         align-items: center;
         gap: .5rem;
-        padding: 0 .5rem 0 1rem;
+        padding: 0 1rem;
         border-bottom: 1px solid var(--c-hairline);
         .c-logo { flex: 1; min-width: 0; }
         .c-logo-mark { width: 38px; height: 38px; border-radius: $radius-md; }
