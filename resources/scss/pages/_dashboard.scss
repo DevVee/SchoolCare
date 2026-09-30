@@ -150,12 +150,12 @@
     display: flex;
     align-items: center;
     gap: .5rem;
-    padding: .375rem .375rem .375rem 1rem;
+    padding: .375rem .375rem .375rem .375rem;
     border-radius: $border-radius-pill;
     background: #fff;
     box-shadow: 0 18px 40px -22px rgba(var(--brand-rgb), .55);
     // The ring: a 2px frame whose light turns slowly (one rotating layer, cheap)
-    .c-ask-ring {
+    @at-root :is(.c-ask, .coco-input) .c-ask-ring {
         position: absolute;
         inset: 0;
         z-index: -1;
@@ -178,7 +178,7 @@
         }
     }
     &:focus-within { box-shadow: 0 0 0 4px rgba(var(--brand-rgb), .14), 0 18px 40px -22px rgba(var(--brand-rgb), .6); }
-    .c-ask-glyph { font-size: 1.125rem; color: var(--brand-600); }
+    .c-ask-glyph { margin-right: .25rem; }
     input {
         flex: 1;
         min-width: 0;
@@ -286,9 +286,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .c-ask .c-ask-ring::before { animation: none; }
+    :is(.c-ask, .coco-input) .c-ask-ring::before { animation: none; }
     .c-brief-line.is-ticking { transform: none; animation-name: c-fade-in; }
 }
 @media (prefers-contrast: more) {
-    .c-ask .c-ask-ring { background: $gray-500; &::before { display: none; } }
+    :is(.c-ask, .coco-input) .c-ask-ring { background: $gray-500; &::before { display: none; } }
 }

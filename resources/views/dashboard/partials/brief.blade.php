@@ -6,7 +6,7 @@
 --}}
 <section class="c-brief" data-brief data-brief-url="{{ route('dashboard.brief') }}" aria-labelledby="briefTitle">
     <div class="c-brief-head">
-        <x-ui.icon name="stars" class="c-brief-glyph" />
+        <x-ui.coco-orb size="xs" still class="c-brief-glyph" />
         <div class="min-w-0">
             <h2 class="c-brief-title" id="briefTitle">{{ $aiName }}'s brief</h2>
             <p class="c-brief-sub" data-brief-meta>Reading today's numbers</p>

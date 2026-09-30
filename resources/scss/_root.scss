@@ -38,7 +38,7 @@
     --bs-focus-ring-color: rgba(var(--brand-rgb), .25);
 
     // One colour theme: Bootstrap success / info / warning follow the brand too
-    @each $name in ("success", "info", "warning") {
+    @each $name in ("info", "warning") {
         --bs-#{$name}: var(--brand-600);
         --bs-#{$name}-rgb: var(--brand-rgb);
         --bs-#{$name}-text-emphasis: var(--brand-700);
@@ -47,7 +47,7 @@
     }
 
     // -- Surfaces & ink -------------------------------------------------------------
-    --c-canvas:     #{$body-bg};
+    --c-canvas:     #{$canvas};
     --c-surface:    #FFFFFF;
     --c-surface-2:  #{$gray-100};
     --c-border:     #{$gray-200};
@@ -85,7 +85,7 @@
     // -- Brand shorthands ---------------------------------------------------------------
     --c-brand:       var(--brand-600);
     --c-brand-hover: var(--brand-700);
-    --c-online:      var(--brand-600);
+    --c-online:      #34C759;          // live / online dots (Apple green, dots only, never text)
 
     // -- Radii (10 controls, 12 tiles, 16 cards, 20 modals; buttons are capsules) ---
     --c-radius-sm: 8px;

@@ -52,6 +52,7 @@ $bootstrap-icons-font-dir: "/fonts";
 @import "components/stat-strip";
 @import "components/section-nav";
 @import "components/combobox";
+@import "components/coco";   // AI assistant: orb, chat page, history modal
 @import "components/life";   // reveal, spotlight, live dot, word rise, grid (last: wins over components)
 
 // ─── 5. Layout (app shell) + pages ───────────────────────────────────────
@@ -66,3 +67,4 @@ $bootstrap-icons-font-dir: "/fonts";
 @import "pages/admin-tools";
 @import "pages/public";
 @import "pages/patients";
+@import "pages/print-settings";

@@ -5,7 +5,7 @@
 --}}
 <form class="c-ask" action="{{ route('ai-assistant.index') }}" method="GET" role="search" data-no-guard>
     <span class="c-ask-ring" aria-hidden="true"></span>
-    <x-ui.icon name="stars" class="c-ask-glyph" />
+    <x-ui.coco-orb size="sm" class="c-ask-glyph" />
     <label for="dashAsk" class="visually-hidden">Ask {{ $aiName }} anything</label>
     <input id="dashAsk" name="q" type="text" placeholder="Ask {{ $aiName }} anything" autocomplete="off" maxlength="600" required>
     <button type="submit" class="btn btn-primary c-ask-send">
