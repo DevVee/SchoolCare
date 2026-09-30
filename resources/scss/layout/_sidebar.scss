@@ -2,7 +2,7 @@
 // App sidebar (layouts/partials/sidebar.blade.php, items from
 // config/navigation.php). Modeled on the owner's reference (ui_principles.md
 // section 9): header (logo + school name + collapse chevron), profile card at
-// the top, grouped items (one per module) with module-toned outline icons.
+// the top, grouped items (one per module) with black outline icons.
 //
 // >= lg: fixed 260px; `html.sidebar-collapsed` gives a 72px icon rail.
 // <  lg: Bootstrap offcanvas drawer (.offcanvas-lg).
@@ -177,8 +177,8 @@
             flex-shrink: 0;
             font-size: 1.125rem;
             line-height: 1;
-            // One colour theme: every nav icon is the brand blue; kept on hover and active
-            color: var(--brand-600);
+            // Every nav icon is black (ink); kept on hover and active
+            color: var(--c-ink);
         }
         .sidebar-link-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
         // Plain count: neutral (never pink/red), capped at 99+ by x-ui.count

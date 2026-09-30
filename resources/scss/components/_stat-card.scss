@@ -1,7 +1,7 @@
 // =============================================================================
 // Stat cards
-//   .stat-tile (x-ui.stat-card): label + tinted icon square, big Figtree value,
-//   delta line. White surface, 1px border; links press to .97.
+//   .stat-tile (x-ui.stat-card): label + tinted icon square, big black Figtree
+//   value, delta line. White surface, 1px border; links press to .97.
 //   .stat-card (legacy dashboard markup): kept, flattened (solid icon squares,
 //   no glow, no lift). Removed when the dashboard is migrated.
 // =============================================================================
@@ -63,7 +63,7 @@
         font-weight: 700;
         letter-spacing: -.02em;
         line-height: 1.1;
-        color: var(--tile);
+        color: var(--c-ink);
         font-variant-numeric: tabular-nums;
         margin-top: -.25rem;
         white-space: nowrap;
@@ -98,9 +98,6 @@
 @each $name, $t in $tones {
     .stat-tile.tone-#{$name} { --tile: var(--c-#{$name}-600); --tile-rgb: var(--c-#{$name}-rgb); }
 }
-// Neutral values read better dark
-.stat-tile.tone-neutral, .stat-tile.tone-slate, .stat-tile.tone-admin { .stat-value { color: var(--c-ink); } }
-
 // Responsive equal-height row (x-ui.stat-cards / x-ui.stat-strip)
 .stat-cards {
     display: grid;
