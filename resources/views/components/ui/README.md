@@ -39,7 +39,7 @@ Every layout that renders app pages needs these (the shell phase adds them to `l
   module, so it runs after the HTML is parsed: inline page scripts must wrap Bootstrap calls in
   `DOMContentLoaded` (module scripts run before that event).
 * Product naming: never hardcode a product or school name. Use `settings('app_name')`, `app_short_name`,
-  `app_tagline`, `org_name` (hide when empty), `org_short_name`, `settings()->imageUrl('brand_logo', '/sscms-icon.svg')`,
+  `app_tagline`, `org_name` (hide when empty), `org_short_name`, `settings()->imageUrl('brand_logo', '/schoolcare-icon.svg')`,
   `settings()->imageUrl('school_logo', '')`, `header_title`, `topbar_show_school`, `ai_assistant_name`, or simply `<x-ui.logo>`.
 
 ## 2. Tokens
@@ -276,8 +276,8 @@ Identity cell markup (name link + one muted line):
 ```
 
 **`x-ui.pagination`** `paginator` (req), `noun`, `on-each-side` (default 1). Keeps the query string.
-Plain `{{ $x->links() }}` renders the same markup (`Paginator::defaultView('pagination::sscms')`,
-`defaultSimpleView('pagination::sscms-simple')`, views in `resources/views/vendor/pagination/`).
+Plain `{{ $x->links() }}` renders the same markup (`Paginator::defaultView('pagination::schoolcare')`,
+`defaultSimpleView('pagination::schoolcare-simple')`, views in `resources/views/vendor/pagination/`).
 
 ### Forms
 

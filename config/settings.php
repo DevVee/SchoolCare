@@ -37,12 +37,12 @@ return [
             'description' => 'System name, organization and regional formats.',
             'fields'      => [
                 'app_name' => [
-                    'type' => 'string', 'label' => 'System Name', 'default' => 'SSCMS',
+                    'type' => 'string', 'label' => 'System Name', 'default' => 'SchoolCare',
                     'help' => 'Shown in the browser title, sidebar, login page and emails.',
                     'rules' => ['required', 'string', 'max:100'],
                 ],
                 'app_short_name' => [
-                    'type' => 'string', 'label' => 'Short Name', 'default' => 'SSCMS',
+                    'type' => 'string', 'label' => 'Short Name', 'default' => 'SchoolCare',
                     'help' => 'Compact name used where space is limited.',
                     'rules' => ['nullable', 'string', 'max:30'],
                 ],
@@ -256,14 +256,14 @@ return [
             'description' => 'Logo, favicon and login page text.',
             'fields'      => [
                 'brand_logo' => [
-                    'type' => 'image', 'label' => 'School Logo', 'default' => '', 'fallback' => '/sscms-icon.svg',
-                    'help' => 'PNG, JPG or WebP, up to 2 MB. Square images look best. Used everywhere: sidebar, top bar, login page, PDF reports and health cards. Leave empty to use the default SSCMS mark.',
+                    'type' => 'image', 'label' => 'School Logo', 'default' => '', 'fallback' => '/schoolcare-icon.svg',
+                    'help' => 'PNG, JPG or WebP, up to 2 MB. Square images look best. Used everywhere: sidebar, top bar, login page, PDF reports and health cards. Leave empty to use the default SchoolCare mark.',
                     'rules' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
                 ],
                 'header_title' => [
                     'type' => 'select', 'label' => 'Sidebar Title', 'default' => 'app',
                     'help' => 'What the sidebar shows next to the logo.',
-                    'options' => ['app' => 'System name (e.g. SSCMS)', 'school' => 'School name or abbreviation', 'both' => 'System name with school name below'],
+                    'options' => ['app' => 'System name (e.g. SchoolCare)', 'school' => 'School name or abbreviation', 'both' => 'System name with school name below'],
                     'rules' => ['required', 'in:app,school,both'],
                 ],
                 'topbar_show_school' => [
@@ -271,7 +271,7 @@ return [
                     'rules' => ['boolean'],
                 ],
                 'brand_favicon' => [
-                    'type' => 'image', 'label' => 'Favicon', 'default' => '', 'fallback' => '/sscms-icon.svg', 'fallback_key' => 'brand_logo',
+                    'type' => 'image', 'label' => 'Favicon', 'default' => '', 'fallback' => '/schoolcare-icon.svg', 'fallback_key' => 'brand_logo',
                     'help' => 'PNG or ICO, up to 256 KB. Shown in the browser tab.',
                     'rules' => ['nullable', 'file', 'mimes:png,ico', 'max:256'],
                 ],
@@ -487,7 +487,7 @@ return [
             'partial'     => 'admin.settings.partials.sms',
             'fields'      => [
                 'sms_sender_name' => [
-                    'type' => 'string', 'label' => 'Sender Name', 'default' => env('SEMAPHORE_SENDER_NAME', 'CLINOVIA'),
+                    'type' => 'string', 'label' => 'Sender Name', 'default' => env('SEMAPHORE_SENDER_NAME', 'SCHOOLCARE'),
                     'help' => 'The name people see instead of a phone number. Up to 11 letters or numbers. It must be approved by the SMS provider first. Leave empty to use the name set up on the server.',
                     'rules' => ['nullable', 'string', 'max:11', 'regex:/^[A-Za-z0-9 ]*$/'],
                 ],

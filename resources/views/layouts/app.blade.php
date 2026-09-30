@@ -14,7 +14,7 @@
     <link rel="icon" href="{{ settings()->imageUrl('brand_favicon') }}">
 
     {{-- Apply the remembered collapsed sidebar before first paint (no flash) --}}
-    <script>try{if(localStorage.getItem('sscms.sidebar')==='collapsed'){document.documentElement.classList.add('sidebar-collapsed')}}catch(e){}</script>
+    <script>try{if(localStorage.getItem('schoolcare.sidebar')==='collapsed'){document.documentElement.classList.add('sidebar-collapsed')}}catch(e){}</script>
 
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
     <x-ui.brand-style />

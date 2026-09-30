@@ -68,7 +68,7 @@ class SettingsTest extends TestCase
         $this->actingAs($viewer)->post(route('admin.settings.test-sms'), ['test_number' => '09171234567'])->assertForbidden();
         $this->actingAs($viewer)->post(route('admin.settings.test-email'))->assertForbidden();
 
-        $this->assertSame('SSCMS', settings('app_name'));
+        $this->assertSame('SchoolCare', settings('app_name'));
     }
 
     public function test_saving_one_group_does_not_reset_booleans_of_another_group(): void
@@ -199,7 +199,7 @@ class SettingsTest extends TestCase
 
         $this->assertSame('', settings('brand_logo'));
         Storage::disk('public')->assertMissing($second);
-        $this->assertSame('/sscms-icon.svg', settings()->imageUrl('brand_logo'));
+        $this->assertSame('/schoolcare-icon.svg', settings()->imageUrl('brand_logo'));
     }
 
     public function test_svg_logo_and_oversized_favicon_are_rejected(): void

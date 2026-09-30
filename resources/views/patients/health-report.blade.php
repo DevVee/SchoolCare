@@ -5,7 +5,7 @@
 @use('App\Support\DisplayFormat')
 @php
     $categoryLabels = \App\Models\Patient::categoryLabels();
-    $brandLogo  = settings()->imageUrl('brand_logo', '/sscms-icon.svg');
+    $brandLogo  = settings()->imageUrl('brand_logo', '/schoolcare-icon.svg');
     $schoolLogo = settings()->imageUrl('school_logo', '');
     $orgName    = trim((string) settings('org_name', ''));
     $clinicName = settings('clinic_name') ?: settings('app_name');

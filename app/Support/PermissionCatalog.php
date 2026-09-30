@@ -65,7 +65,7 @@ class PermissionCatalog
 
     public static function superAdminRole(): string
     {
-        return config('clinovia.super_admin_role', 'administrator');
+        return config('schoolcare.super_admin_role', 'administrator');
     }
 
     public static function isSuperAdminRole(string $role): bool
@@ -75,7 +75,7 @@ class PermissionCatalog
 
     public static function isSystemRole(string $role): bool
     {
-        return in_array($role, config('clinovia.system_roles', []), true)
+        return in_array($role, config('schoolcare.system_roles', []), true)
             || static::isSuperAdminRole($role);
     }
 }

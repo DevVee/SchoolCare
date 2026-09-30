@@ -1,5 +1,5 @@
 {{--
-    Default simple paginator view (Paginator::defaultSimpleView('pagination::sscms-simple')).
+    Default simple paginator view (Paginator::defaultSimpleView('pagination::schoolcare-simple')).
     Used by simplePaginate() / cursorPaginate(): "Showing 21 to 40" + Previous / Next.
 --}}
 @php

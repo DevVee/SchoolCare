@@ -1,5 +1,5 @@
 {{--
-    Default paginator view (Paginator::defaultView('pagination::sscms')).
+    Default paginator view (Paginator::defaultView('pagination::schoolcare')).
     "Showing 1 to 20 of 134 results" + previous / page numbers / next.
     Phones: previous, "Page X of Y", next (44px targets).
     Optional data: noun (e.g. "patients") via $paginator->links(null, ['noun' => 'patients']).

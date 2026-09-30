@@ -14,7 +14,7 @@
 
     Sources: settings('app_name') (default from config app.name), app_short_name, app_tagline,
     org_name (hidden when empty), org_short_name, header_title, topbar_show_school,
-    settings()->imageUrl('brand_logo', '/sscms-icon.svg'), settings()->imageUrl('school_logo', '').
+    settings()->imageUrl('brand_logo', '/schoolcare-icon.svg'), settings()->imageUrl('school_logo', '').
 --}}
 @props([
     'variant' => 'plain',     // plain|sidebar|topbar|auth
@@ -40,7 +40,7 @@
     $tagline   = (string) $get('app_tagline', '');
     $orgName   = trim((string) $get('org_name', ''));
     $orgShort  = trim((string) $get('org_short_name', ''));
-    $markUrl   = $img('brand_logo', asset('sscms-icon.svg'));
+    $markUrl   = $img('brand_logo', asset('schoolcare-icon.svg'));
     $schoolUrl = $img('school_logo', '') ?: $markUrl;
 
     $title = $appName;

@@ -56,7 +56,7 @@
                 @php
                     $role = $user->roles->first();
                     $isSelf = $user->id === auth()->id();
-                    $targetIsAdmin = $user->hasRole(config('clinovia.super_admin_role'));
+                    $targetIsAdmin = $user->hasRole(config('schoolcare.super_admin_role'));
                     $canTouch = auth()->user()->can('manage-users') && (! $targetIsAdmin || auth()->user()->isAdmin());
                 @endphp
                 <tr>

@@ -2,7 +2,7 @@
     x-ui.pagination: "Showing 1 to 20 of 134 patients" + page links (keeps the query string).
     <x-ui.pagination :paginator="$patients" noun="patients" />
     x-ui.table renders this for you when given :paginator. Legacy {{ $x->links() }} calls use the
-    same markup (Paginator::defaultView is set to pagination::sscms in AppServiceProvider).
+    same markup (Paginator::defaultView is set to pagination::schoolcare in AppServiceProvider).
 --}}
 @props([
     'paginator',
@@ -19,5 +19,5 @@
             $paginator->onEachSide($onEachSide);
         }
     @endphp
-    {{ $paginator->links($isLengthAware ? 'pagination::sscms' : 'pagination::sscms-simple', ['noun' => $noun]) }}
+    {{ $paginator->links($isLengthAware ? 'pagination::schoolcare' : 'pagination::schoolcare-simple', ['noun' => $noun]) }}
 @endif

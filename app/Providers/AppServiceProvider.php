@@ -56,9 +56,9 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        // Branded pagination for every ->links() call (resources/views/vendor/pagination/sscms*.blade.php).
-        \Illuminate\Pagination\Paginator::defaultView('pagination::sscms');
-        \Illuminate\Pagination\Paginator::defaultSimpleView('pagination::sscms-simple');
+        // Branded pagination for every ->links() call (resources/views/vendor/pagination/schoolcare*.blade.php).
+        \Illuminate\Pagination\Paginator::defaultView('pagination::schoolcare');
+        \Illuminate\Pagination\Paginator::defaultSimpleView('pagination::schoolcare-simple');
 
         // App shell sidebar: config/navigation.php resolved for the signed-in user.
         \Illuminate\Support\Facades\View::composer('layouts.partials.sidebar', \App\View\Composers\NavigationComposer::class);
@@ -117,7 +117,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function ($user, string $ability, array $arguments = []) {
             if ($arguments === []
                 && method_exists($user, 'hasRole')
-                && $user->hasRole(config('clinovia.super_admin_role', 'administrator'))) {
+                && $user->hasRole(config('schoolcare.super_admin_role', 'administrator'))) {
                 return true;
             }
 

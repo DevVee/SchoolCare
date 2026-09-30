@@ -228,7 +228,7 @@ return [
     |
     | Applied by RolePermissionSeeder ONLY when the role is created for the
     | first time. Existing roles are never modified (admin edits survive
-    | every deploy). The super-admin role (config('clinovia.super_admin_role'))
+    | every deploy). The super-admin role (config('schoolcare.super_admin_role'))
     | always receives every permission and is not listed here.
     |
     */

@@ -11,7 +11,7 @@
  */
 import { Tooltip } from 'bootstrap';
 
-const STORAGE_KEY = 'sscms.sidebar';
+const STORAGE_KEY = 'schoolcare.sidebar';
 const root = document.documentElement;
 const desktop = window.matchMedia('(min-width: 992px)');
 

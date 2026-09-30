@@ -2,7 +2,7 @@
 set -e
 
 # =============================================================================
-# Clinovia — Docker container startup script (runs on every boot)
+# SchoolCare — Docker container startup script (runs on every boot)
 #
 #   1. Validate APP_KEY (must be stable — never regenerated at boot)
 #   2. Resolve APP_URL / ASSET_URL
@@ -109,7 +109,7 @@ chmod 664 "$DB_DATABASE"
 # ─── 7. Start services via supervisor ────────────────────────────────────────
 echo ""
 echo "==================================================="
-echo "  Clinovia is starting…"
+echo "  SchoolCare is starting…"
 echo "  URL  : ${APP_URL}"
 echo "  Port : ${PORT}"
 echo "==================================================="

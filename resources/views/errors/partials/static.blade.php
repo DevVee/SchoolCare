@@ -1,6 +1,6 @@
 {{--
     Self-contained error page for 500 and 503: no database, no settings(), no
-    Vite manifest, no session. Only inline CSS and the static /sscms-icon.svg.
+    Vite manifest, no session. Only inline CSS and the static /schoolcare-icon.svg.
     Variables: $code, $title, $message, $retry (bool).
 --}}
 <!DOCTYPE html>
@@ -10,7 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>{{ $title }}</title>
-<link rel="icon" href="/sscms-icon.svg">
+<link rel="icon" href="/schoolcare-icon.svg">
 <style>
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem;background:#F8FAFC;color:#0F172A;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;line-height:1.5}
@@ -31,7 +31,7 @@ a.btn:focus-visible{outline:3px solid rgba(37,99,235,.45);outline-offset:2px}
 </head>
 <body>
 <main>
-    <img src="/sscms-icon.svg" alt="" width="40" height="40">
+    <img src="/schoolcare-icon.svg" alt="" width="40" height="40">
     <p class="code">Error {{ $code }}</p>
     <h1>{{ $title }}</h1>
     <p class="msg">{{ $message }}</p>

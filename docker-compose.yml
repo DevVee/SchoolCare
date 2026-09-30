@@ -1,17 +1,17 @@
-# Clinovia — production-like local stack (nginx + php-fpm + scheduler + queue)
+# SchoolCare — production-like local stack (nginx + php-fpm + scheduler + queue)
 #
 #   1. cp .env.production.example .env.production   (fill in APP_KEY, ADMIN_*, etc.)
 #   2. docker compose up -d --build
 #   3. open http://localhost:8080
 #
-# All data (SQLite database + uploaded files) lives in the `sscms-data`
+# All data (SQLite database + uploaded files) lives in the `schoolcare-data`
 # volume, so it survives rebuilds and restarts. Back it up with:
 #   docker compose cp app:/var/data ./backup
 services:
   app:
     build: .
-    image: sscms:latest
-    container_name: sscms
+    image: schoolcare:latest
+    container_name: schoolcare
     env_file: .env.production
     environment:
       DATA_DIR: /var/data
@@ -20,7 +20,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - sscms-data:/var/data
+      - schoolcare-data:/var/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/ping"]
@@ -29,4 +29,4 @@ services:
       retries: 3
 
 volumes:
-  sscms-data:
+  schoolcare-data:

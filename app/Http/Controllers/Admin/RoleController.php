@@ -17,7 +17,7 @@ use Spatie\Permission\PermissionRegistrar;
  *
  * - The super-admin role always holds every permission; it cannot be
  *   edited, stripped or deleted (prevents administrator lock-out).
- * - System roles (config('clinovia.system_roles')) cannot be deleted.
+ * - System roles (config('schoolcare.system_roles')) cannot be deleted.
  * - Roles that still have users cannot be deleted.
  */
 class RoleController extends Controller
@@ -34,7 +34,7 @@ class RoleController extends Controller
         return view('admin.roles.index', [
             'roles'          => $roles,
             'superAdminRole' => PermissionCatalog::superAdminRole(),
-            'systemRoles'    => config('clinovia.system_roles', []),
+            'systemRoles'    => config('schoolcare.system_roles', []),
         ]);
     }
 

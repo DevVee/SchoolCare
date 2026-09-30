@@ -27,7 +27,7 @@ class EmailNotificationsTest extends TestCase
         Notification::assertSentTo($user, WelcomeUserNotification::class, function ($n) use ($user) {
             $mail = $n->toMail($user);
 
-            return str_contains($mail->subject, 'Welcome to SSCMS')
+            return str_contains($mail->subject, 'Welcome to SchoolCare')
                 && str_contains($mail->actionUrl, '/reset-password/');
         });
 

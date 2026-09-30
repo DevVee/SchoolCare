@@ -17,10 +17,10 @@
     $appName = (string) $get('app_name', config('app.name'));
     $orgName = trim((string) $get('org_name', ''));
     try {
-        $favicon = settings()->imageUrl('brand_favicon') ?: '/sscms-icon.svg';
-        $mark = settings()->imageUrl('brand_logo') ?: '/sscms-icon.svg';
+        $favicon = settings()->imageUrl('brand_favicon') ?: '/schoolcare-icon.svg';
+        $mark = settings()->imageUrl('brand_logo') ?: '/schoolcare-icon.svg';
     } catch (\Throwable $e) {
-        $favicon = $mark = '/sscms-icon.svg';
+        $favicon = $mark = '/schoolcare-icon.svg';
     }
     try {
         $styles = app(\Illuminate\Foundation\Vite::class)(['resources/scss/app.scss'])->toHtml();

@@ -1,7 +1,7 @@
-# Clinovia (SSCMS) — Tech Stack Documentation
+# SchoolCare — Tech Stack Documentation
 
 > **Smart School Clinic Management System** for Immaculate Conception College of Balayan, Inc.  
-> Built and maintained by the Clinovia dev team.
+> Built and maintained by the SchoolCare dev team.
 
 ---
 
@@ -156,7 +156,7 @@ HTTP client used internally by:
 - **Default model:** `llama-3.3-70b-versatile` (configurable via Settings)
 - **Env variable:** `GROQ_API_KEY` in `.env`
 - Sends last 5 conversations as context for continuity
-- System prompt configures Cobi's personality and knowledge of the SSCMS system
+- System prompt configures Cobi's personality and knowledge of the SchoolCare system
 
 To change the AI model: go to **Admin → Settings → AI Model** in the app, or set `ai_model` in the `settings` table.
 

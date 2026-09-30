@@ -6,7 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Clinovia is a closed-staff system — self-registration is disabled by design.
+ * SchoolCare is a closed-staff system — self-registration is disabled by design.
  * New accounts are created exclusively by administrators via Admin → Users → Create.
  * ALLOW_REGISTRATION is false in config/auth.php.
  *

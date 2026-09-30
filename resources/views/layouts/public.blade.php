@@ -48,7 +48,7 @@
     <header class="pub-top">
         <div class="pub-container pub-top-inner">
             <a href="{{ url('/') }}" class="pub-brand">
-                <img src="{{ settings()->imageUrl('brand_logo', '/sscms-icon.svg') }}" alt="" width="40" height="40" class="pub-brand-logo">
+                <img src="{{ settings()->imageUrl('brand_logo', '/schoolcare-icon.svg') }}" alt="" width="40" height="40" class="pub-brand-logo">
                 <span class="pub-brand-text">
                     <span class="pub-brand-name">{{ $clinicName }}</span>
                     @if ($orgName !== '')<span class="pub-brand-sub">{{ $orgName }}</span>@endif
