@@ -27,7 +27,7 @@
             {{ $line }}
 @endforeach
 
-            This is an automated message from {{ \App\Support\MailBrand::appName() }}. Please do not reply to this email.
+            This is an automated message from {{ \App\Support\MailBrand::appName() }}.@if (! \App\Support\MailBrand::replyTo()) Please do not reply to this email.@endif
             © {{ date('Y') }} {{ $sender }}
         </x-mail::footer>
     </x-slot:footer>

@@ -47,6 +47,14 @@ class MailBrand
         return url(settings()->imageUrl('brand_logo'));
     }
 
+    /** The clinic's email (settings) when it is a valid address; used as Reply-To. */
+    public static function replyTo(): ?string
+    {
+        $email = trim((string) settings('clinic_email', ''));
+
+        return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
+    }
+
     /** Clinic address and "contact · email" for the footer; empty values left out. */
     public static function contactLines(): array
     {

@@ -113,6 +113,12 @@ class AppServiceProvider extends ServiceProvider
                 'mail.from.address' => $fromAddress !== '' ? $fromAddress : config('mail.from.address'),
                 'mail.from.name'    => $fromName,
             ]);
+
+            // Replies to the (no-reply) sender go to the clinic's own inbox.
+            $replyTo = \App\Support\MailBrand::replyTo();
+            if ($replyTo !== null) {
+                config(['mail.reply_to' => ['address' => $replyTo, 'name' => \App\Support\MailBrand::senderName()]]);
+            }
         } catch (\Throwable) {
             // Settings unavailable (no table / no DB yet) — keep .env config.
         }

@@ -60,6 +60,16 @@ class EmailNotificationsTest extends TestCase
         $this->assertStringContainsString('Balayan, Batangas', $html);
         $this->assertStringContainsString('0917 000 0000', $html);
         $this->assertStringNotContainsString('Laravel', $html);
+        // No clinic email yet: no Reply-To, so the footer asks people not to reply.
+        $this->assertNull(\App\Support\MailBrand::replyTo());
+        $this->assertStringContainsString('Please do not reply', $html);
+
+        app(SettingsService::class)->setMany(['clinic_email' => 'clinic@sunrise.test']);
+        $html = (string) (new InviteUserNotification('token123'))->toMail($user)->render();
+
+        $this->assertSame('clinic@sunrise.test', \App\Support\MailBrand::replyTo());
+        $this->assertStringContainsString('clinic@sunrise.test', $html);
+        $this->assertStringNotContainsString('Please do not reply', $html);
     }
 
     public function test_appointment_email_only_when_enabled_and_patient_has_email(): void

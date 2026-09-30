@@ -33,7 +33,7 @@
 <br>{{ $line }}
 @endforeach
 
-<span class="footer-note">This is an automated message from {{ \App\Support\MailBrand::appName() }}. Please do not reply to this email.<br>© {{ date('Y') }} {{ $sender }}</span>
+<span class="footer-note">This is an automated message from {{ \App\Support\MailBrand::appName() }}.@if (! \App\Support\MailBrand::replyTo()) Please do not reply to this email.@endif<br>© {{ date('Y') }} {{ $sender }}</span>
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>
