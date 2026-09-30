@@ -1,9 +1,12 @@
-# Deploy main to iccbiclinic.site (Hostinger) over SSH.
+# Deploy main to schoolcare.online (Hostinger) over SSH.
 #
 # Repository secrets: SSH_HOST, SSH_PORT, SSH_USER, SSH_PRIVATE_KEY, SSH_KNOWN_HOSTS.
 # The server keeps its own .env, SQLite database, storage/ (uploads, logs,
-# sessions), public/storage link and root .htaccess; rsync never touches them.
+# sessions), public/storage link and root .htaccess; rsync never touches them,
+# except APP_URL in .env, which follows the domain below.
 # The database is copied to ~/backups before migrations run.
+# Moving to another domain: change APP_DIR and APP_URL here. The preflight step
+# refuses to deploy into a folder that is not the installed app.
 name: Deploy to Hostinger
 
 on:
@@ -16,7 +19,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  APP_DIR: domains/iccbiclinic.site/public_html
+  APP_DIR: domains/schoolcare.online/public_html
+  APP_URL: https://schoolcare.online
 
 jobs:
   deploy:
@@ -53,6 +57,13 @@ jobs:
           echo "SSH=ssh -i $HOME/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" >> "$GITHUB_ENV"
           echo "TARGET=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" >> "$GITHUB_ENV"
 
+      # rsync --delete below would wipe whatever is in APP_DIR, so only deploy into
+      # a folder that already holds this app (its artisan file, .env and database).
+      - name: Preflight, the target folder is the installed app
+        run: |
+          $SSH "$TARGET" "test -f ~/$APP_DIR/artisan && test -f ~/$APP_DIR/.env && test -f ~/$APP_DIR/database/database.sqlite" \
+            || { echo "::error::~/$APP_DIR is not the installed app (artisan, .env or database missing). Nothing was changed."; exit 1; }
+
       - name: Back up the database (keeps the latest 20)
         run: |
           $SSH "$TARGET" "mkdir -p ~/backups && cp ~/$APP_DIR/database/database.sqlite ~/backups/schoolcare-\$(date +%Y%m%d-%H%M%S).sqlite && ls -1t ~/backups/schoolcare-*.sqlite | tail -n +21 | xargs -r rm --"
@@ -72,6 +83,10 @@ jobs:
             --exclude '/public/hot' \
             -e "$SSH" \
             ./ "$TARGET:$APP_DIR/"
+
+      - name: Point APP_URL at the domain
+        run: |
+          $SSH "$TARGET" "cd $APP_DIR && if grep -q '^APP_URL=' .env; then sed -i 's|^APP_URL=.*|APP_URL=$APP_URL|' .env; else printf '\nAPP_URL=%s\n' '$APP_URL' >> .env; fi && grep '^APP_URL=' .env"
 
       - name: Migrate and refresh caches
         run: |

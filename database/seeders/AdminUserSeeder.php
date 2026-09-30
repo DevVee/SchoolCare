@@ -23,7 +23,7 @@ class AdminUserSeeder extends Seeder
             return;
         }
 
-        $email    = env('ADMIN_EMAIL') ?: 'admin@iccbiclinic.site';
+        $email    = env('ADMIN_EMAIL') ?: 'admin@schoolcare.online';
         $password = env('ADMIN_PASSWORD') ?: Str::password(16, symbols: false);
 
         $admin = User::firstOrCreate(
