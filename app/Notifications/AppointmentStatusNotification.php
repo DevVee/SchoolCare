@@ -55,13 +55,13 @@ class AppointmentStatusNotification extends Notification implements ShouldQueue
             ->line($intro);
 
         if ($a->purpose) {
-            $mail->line("Purpose: {$a->purpose}");
+            $mail->line("**Purpose:** {$a->purpose}");
         }
 
         if ($contact = settings('clinic_contact')) {
             $mail->line("Questions? Contact the clinic at {$contact}.");
         }
 
-        return $mail->salutation("Regards, {$clinic}");
+        return $mail;
     }
 }

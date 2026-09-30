@@ -24,9 +24,8 @@ class BrandedResetPassword
             ->subject("{$app}: reset your password")
             ->greeting('Hello'.(isset($notifiable->name) ? " {$notifiable->name}" : '').',')
             ->line("We received a request to reset the password for your {$app} account.")
-            ->action('Reset Password', $url)
+            ->action('Reset password', $url)
             ->line("This link expires in {$expire} minutes.")
-            ->line('If you did not request a password reset, you can ignore this email.')
-            ->salutation('Regards, '.(settings('clinic_name') ?: $app));
+            ->line('If you did not request a password reset, you can ignore this email.');
     }
 }

@@ -51,9 +51,8 @@ class InviteUserNotification extends Notification
             ->subject("You're invited to {$app}")
             ->greeting("Hello {$notifiable->name},")
             ->line("{$clinic} has invited you to {$app}. Choose a password to finish setting up your account.")
-            ->line("Sign-in email: {$notifiable->email}")
+            ->line("**Sign-in email:** {$notifiable->email}")
             ->action('Accept invitation', $url)
-            ->line("This link expires in {$days} ".($days === 1 ? 'day' : 'days').'. If it expires, ask an administrator to send a new invitation.')
-            ->salutation("Regards, {$clinic}");
+            ->line("This link expires in {$days} ".($days === 1 ? 'day' : 'days').'. If it expires, ask an administrator to send a new invitation.');
     }
 }

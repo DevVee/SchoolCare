@@ -43,6 +43,25 @@ class EmailNotificationsTest extends TestCase
         $this->assertInstanceOf(BrevoApiTransport::class, Mail::mailer('brevo')->getSymfonyTransport());
     }
 
+    public function test_emails_use_the_clinic_branding(): void
+    {
+        app(SettingsService::class)->setMany([
+            'brand_primary_color' => '#0F766E',
+            'clinic_name'         => 'Sunrise Clinic',
+            'clinic_address'      => 'Balayan, Batangas',
+            'clinic_contact'      => '0917 000 0000',
+        ]);
+        $user = User::factory()->create();
+
+        $html = (string) (new InviteUserNotification('token123'))->toMail($user)->render();
+
+        $this->assertStringContainsString('#0F766E', $html);       // accent bar + button
+        $this->assertStringContainsString('Sunrise Clinic', $html); // sign-off + footer
+        $this->assertStringContainsString('Balayan, Batangas', $html);
+        $this->assertStringContainsString('0917 000 0000', $html);
+        $this->assertStringNotContainsString('Laravel', $html);
+    }
+
     public function test_appointment_email_only_when_enabled_and_patient_has_email(): void
     {
         Notification::fake();
