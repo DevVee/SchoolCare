@@ -1,4 +1,317 @@
 // =============================================================================
 // Print settings (Admin > Settings > Printing): letterhead banner and signature
 // previews. Owned by the print-branding work.
+//
+// Also the browser print parts of printed documents (reports and the patient
+// health report page): .print-doc-only, .print-letterhead, .print-signoff from
+// the shared partials reports/pdf/_letterhead and reports/pdf/_signatures.
 // =============================================================================
+
+// ─── Settings page ───────────────────────────────────────────────────────────
+
+.print-settings {
+    // Image picker: file input, then Remove / Undo and a short status line.
+    .print-upload {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+    .print-upload-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .5rem .75rem;
+        &:empty { display: none; }
+    }
+    .print-upload-status {
+        font-size: .8125rem;
+        color: var(--c-ink-2);
+        &:empty { display: none; }
+    }
+
+    // Height: slider with a number box beside it.
+    .print-range {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        .form-range { flex: 1 1 auto; min-width: 0; }
+    }
+    .print-range-number {
+        width: 8.5rem;
+        flex: 0 0 auto;
+        .form-control { text-align: right; font-variant-numeric: tabular-nums; }
+    }
+
+    // Segmented choice (radio buttons), same look as .nav-segmented.
+    .print-choice {
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        > legend {
+            float: none;
+            width: auto;
+            padding: 0;
+            font-size: $form-label-font-size;
+            font-weight: $form-label-font-weight;
+            line-height: inherit;
+            color: $form-label-color;
+            margin-bottom: $form-label-margin-bottom;
+        }
+    }
+    .print-segmented {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        width: fit-content;
+        max-width: 100%;
+        padding: 3px;
+        background: var(--c-surface-2);
+        border: 1px solid var(--c-border);
+        border-radius: $border-radius-lg;
+    }
+    .print-segment {
+        display: inline-flex;
+        align-items: center;
+        gap: .375rem;
+        min-height: 2.25rem;
+        padding: .375rem .875rem;
+        border-radius: $border-radius;
+        font-size: .9375rem;
+        font-weight: 600;
+        color: var(--c-ink-2);
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: background-color $dur-fast ease-out, color $dur-fast ease-out, box-shadow $dur-fast ease-out, transform $dur-press ease-out;
+        .c-icon { font-size: .875rem; }
+        &:hover { color: var(--c-ink); background: rgba(255, 255, 255, .6); }
+        &:active { transform: scale($press-scale); }
+        @media (pointer: coarse) { min-height: 2.75rem; }
+    }
+    .btn-check:checked + .print-segment {
+        background: #fff;
+        color: var(--c-ink);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, .08), 0 0 0 1px rgba(15, 23, 42, .04);
+    }
+    .btn-check:focus-visible + .print-segment {
+        outline: 3px solid rgba(var(--brand-rgb), .35);
+        outline-offset: 1px;
+    }
+
+    // "Prints on" row of switches, and the footer switch rows.
+    .print-on,
+    .print-matrix-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .25rem 1.5rem;
+        .form-check { margin: 0; }
+    }
+    .print-on-label,
+    .print-matrix-label {
+        font-size: $form-label-font-size;
+        font-weight: $form-label-font-weight;
+        color: $form-label-color;
+    }
+    .print-matrix {
+        border: 1px solid rgba(0, 0, 0, .06);
+        border-radius: $radius-md;
+        overflow: hidden;
+        margin-bottom: .5rem;
+    }
+    .print-matrix-row {
+        padding: .625rem 1rem;
+        & + & { border-top: 1px solid rgba(0, 0, 0, .06); }
+    }
+    .print-matrix-label { min-width: 8rem; }
+
+    // One signatory: hairline panel with its fields and a print-size preview.
+    .print-signer {
+        padding: 1rem 1.125rem 1.125rem;
+        border: 1px solid rgba(0, 0, 0, .06);
+        border-radius: $radius-md;
+        background: var(--c-surface);
+    }
+    .print-signer-head { margin-bottom: .875rem; }
+    .print-signer-title {
+        font-family: $font-ui;
+        font-size: .9375rem;
+        font-weight: 700;
+        letter-spacing: -.01em;
+        color: var(--c-ink);
+        margin: 0;
+    }
+    .print-signer-desc {
+        font-size: .8125rem;
+        color: var(--c-ink-2);
+        margin: .125rem 0 0;
+        line-height: 1.45;
+    }
+}
+
+// Preview of the top of an A4 page (letterhead), drawn to scale.
+.print-preview {
+    margin: 0;
+    padding: 1.25rem;
+    border-radius: $radius-lg;
+    background: var(--c-surface-2);
+}
+.print-paper {
+    // Margins as a share of the page width (set inline from the real mm values).
+    --print-margin-x: 6.6667%;
+    --print-margin-top: 7.619%;
+    container-type: inline-size;
+    aspect-ratio: 210 / 120;
+    padding: var(--print-margin-top) var(--print-margin-x) 0;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .06), 0 6px 20px rgba(15, 23, 42, .08);
+    font-family: $font-ui;
+    color: #000;
+}
+.print-paper-body {
+    height: 100%;
+    // Printable area between the page margins.
+    outline: 1px dashed $gray-300;
+    outline-offset: 0;
+}
+.print-paper-banner {
+    line-height: 0;
+    margin-bottom: 1.2cqw;
+    img {
+        display: inline-block;
+        max-width: 100%;
+        height: auto;
+        vertical-align: top;
+    }
+}
+.print-paper-default {
+    display: flex;
+    align-items: center;
+    gap: 2.2cqw;
+    margin-bottom: 1.2cqw;
+    .print-paper-bar { margin: .6cqw 0 0; }
+}
+.print-paper-logo {
+    width: 9cqw;
+    height: 9cqw;
+    flex: 0 0 auto;
+    object-fit: contain;
+}
+.print-paper-org { font-size: 2cqw; font-weight: 700; line-height: 1.2; }
+.print-paper-clinic { font-size: 1.7cqw; font-weight: 700; line-height: 1.2; color: #222; }
+.print-paper-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    font-size: 2.4cqw;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.print-paper-period { font-size: 1.5cqw; font-weight: 400; color: #222; white-space: nowrap; }
+.print-paper-rule { height: 2px; background: #000; margin: 1cqw 0 2.4cqw; }
+.print-paper-bar {
+    height: 1.3cqw;
+    margin-bottom: 1.6cqw;
+    border-radius: 1cqw;
+    background: $gray-200;
+}
+.print-preview-caption {
+    margin: .75rem 0 0;
+    text-align: center;
+    font-size: .8125rem;
+    color: var(--c-ink-2);
+    font-variant-numeric: tabular-nums;
+}
+
+// Preview of one signature at print size (1 mm on screen = 1 mm of paper at 100% zoom).
+.print-sig-preview {
+    height: 100%;
+    margin: 0;
+    padding: 1rem;
+    border-radius: $radius-md;
+    background: var(--c-surface-2);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.print-sig-paper {
+    padding: 1rem 1.25rem 1.125rem;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .06), 0 4px 14px rgba(15, 23, 42, .06);
+    color: #000;
+    font-family: $font-ui;
+    transition: opacity $dur-fast ease-out;
+}
+.print-sig-caption {
+    min-height: 1.1em;
+    font-size: .75rem;
+    color: #444;
+}
+.print-sig-space {
+    min-height: 12mm;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    img { max-width: 100%; width: auto; object-fit: contain; }
+}
+.print-sig-name {
+    margin: 0 .5rem;
+    padding-top: .125rem;
+    border-top: 1px solid #000;
+    text-align: center;
+    font-size: .875rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+.print-sig-position,
+.print-sig-license {
+    text-align: center;
+    font-size: .75rem;
+    color: #222;
+    overflow-wrap: anywhere;
+    &:empty { display: none; }
+}
+.print-sig-license { color: #444; }
+.print-sig-preview.is-empty {
+    .print-sig-paper { opacity: .55; }
+    .print-sig-name { color: var(--c-muted); font-weight: 500; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .print-settings .print-segment,
+    .print-sig-paper { transition: none; }
+}
+
+// ─── Printed documents (browser print) ───────────────────────────────────────
+
+// Letterhead banner on screen (health report page) and on paper.
+.print-letterhead {
+    line-height: 0;
+    img { max-width: 100%; height: auto; vertical-align: top; }
+}
+
+// Without a banner, report pages print the school logo and names (same partial as the PDF).
+.print-identity { line-height: 1.3; }
+
+// Only on paper: the report pages' banner, and the signatures and footer line.
+.print-doc-only { display: none !important; }
+
+@media print {
+    .print-doc-only { display: block !important; }
+    .print-letterhead { margin: 0 0 4mm; }
+    .print-signoff {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        color: #000;
+    }
+    .print-signoff-footer {
+        margin: 6mm 0 0;
+        font-size: 8pt;
+        color: #555;
+    }
+}

@@ -60,6 +60,9 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        // PDFs embed only the glyphs they use instead of whole DejaVu fonts (about 1 MB each otherwise).
+        config(['dompdf.options.enable_font_subsetting' => true]);
+
         // Branded pagination for every ->links() call (resources/views/vendor/pagination/schoolcare*.blade.php).
         \Illuminate\Pagination\Paginator::defaultView('pagination::schoolcare');
         \Illuminate\Pagination\Paginator::defaultSimpleView('pagination::schoolcare-simple');

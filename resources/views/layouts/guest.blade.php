@@ -1,9 +1,8 @@
 {{--
     Auth pages (login, forgot / reset / confirm password, verify email, register).
-    Apple-style sign-in: a calm #F5F5F7 canvas with a faint grid, one centered
+    Apple-style sign-in: a calm #F5F5F7 canvas with a faint grid and one centered
     white card (logo, big title, one muted line, the form) that materializes on
-    load, and a quiet line under it with today's hours (a live dot while the
-    clinic is open), phone and email.
+    load. Nothing else sits under the card (owner, 2026-09-30).
     With Settings > Branding > "Sign-in page photo" (login_image) the card grows
     a photo pane on desktop (>= 992px) with the clinic name and login_quote over
     a dark scrim. Without a photo, login_quote (when set) sits under the card.
@@ -20,28 +19,9 @@
     $clinicName = trim((string) settings('clinic_name'));
     $quote = trim((string) settings('login_quote'));
     $quoteAuthor = trim((string) settings('login_quote_author'));
-    $phone = trim((string) settings('clinic_contact'));
-    $email = trim((string) settings('clinic_email'));
     $logoUrl = settings()->imageUrl('brand_logo');
     $photoUrl = filled(settings('login_image')) ? settings()->imageUrl('login_image') : null;
     $pageTitle = isset($title) && trim(strip_tags((string) $title)) !== '' ? trim(strip_tags((string) $title)) : 'Sign in';
-
-    // "Open today 7:30 AM to 5:00 PM" / "Closed today" (skipped when no hours are configured)
-    // The dot beside it breathes only while the clinic is open right now.
-    $hoursLine = null;
-    $openNow = false;
-    try {
-        $today = \App\Support\ClinicHours::forDate(now());
-        if ($today === null) {
-            $hoursLine = 'Closed today';
-        } elseif (! ($today['open'] === '00:00' && $today['close'] === '23:59')) {
-            $fmt = fn ($t) => \Carbon\Carbon::createFromFormat('H:i', $t)->format('g:i A');
-            $hoursLine = 'Open today '.$fmt($today['open']).' to '.$fmt($today['close']);
-        }
-        $openNow = \App\Support\ClinicHours::isWithinHours(now(), now()->format('H:i'));
-    } catch (\Throwable $e) {
-        $hoursLine = null;
-    }
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -92,30 +72,14 @@
                 @endif
             </div>
 
-            <div class="auth-meta">
-                @if ($hoursLine || $phone !== '' || $email !== '')
-                    <ul class="auth-info">
-                        @if ($hoursLine)
-                            <li><span @class(['auth-dot', 'is-open' => $openNow]) aria-hidden="true"></span>{{ $hoursLine }}</li>
-                        @endif
-                        @if ($phone !== '')
-                            <li><x-ui.icon name="telephone" /><a href="tel:{{ preg_replace('/[^0-9+]/', '', $phone) }}">{{ $phone }}</a></li>
-                        @endif
-                        @if ($email !== '')
-                            <li><x-ui.icon name="envelope" /><a href="mailto:{{ $email }}">{{ $email }}</a></li>
-                        @endif
-                    </ul>
-                @endif
-                @if ($quote !== '' && ! $photoUrl)
-                    <figure class="auth-quote">
-                        <blockquote>{{ $quote }}</blockquote>
-                        @if ($quoteAuthor !== '')
-                            <figcaption>{{ $quoteAuthor }}</figcaption>
-                        @endif
-                    </figure>
-                @endif
-                <p class="auth-footer">&copy; {{ date('Y') }} {{ $orgName !== '' ? $orgName : $appName }}</p>
-            </div>
+            @if ($quote !== '' && ! $photoUrl)
+                <figure class="auth-quote">
+                    <blockquote>{{ $quote }}</blockquote>
+                    @if ($quoteAuthor !== '')
+                        <figcaption>{{ $quoteAuthor }}</figcaption>
+                    @endif
+                </figure>
+            @endif
         </main>
     </div>
 </body>

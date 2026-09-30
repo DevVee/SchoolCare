@@ -24,6 +24,8 @@
 @endphp
 
 @section('content')
+{{-- Printed only: letterhead banner (Admin > Settings > Printing), as on the PDF --}}
+@include('reports.pdf._letterhead', ['document' => 'reports', 'screen' => true, 'printOnly' => true])
 
 <x-ui.page-header title="Appointments report" :description="DisplayFormat::date($from).' to '.DisplayFormat::date($to)"
     :breadcrumbs="['Reports' => route('reports.index'), 'Appointments report' => null]">
@@ -63,5 +65,8 @@
         </x-slot:empty>
     </x-ui.table>
 </x-ui.card>
+
+{{-- Printed only: signatures and footer line, as on the PDF --}}
+@include('reports.pdf._signatures', ['document' => 'reports', 'screen' => true])
 
 @endsection

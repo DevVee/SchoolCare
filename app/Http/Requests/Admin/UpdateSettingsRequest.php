@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Services\ImageResizer;
 use App\Services\SettingsService;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -56,6 +57,20 @@ class UpdateSettingsRequest extends FormRequest
                             $fail('The :attribute must be a PNG, JPG, WebP or ICO image.');
                         }
                     };
+                    if (! empty($def['resize'])) {
+                        // Resized on save (ImageResizer): it must decode, and not be so big that decoding runs out of memory.
+                        $fieldRules[] = function (string $attribute, mixed $value, Closure $fail) {
+                            if (! $value instanceof \Illuminate\Http\UploadedFile || ! $value->isValid()) {
+                                return;
+                            }
+                            $size = @getimagesize($value->getRealPath());
+                            if (! $size || $size[0] < 1 || $size[1] < 1) {
+                                $fail('The :attribute could not be read. Save it again as PNG or JPG and upload it again.');
+                            } elseif ($size[0] * $size[1] > ImageResizer::MAX_PIXELS) {
+                                $fail('The :attribute is too large. Use an image smaller than 6000 by 6000 pixels.');
+                            }
+                        };
+                    }
                     break;
 
                 case 'secret':

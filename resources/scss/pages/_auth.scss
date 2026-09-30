@@ -8,7 +8,7 @@
 // With a sign-in photo (login_image) the card grows a photo pane on desktop.
 // =============================================================================
 
-$auth-card-w: 27.5rem;   // 440px
+$auth-card-w: 30.5rem;   // 488px
 
 .auth-body { background: var(--c-canvas); }
 
@@ -230,68 +230,15 @@ $auth-card-w: 27.5rem;   // 440px
     > .form-control.is-invalid { background-image: none; }
 }
 
-// ─── Under the card: hours (live dot), phone, email, quote, copyright ──────
-.auth-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: .875rem;
-    width: 100%;
-    max-width: 40rem;
-    text-align: center;
-    font-size: .8125rem;
-    color: var(--c-muted);
-    animation: auth-fade 700ms 180ms ease-out both;
-}
-.auth-info {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: .25rem 1.25rem;
-    li { display: inline-flex; align-items: center; gap: .5rem; min-height: 1.75rem; }
-    .c-icon { color: var(--c-faint); }
-    a {
-        color: var(--c-ink-2);
-        text-decoration: none;
-        text-underline-offset: 3px;
-        overflow-wrap: anywhere;
-        &:hover { color: var(--brand-700); text-decoration: underline; }
-    }
-}
-.auth-dot {
-    position: relative;
-    display: inline-flex;
-    flex-shrink: 0;
-    width: .4375rem;
-    height: .4375rem;
-    border-radius: 50%;
-    background: var(--c-faint);
-    &.is-open {
-        background: var(--brand-600);
-        &::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: inherit;
-            animation: auth-live 2.2s cubic-bezier(0, 0, .2, 1) infinite;
-        }
-    }
-}
-@keyframes auth-live {
-    0%        { transform: scale(1);   opacity: .55; }
-    80%, 100% { transform: scale(2.6); opacity: 0; }
-}
+// ─── Under the card: the sign-in quote (login_quote), only without a photo ──
 .auth-quote {
     margin: 0;
     max-width: 30rem;
+    text-align: center;
+    animation: auth-fade 700ms 180ms ease-out both;
     blockquote { margin: 0; font-size: .875rem; line-height: 1.5; color: var(--c-ink-2); text-wrap: balance; }
     figcaption { margin-top: .25rem; font-size: .8125rem; color: var(--c-muted); }
 }
-.auth-footer { margin: 0; font-size: .75rem; color: var(--c-muted); }
 
 // ─── Photo pane (login_image, desktop only) ─────────────────────────────────
 .auth-aside {
@@ -365,7 +312,6 @@ $auth-card-w: 27.5rem;   // 440px
 // ─── Accessibility ──────────────────────────────────────────────────────────
 @media (prefers-reduced-motion: reduce) {
     .auth-card { animation-name: auth-fade; animation-duration: 300ms; }
-    .auth-dot.is-open::after { animation: none; }
     .password-field .password-toggle:active { transform: translateY(-50%); }
     .auth-back:hover .c-icon { transform: none; }
 }
@@ -376,5 +322,5 @@ $auth-card-w: 27.5rem;   // 440px
 }
 @media print {
     .auth-grid, .auth-aside { display: none !important; }
-    .auth-card, .auth-meta { animation: none; box-shadow: none; }
+    .auth-card, .auth-quote { animation: none; box-shadow: none; }
 }

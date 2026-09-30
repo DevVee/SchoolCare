@@ -3,6 +3,8 @@
 <html>
 <head>
 <meta charset="utf-8">
+<title>Health Report Card, {{ $patient->full_name }}</title>
+<meta name="author" content="{{ \App\Support\PrintBranding::issuerName() }}">
 <style>
     body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #0F172A; margin: 0; padding: 22px; }
     h1   { font-size: 16px; margin: 0 0 2px; color: #1D4ED8; }
@@ -20,38 +22,31 @@
     .note { background: #EFF6FF; border: 1px solid #BFDBFE; padding: 6px 8px; margin: 8px 0; }
     .right { text-align: right; }
     .footer { margin-top: 16px; font-size: 8px; color: #64748B; }
+    .confidential-row { text-align: right; margin: 0 0 4px; }
+    .confidential { display: inline-block; border: 0.75px solid #0F172A; padding: 1px 6px; font-size: 7.5px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: #0F172A; }
+    .pagefoot { position: fixed; bottom: -8mm; right: 22px; font-size: 7.5px; color: #64748B; }
+    .pagenum:before { content: counter(page); }
 </style>
 </head>
 <body>
 @php
+    // Letterhead, signatures, footer line and page numbers: Admin > Settings > Printing.
     $categoryLabels = \App\Models\Patient::categoryLabels();
-    $schoolPath = settings()->imagePath('school_logo', false);
-    $schoolData = null;
-    if ($schoolPath && is_readable($schoolPath) && filesize($schoolPath) <= 2 * 1024 * 1024) {
-        $ext  = strtolower(pathinfo($schoolPath, PATHINFO_EXTENSION));
-        $mime = ['png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'webp' => 'image/webp', 'gif' => 'image/gif'][$ext] ?? null;
-        if ($mime) {
-            $schoolData = 'data:'.$mime.';base64,'.base64_encode(file_get_contents($schoolPath));
-        }
-    }
-    $orgName = trim((string) settings('org_name', ''));
+    $footerNote = \App\Support\PrintBranding::footerText('health');
+    $preparedBy = \App\Support\PrintBranding::preparedByShown('health') ? null : auth()->user()?->name;
 @endphp
 
+@if (\App\Support\PrintBranding::pageNumbers('health'))
+    <div class="pagefoot">Page <span class="pagenum"></span></div>
+@endif
+
 <div class="header">
-    <table style="margin:0;">
-        <tr>
-            <td style="border:none; padding:0;">
-                @include('reports.pdf._brand', ['title' => 'Health Report Card'])
-                @if ($orgName !== '')<div class="muted">{{ $orgName }}</div>@endif
-            </td>
-            @if ($schoolData)
-                <td style="border:none; padding:0; width:50px; text-align:right;">
-                    <img src="{{ $schoolData }}" style="width:44px; height:44px;" alt="">
-                </td>
-            @endif
-        </tr>
-    </table>
-    <div class="muted">Generated {{ DisplayFormat::date(now()) }} {{ DisplayFormat::time(now()) }}</div>
+    <div class="confidential-row"><span class="confidential">Confidential</span></div>
+    @include('reports.pdf._letterhead', [
+        'document' => 'health',
+        'title'    => 'Health Report Card',
+        'subtitle' => 'Generated '.DisplayFormat::date(now()).' '.DisplayFormat::time(now()),
+    ])
 </div>
 
 <h2>{{ $patient->full_name }}</h2>
@@ -211,6 +206,10 @@
     <p class="muted">No appointments recorded.</p>
 @endif
 
-<div class="footer">Confidential health information from the records of {{ settings('clinic_name') ?: settings('app_name') }}. Prepared by {{ auth()->user()?->name }}.</div>
+@include('reports.pdf._signatures', ['document' => 'health'])
+
+@if ($footerNote !== '' || $preparedBy)
+    <div class="footer">{{ $footerNote }}@if ($preparedBy){{ $footerNote !== '' ? ' ' : '' }}Prepared by {{ $preparedBy }}.@endif</div>
+@endif
 </body>
 </html>
