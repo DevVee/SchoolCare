@@ -21,7 +21,11 @@ function icon(name) {
     return i;
 }
 
-if (dlg && typeof dlg.showModal === 'function') {
+// The code lives in a function, not in an `if { }` block: the minifier turned
+// functions declared inside a block into top-level `var`s, one of which clashed
+// with a name from another module ("Identifier 'ca' has already been declared"),
+// and that syntax error stopped every script on every page.
+function initSpotlight() {
     const input = dlg.querySelector('[data-spotlight-input]');
     const list = dlg.querySelector('[data-spotlight-list]');
     const cfg = dlg.dataset;
@@ -230,3 +234,5 @@ if (dlg && typeof dlg.showModal === 'function') {
         }
     });
 }
+
+if (dlg && typeof dlg.showModal === 'function') initSpotlight();

@@ -3,6 +3,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
+        "check:build": "node scripts/check-build.mjs",
         "dev": "vite"
     },
     "devDependencies": {

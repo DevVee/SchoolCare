@@ -199,6 +199,9 @@ $auth-card-w: 30.5rem;   // 488px
     line-height: 1.45;
     color: var(--c-muted);
     text-align: left;
+    // Fill the line before wrapping (the global `pretty` wrap moved the last words
+    // to a second line that was not needed), so a short note stays on one line.
+    text-wrap: wrap;
     .c-icon { margin-top: .125rem; flex-shrink: 0; color: var(--c-faint); }
 }
 
