@@ -86,6 +86,34 @@ function foldDonut(values, labels) {
     return { values: [...top.map((p) => p[0]), otherTotal], labels: [...top.map((p) => p[1]), 'Other'] };
 }
 
+/**
+ * A category label for under a column: long free text ("Migraine With Aura,
+ * Right-sided, Since Morning") keeps the part before the first comma and wraps
+ * onto at most two short lines, the last one ending in "…" when cut. Short
+ * labels are left alone. The tooltip and the data table keep the full text.
+ */
+function columnLabel(text, width = 14) {
+    let label = String(text ?? '').trim();
+    if (label.length <= width) return label;
+    const head = label.split(',')[0].trim();
+    if (head.length >= 3) label = head;
+    const lines = [];
+    let line = '';
+    for (const word of label.split(/\s+/)) {
+        const next = line ? `${line} ${word}` : word;
+        if (next.length <= width || !line) {
+            line = next;
+        } else {
+            lines.push(line);
+            line = word;
+        }
+    }
+    if (line) lines.push(line);
+    if (lines.length <= 2) return lines.length === 1 ? lines[0] : lines;
+    const second = lines[1].length > width - 1 ? lines[1].slice(0, width - 1) : lines[1];
+    return [lines[0], `${second}…`];
+}
+
 /** Builds full ApexCharts options from the compact config. */
 export function buildOptions(cfg) {
     const type = cfg.type || 'line';
@@ -217,6 +245,18 @@ export function buildOptions(cfg) {
         // Apex swaps axes for horizontal bars: values live on xaxis.
         options.xaxis = { ...categoryAxis, labels: { ...valueAxisLabels } };
         options.yaxis = { labels: { style: axisLabelStyle, maxWidth: 180 } };
+    } else if (type === 'bar') {
+        // Columns styled like the line charts (same grid and axes), rounded tops,
+        // short two-line labels underneath and the full label in the tooltip.
+        const full = cfg.categories || [];
+        options.xaxis = {
+            ...categoryAxis,
+            categories: full.map((c) => columnLabel(c)),
+            labels: { ...categoryAxis.labels, trim: false, hideOverlappingLabels: false },
+        };
+        options.yaxis = { labels: valueAxisLabels, min: 0, forceNiceScale: true, tickAmount: 4 };
+        options.plotOptions.bar = { ...options.plotOptions.bar, borderRadius: 6, columnWidth: full.length > 8 ? '60%' : '42%' };
+        options.tooltip = { ...options.tooltip, x: { formatter: (val, o) => full[o?.dataPointIndex] ?? val } };
     } else {
         options.xaxis = categoryAxis;
         options.yaxis = { labels: valueAxisLabels, min: isBar || type === 'area' ? 0 : undefined, forceNiceScale: true, tickAmount: 4 };

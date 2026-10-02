@@ -157,10 +157,11 @@
     @if($canLogs)
     <div class="{{ $bottomCol }}">
         <x-ui.card module="logbook" icon="clipboard2-pulse" title="Top reasons for visit" :subtitle="$reasonsPeriod" class="h-100">
-            <x-ui.chart type="horizontal-bar"
+            {{-- Columns like the Clinic visits chart; short labels under them, the full reason in the tooltip and table --}}
+            <x-ui.chart type="bar"
                 :series="[['name' => 'Visits', 'data' => $topReasons->pluck('total')->all()]]"
                 :categories="$topReasons->pluck('reason')->all()"
-                :height="max(160, 38 * $topReasons->count() + 40)"
+                height="260"
                 empty="No visits logged in the last 12 months." />
         </x-ui.card>
     </div>
