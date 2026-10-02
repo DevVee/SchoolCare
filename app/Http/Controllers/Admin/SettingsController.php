@@ -9,6 +9,7 @@ use App\Services\AiAssistantService;
 use App\Services\SettingsService;
 use App\Services\SignInCodes;
 use App\Services\SmsService;
+use App\Support\MailHealth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -191,6 +192,9 @@ class SettingsController extends Controller
             'log_level'     => $logLevel,
             'log_hidden'    => $logLevel !== null && ! in_array(strtolower((string) $logLevel), ['debug'], true),
             'queue'         => (string) config('queue.default'),
+            'ready'         => MailHealth::ready(),
+            'problems'      => MailHealth::problems(),
+            'failures'      => MailHealth::recentFailures(3),
         ];
     }
 }

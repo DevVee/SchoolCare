@@ -229,5 +229,6 @@
     .app-sidebar .sidebar-profile-avatar .avatar { transition: none; }
 }
 
-// Rail tooltips (collapsed sidebar)
-.rail-tooltip { --bs-tooltip-font-size: .8125rem; }
+// Rail tooltips (collapsed sidebar): labels only, never in the way of a click
+// on the topbar or the page beside the rail.
+.rail-tooltip { --bs-tooltip-font-size: .8125rem; pointer-events: none; }

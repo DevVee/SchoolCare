@@ -78,6 +78,8 @@
 </section>
 
 <template id="cocoFace"><x-ui.coco-orb size="xs" still /></template>
+{{-- Action cards under past answers (conversation id => cards), drawn by cocoCard() below. --}}
+<script type="application/json" id="cocoCards">@json((object) ($cards ?? []))</script>
 @endsection
 
 @push('modals')
@@ -302,6 +304,227 @@ document.addEventListener('DOMContentLoaded', function () {
         el.removeAttribute('data-markdown');
     });
 
+    // ── Action cards ──────────────────────────────────────────────────────
+    // The assistant only prepares an action (a text, an email, an appointment,
+    // a setting). It runs when the user taps Confirm, which posts to the card's
+    // confirm_url; the server checks everything again. Cards come with an answer
+    // (data.actions) or, for past answers, from #cocoCards.
+    var GSM = '@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !"#¤%&\'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà';
+    var GSM_EXT = '^{}\\[~]|€';
+    var SMS_MAX_PARTS = 3;
+    var cardTimers = [];
+
+    // Text messages needed, as the server counts them (App\Services\Coco\Actions\SendSms::parts).
+    function smsParts(text) {
+        var units = 0, gsm = true, chars = Array.from(text);
+        for (var i = 0; i < chars.length; i++) {
+            if (GSM.indexOf(chars[i]) !== -1) units += 1;
+            else if (GSM_EXT.indexOf(chars[i]) !== -1) units += 2;
+            else { gsm = false; break; }
+        }
+        if (!gsm) units = text.length;
+        var single = gsm ? 160 : 70, multi = gsm ? 153 : 67;
+        return units <= single ? 1 : Math.ceil(units / multi);
+    }
+
+    function iconHtml(name) { return '<i class="bi bi-' + escapeHtml(name) + ' c-icon" aria-hidden="true"></i>'; }
+    function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
+
+    // Done, failed, cancelled or expired: the card becomes one line.
+    function resultLine(el, status, result) {
+        var ok = !!(result && result.ok) && status === 'confirmed';
+        var muted = status === 'cancelled' || status === 'expired';
+        var url = ok && result.url && /^https?:\/\//.test(result.url) ? result.url : '';
+        el.className = 'coco-action is-result ' + (ok ? 'is-done' : muted ? 'is-muted' : 'is-failed');
+        el.dataset.done = '1';
+        el.innerHTML = '<p class="coco-action-result" role="status">'
+            + iconHtml(ok ? 'check-circle-fill' : muted ? 'x-circle' : 'exclamation-circle')
+            + '<span>' + escapeHtml((result && result.text) || 'Nothing was done.')
+            + (url ? ' <a href="' + escapeHtml(url) + '">Open</a>' : '') + '</span></p>';
+    }
+
+    function cocoCard(card) {
+        var el = document.createElement('div');
+        el.className = 'coco-action';
+        el.dataset.action = card.id;
+        if (card.status !== 'pending') { resultLine(el, card.status, card.result); return el; }
+
+        var uid = 'act-' + String(card.id).slice(0, 8);
+        var edit = card.editable;
+        var candidates = card.candidates || [];
+        var html = '<div class="coco-action-head">' + iconHtml(card.icon) + '<span class="coco-action-title">' + escapeHtml(card.title) + '</span>'
+            + '<span class="coco-action-timer" data-timer></span></div>';
+
+        if (card.fields && card.fields.length) {
+            html += '<dl class="coco-action-fields">';
+            card.fields.forEach(function (f) { html += '<dt>' + escapeHtml(f.label) + '</dt><dd>' + escapeHtml(f.value) + '</dd>'; });
+            html += '</dl>';
+        }
+
+        if (candidates.length) {
+            var usable = candidates.filter(function (c) { return !c.disabled; });
+            html += '<fieldset class="coco-action-pick"><legend>' + candidates.length + ' records match. Pick one</legend>';
+            candidates.forEach(function (c) {
+                html += '<label class="coco-action-option' + (c.disabled ? ' is-disabled' : '') + '">'
+                    + '<input type="radio" name="' + uid + '-pick" value="' + escapeHtml(c.id) + '"'
+                    + (c.disabled ? ' disabled' : '') + (usable.length === 1 && !c.disabled ? ' checked' : '') + '>'
+                    + '<span><strong>' + escapeHtml(c.label) + '</strong>'
+                    + (c.detail ? '<small>' + escapeHtml(c.detail) + '</small>' : '')
+                    + (c.meta ? '<small>' + escapeHtml(c.meta) + '</small>' : '') + '</span></label>';
+            });
+            html += '</fieldset>';
+        }
+
+        if (edit) {
+            if (edit.kind === 'email') {
+                html += '<div class="coco-action-subject"><label class="coco-action-label" for="' + uid + '-subject">Subject</label>'
+                    + '<input type="text" class="form-control" id="' + uid + '-subject" maxlength="150" data-subject value="' + escapeHtml(edit.subject || '') + '"></div>';
+            }
+            html += '<label class="coco-action-label" for="' + uid + '-text">' + (edit.kind === 'sms' ? 'Message' : 'Email text') + '</label>'
+                + '<textarea class="form-control" id="' + uid + '-text" rows="' + (edit.kind === 'sms' ? 3 : 7) + '" data-text>'
+                + escapeHtml(edit.message || '') + '</textarea>'
+                + '<p class="coco-action-count" data-count aria-live="polite"></p>';
+        }
+
+        if (card.notes && card.notes.length) {
+            html += '<ul class="coco-action-notes">';
+            card.notes.forEach(function (n) { html += '<li>' + iconHtml('info-circle') + '<span>' + escapeHtml(n) + '</span></li>'; });
+            html += '</ul>';
+        }
+
+        // data-act-*, not data-confirm: ui/confirm.js would catch [data-confirm] and ask "Are you sure?" first.
+        html += '<p class="coco-action-error" role="alert" data-error hidden></p>'
+            + '<div class="coco-action-buttons">'
+            + '<button type="button" class="btn btn-primary btn-sm" data-act-confirm>' + iconHtml('check-lg') + 'Confirm</button>'
+            + '<button type="button" class="btn btn-ghost btn-sm" data-act-cancel>Cancel</button></div>';
+        el.innerHTML = html;
+
+        var text = el.querySelector('[data-text]');
+        var subject = el.querySelector('[data-subject]');
+        var count = el.querySelector('[data-count]');
+        var confirmBtn = el.querySelector('[data-act-confirm]');
+        var cancelBtn = el.querySelector('[data-act-cancel]');
+        var errorEl = el.querySelector('[data-error]');
+        var timer = el.querySelector('[data-timer]');
+        var blocked = false;
+        var working = false;
+
+        function showError(message) { errorEl.textContent = message || ''; errorEl.hidden = !message; }
+
+        // Live length and cost while the user edits the text.
+        function syncCount() {
+            if (!text) return;
+            var value = text.value;
+            if (edit.kind === 'sms') {
+                var parts = smsParts(value);
+                blocked = parts > SMS_MAX_PARTS || !value.trim();
+                count.textContent = plural(value.length, 'character') + ', ' + plural(parts, 'text message') + ', ' + plural(parts, 'SMS credit')
+                    + (parts > SMS_MAX_PARTS ? '. Too long: keep it to ' + SMS_MAX_PARTS + ' text messages.' : '.');
+                count.classList.toggle('is-over', parts > SMS_MAX_PARTS);
+            } else {
+                var max = edit.max || 5000;
+                blocked = value.length > max || !value.trim() || (subject && !subject.value.trim());
+                count.textContent = value.length + ' of ' + max + ' characters';
+                count.classList.toggle('is-over', value.length > max);
+            }
+            if (!working) confirmBtn.disabled = blocked;
+        }
+        if (text) text.addEventListener('input', syncCount);
+        if (subject) subject.addEventListener('input', syncCount);
+        syncCount();
+
+        // Expiry countdown from the server's seconds left, so a wrong device clock does not matter.
+        var deadline = Date.now() + Math.max(0, card.seconds_left || 0) * 1000;
+        function tick() {
+            if (el.dataset.done) return false;
+            var s = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+            if (s <= 0) {
+                resultLine(el, 'expired', { ok: false, text: 'This expired, so nothing was done. Ask again if you still need it.' });
+                return false;
+            }
+            timer.textContent = 'Expires in ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+            return true;
+        }
+        if (tick()) cardTimers.push(tick);
+
+        async function post(url, body) {
+            var res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                body: JSON.stringify(body || {})
+            });
+            var data = {};
+            try { data = await res.json(); } catch (err) { data = {}; }
+            if (res.status === 419) { showError('Your session has expired. Reload the page and try again.'); return null; }
+            if (res.status === 429) { showError('Too many tries in a short time. Please wait a moment.'); return null; }
+            if (!res.ok) { showError(data.message || 'Something went wrong. Please try again.'); return null; }
+            return data;
+        }
+
+        // The server's answer: a finished card becomes its result line; otherwise say why not.
+        function settle(data) {
+            if (data.card && data.card.status !== 'pending') {
+                resultLine(el, data.card.status, data.card.result || data);
+                return;
+            }
+            showError(data.text || 'It could not be done.');
+        }
+
+        async function act(url, body, label) {
+            if (working) return;
+            working = true;
+            confirmBtn.disabled = cancelBtn.disabled = true;
+            if (label) confirmBtn.innerHTML = iconHtml('hourglass-split') + label;
+            showError('');
+            try {
+                var data = await post(url, body);
+                if (data) settle(data);
+            } catch (err) {
+                showError('Could not reach the server. Check your connection and try again.');
+            } finally {
+                working = false;
+                if (!el.dataset.done) {
+                    confirmBtn.innerHTML = iconHtml('check-lg') + 'Confirm';
+                    confirmBtn.disabled = blocked;
+                    cancelBtn.disabled = false;
+                }
+            }
+        }
+
+        confirmBtn.addEventListener('click', function () {
+            var body = {};
+            if (candidates.length) {
+                var picked = el.querySelector('input[type="radio"]:checked');
+                if (!picked) { showError('Pick who this is for first.'); return; }
+                body.choice = picked.value;
+            } else if (card.choice) {
+                body.choice = card.choice;
+            }
+            if (text) body.message = text.value;
+            if (subject) body.subject = subject.value;
+            act(card.confirm_url, body, 'Working');
+        });
+        cancelBtn.addEventListener('click', function () { act(card.cancel_url, {}, null); });
+
+        return el;
+    }
+
+    setInterval(function () { cardTimers = cardTimers.filter(function (t) { return t(); }); }, 1000);
+
+    // Cards go under the answer, above its time.
+    function addCards(row, cards) {
+        if (!row || !cards || !cards.length) return;
+        var msg = row.querySelector('.coco-msg');
+        var time = msg.querySelector('.coco-time');
+        cards.forEach(function (c) { msg.insertBefore(cocoCard(c), time); });
+    }
+
+    var savedCards = {};
+    try { savedCards = JSON.parse(document.getElementById('cocoCards').textContent || '{}') || {}; } catch (err) { savedCards = {}; }
+    Object.keys(savedCards).forEach(function (id) {
+        addCards(chat.querySelector('.coco-row.is-ai[data-convo="' + CSS.escape(id) + '"]'), savedCards[id]);
+    });
+
     // ── Chat ──────────────────────────────────────────────────────────────
     // The page scrolls (not a box inside it), so new messages bring the window down.
     function scrollBottom(smooth) {
@@ -466,6 +689,10 @@ document.addEventListener('DOMContentLoaded', function () {
             hideTyping();
             if (res.ok) {
                 var answerRow = appendMessage('assistant', data.response || '');
+                if (data.actions && data.actions.length) {
+                    addCards(answerRow, data.actions);
+                    scrollBottom(true);
+                }
                 if (data.id) {
                     userRow.id = 'msg-' + data.id;
                     userRow.dataset.convo = answerRow.dataset.convo = data.id;
