@@ -33,6 +33,7 @@
     'yFormat' => 'integer',
     'currency' => 'PHP',
     'totalLabel' => 'Total',
+    'categoryLabel' => null,   // data table heading for the categories (default: Category / Period)
     'id' => null,
 ])
 @php
@@ -123,7 +124,7 @@
                     @else
                         <thead>
                             <tr>
-                                <th scope="col">{{ $type === 'horizontal-bar' ? 'Category' : 'Period' }}</th>
+                                <th scope="col">{{ $categoryLabel ?? ($type === 'horizontal-bar' ? 'Category' : 'Period') }}</th>
                                 @foreach ($normalizedSeries as $s)<th scope="col" class="text-end">{{ $s['name'] }}</th>@endforeach
                             </tr>
                         </thead>
