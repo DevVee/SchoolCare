@@ -157,10 +157,10 @@
     @if($canLogs)
     <div class="{{ $bottomCol }}">
         <x-ui.card module="logbook" icon="clipboard2-pulse" title="Top reasons for visit" :subtitle="$reasonsPeriod" class="h-100">
-            {{-- Columns like the Clinic visits chart; short labels under them, the full reason in the tooltip and table --}}
-            <x-ui.chart type="bar"
+            {{-- Same smooth line as Clinic visits; short labels under the points, the full reason in the tooltip and table --}}
+            <x-ui.chart type="line"
                 :series="[['name' => 'Visits', 'data' => $topReasons->pluck('total')->all()]]"
-                :categories="$topReasons->pluck('reason')->all()"
+                :categories="$topReasons->pluck('reason')->all()" category-label="Reason"
                 height="260"
                 empty="No visits logged in the last 12 months." />
         </x-ui.card>

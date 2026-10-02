@@ -33,10 +33,10 @@
 
 @if($usage->isNotEmpty())
 <x-ui.card class="mb-4" module="medicines" icon="bar-chart" title="Most dispensed medicines" subtitle="Top 10 by quantity">
-    <x-ui.chart type="horizontal-bar"
+    <x-ui.chart type="line"
         :series="[['name' => 'Quantity', 'data' => $top->pluck('total_dispensed')->map(fn ($v) => (int) $v)->all()]]"
-        :categories="$top->map(fn ($u) => $u->medicine->name ?? 'Unknown medicine')->all()"
-        :height="max(160, 34 * $top->count() + 40)" />
+        :categories="$top->map(fn ($u) => $u->medicine->name ?? 'Unknown medicine')->all()" category-label="Medicine"
+        height="260" />
 </x-ui.card>
 @endif
 

@@ -114,6 +114,23 @@ function columnLabel(text, width = 14) {
     return [lines[0], `${second}…`];
 }
 
+const MONTH_YEAR = /^[A-Z][a-z]{2} \d{4}$/;
+
+/**
+ * What the category axis shows (the tooltip and the data table keep the full
+ * labels). Months ("Nov 2025") show the year only on the first point and on
+ * January; long free text is shortened to what fits under each point, from
+ * the chart's width, instead of overlapping or being cut to "Nov 2...".
+ */
+function axisLabels(categories, width) {
+    const n = categories.length || 1;
+    if (categories.length && categories.every((c) => MONTH_YEAR.test(String(c)))) {
+        return categories.map((c, i) => (i === 0 || String(c).startsWith('Jan') ? String(c) : String(c).slice(0, 3)));
+    }
+    const fits = Math.max(6, Math.min(18, Math.floor(((width || 400) - 64) / n / 6.5)));
+    return categories.map((c) => (String(c).length > fits ? columnLabel(c, fits) : String(c)));
+}
+
 /** Builds full ApexCharts options from the compact config. */
 export function buildOptions(cfg) {
     const type = cfg.type || 'line';
@@ -245,21 +262,25 @@ export function buildOptions(cfg) {
         // Apex swaps axes for horizontal bars: values live on xaxis.
         options.xaxis = { ...categoryAxis, labels: { ...valueAxisLabels } };
         options.yaxis = { labels: { style: axisLabelStyle, maxWidth: 180 } };
-    } else if (type === 'bar') {
-        // Columns styled like the line charts (same grid and axes), rounded tops,
-        // short two-line labels underneath and the full label in the tooltip.
-        const full = cfg.categories || [];
-        options.xaxis = {
-            ...categoryAxis,
-            categories: full.map((c) => columnLabel(c)),
-            labels: { ...categoryAxis.labels, trim: false, hideOverlappingLabels: false },
-        };
-        options.yaxis = { labels: valueAxisLabels, min: 0, forceNiceScale: true, tickAmount: 4 };
+        return options;
+    }
+
+    // Lines, areas and columns: short axis labels that fit, the full label in the
+    // tooltip, points between the ticks so the first and last labels are not cut
+    // at the edges, and small dots when there are only a few points to read.
+    const full = cfg.categories || [];
+    options.xaxis = {
+        ...categoryAxis,
+        categories: axisLabels(full, cfg.width),
+        tickPlacement: 'between',
+        labels: { ...categoryAxis.labels, trim: false, hideOverlappingLabels: true },
+    };
+    options.yaxis = { labels: valueAxisLabels, min: isBar || type === 'area' ? 0 : undefined, forceNiceScale: true, tickAmount: 4 };
+    options.tooltip = { ...options.tooltip, x: { formatter: (val, o) => full[o?.dataPointIndex] ?? val } };
+    if (isBar) {
         options.plotOptions.bar = { ...options.plotOptions.bar, borderRadius: 6, columnWidth: full.length > 8 ? '60%' : '42%' };
-        options.tooltip = { ...options.tooltip, x: { formatter: (val, o) => full[o?.dataPointIndex] ?? val } };
-    } else {
-        options.xaxis = categoryAxis;
-        options.yaxis = { labels: valueAxisLabels, min: isBar || type === 'area' ? 0 : undefined, forceNiceScale: true, tickAmount: 4 };
+    } else if (full.length && full.length <= 10) {
+        options.markers = { ...options.markers, size: 4 };
     }
     return options;
 }
@@ -278,7 +299,8 @@ export async function render(el, config = null) {
     if (!cfg) return null;
     const ApexCharts = await loadApex();
     destroy(el);
-    const chart = new ApexCharts(el, buildOptions(cfg));
+    // The width decides how much of a long category label fits under each point.
+    const chart = new ApexCharts(el, buildOptions({ width: el.clientWidth, ...cfg }));
     instances.set(el, chart);
     el.setAttribute('data-chart-ready', '1');
     await chart.render();

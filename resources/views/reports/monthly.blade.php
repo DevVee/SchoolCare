@@ -46,7 +46,7 @@
 ]])
 
 <x-ui.card class="mb-4" module="logbook" icon="bar-chart" title="Visits per day" :subtitle="$monthStart->format('F Y')">
-    <x-ui.chart type="bar"
+    <x-ui.chart type="line"
         :series="[['name' => 'Clinic visits', 'data' => $dayVisits], ['name' => 'Consultations', 'data' => $dayConsults]]"
         :categories="$dayLabels" height="280" empty="No visits or consultations this month." />
 </x-ui.card>
@@ -54,10 +54,10 @@
 <div class="row g-4 mb-4">
     <div class="col-lg-7">
         <x-ui.card class="h-100" module="logbook" icon="clipboard2-pulse" title="Top reasons for visit">
-            <x-ui.chart type="horizontal-bar"
+            <x-ui.chart type="line"
                 :series="[['name' => 'Visits', 'data' => $topReasons->pluck('total')->all()]]"
-                :categories="$topReasons->pluck('reason')->all()"
-                :height="max(160, 34 * $topReasons->count() + 40)"
+                :categories="$topReasons->pluck('reason')->all()" category-label="Reason"
+                height="260"
                 empty="No visits this month." />
         </x-ui.card>
     </div>

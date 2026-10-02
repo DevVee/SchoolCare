@@ -5,7 +5,7 @@
 <div class="row g-3">
     <div class="col-lg-6">
         <x-ui.card class="h-100">
-            <x-ui.chart type="bar" title="Clinic visits" subtitle="Last 6 months"
+            <x-ui.chart type="line" title="Clinic visits" subtitle="Last 6 months"
                 :series="[['name' => 'Visits', 'data' => $monthly['data']]]"
                 :categories="$monthly['labels']" height="260"
                 empty="No clinic visits in the last 6 months." />
@@ -18,9 +18,9 @@
                     :series="array_values($severity)" :labels="array_keys($severity)" height="260" />
             @else
                 @php $top = array_slice($reasons, 0, 6, true); @endphp
-                <x-ui.chart type="horizontal-bar" title="Most frequent reasons"
+                <x-ui.chart type="line" title="Most frequent reasons"
                     :series="[['name' => 'Visits', 'data' => array_values($top)]]"
-                    :categories="array_keys($top)" height="260"
+                    :categories="array_keys($top)" category-label="Reason" height="260"
                     empty="No clinic visits recorded." />
             @endif
         </x-ui.card>

@@ -69,10 +69,10 @@
 <div class="row g-4">
     <div class="col-lg-7">
         <x-ui.card class="h-100" module="logbook" icon="clipboard2-pulse" title="Top reasons for visit" :subtitle="(string) $year">
-            <x-ui.chart type="horizontal-bar"
+            <x-ui.chart type="line"
                 :series="[['name' => 'Visits', 'data' => $topReasons->pluck('total')->all()]]"
-                :categories="$topReasons->pluck('reason')->all()"
-                :height="max(160, 34 * $topReasons->count() + 40)"
+                :categories="$topReasons->pluck('reason')->all()" category-label="Reason"
+                height="260"
                 :empty="'No visits in '.$year.'.'" />
         </x-ui.card>
     </div>
