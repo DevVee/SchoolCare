@@ -7,6 +7,8 @@ use App\Support\MailHealth;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 /**
@@ -105,6 +107,52 @@ class MailHealthTest extends TestCase
 
         $this->assertFalse(MailHealth::ready());
         $this->artisan('mail:check')->expectsOutputToContain('MAIL_MAILER is log')->assertExitCode(1);
+    }
+
+    public function test_failures_are_kept_even_when_the_app_log_goes_elsewhere(): void
+    {
+        // Production logs to stderr, which never reaches storage/logs.
+        config(['logging.default' => 'null']);
+
+        Log::warning('Invitation email could not be sent', ['user_id' => 3, 'error' => 'Sender no-reply@schoolcare.online is not valid']);
+        Log::warning('Something unrelated failed', ['error' => 'nope']);
+        Log::info('Test email failed', ['error' => 'info level is not a failure']);
+
+        $failures = MailHealth::recentFailures();
+        $this->assertCount(1, $failures);
+        $this->assertSame('Invitation email could not be sent: Sender ***@schoolcare.online is not valid', $failures[0]['text']);
+        $this->assertStringNotContainsString('no-reply@', (string) File::get($this->storage.'/logs/mail-failures.log'));
+    }
+
+    public function test_switches_say_which_emails_are_on(): void
+    {
+        settings()->setMany(['notify_email_appointments' => true]);
+
+        $switches = implode("\n", MailHealth::switches());
+        $this->assertStringContainsString('Appointment emails to patients: on', $switches);
+        $this->assertStringContainsString('New online request emails to the clinic: off', $switches);
+
+        $this->artisan('mail:check')
+            ->expectsOutputToContain('Appointment emails to patients: on')
+            ->expectsOutputToContain('Sign-in codes by email: off')
+            ->assertExitCode(0);
+    }
+
+    public function test_send_test_reports_the_provider_answer_with_the_address_masked(): void
+    {
+        $this->admin->update(['email' => 'ana.admin@school.test']);
+
+        Mail::shouldReceive('raw')->once()->andThrow(new \RuntimeException('Unable to send an email: Sender no-reply@schoolcare.online is not valid'));
+        $this->artisan('mail:check --send-test')
+            ->expectsOutputToContain('Test email to ***@school.test failed: Unable to send an email: Sender ***@schoolcare.online is not valid')
+            ->doesntExpectOutputToContain('ana.admin')
+            ->assertExitCode(1);
+        $this->assertSame('Test email failed: Unable to send an email: Sender ***@schoolcare.online is not valid', MailHealth::recentFailures()[0]['text']);
+
+        Mail::shouldReceive('raw')->once()->andReturnNull();
+        $this->artisan('mail:check --send-test')
+            ->expectsOutputToContain('Test email to ***@school.test: accepted by brevo')
+            ->assertExitCode(0);
     }
 
     public function test_latest_failures_come_from_the_log_newest_first_with_addresses_masked(): void
