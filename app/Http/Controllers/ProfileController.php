@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileAvatarRequest;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Services\AuditLogService;
+use App\Support\SessionPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
@@ -22,7 +24,9 @@ class ProfileController extends Controller
     public function edit(Request $request): View
     {
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user'     => $request->user(),
+            // Where this account is signed in (database sessions only).
+            'sessions' => SessionPolicy::sessionsOf($request->user(), $request),
         ]);
     }
 
@@ -101,10 +105,30 @@ class ProfileController extends Controller
             'must_change_password' => false,
         ])->save();
 
-        AuditLogService::log('updated', 'users', 'Changed own password');
+        // Anyone signed in elsewhere with the old password is signed out.
+        $ended = SessionPolicy::endOtherSessions($request->user(), $request);
+
+        AuditLogService::log('updated', 'users', 'Changed own password'.($ended ? ", signed out on {$ended} other ".Str::plural('device', $ended) : ''));
 
         return Redirect::route('profile.edit')
-            ->with('success', 'Password changed successfully.');
+            ->with('success', 'Password changed.'.($ended ? ' You were signed out on '.SessionPolicy::count($ended, 'other device').'.' : ''));
+    }
+
+    /** Sign out of every other device (Profile > Where you're signed in). */
+    public function destroyOtherSessions(Request $request): RedirectResponse
+    {
+        $request->validateWithBag('otherSessions', [
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $ended = SessionPolicy::endOtherSessions($request->user(), $request);
+
+        AuditLogService::log('updated', 'users', 'Signed out of other devices ('.$ended.')');
+
+        return Redirect::route('profile.edit')
+            ->with('success', $ended
+                ? 'Signed out on '.SessionPolicy::count($ended, 'other device').'.'
+                : 'You were not signed in anywhere else. Devices kept signed in with "Keep me signed in" were signed out too.');
     }
 
     /**

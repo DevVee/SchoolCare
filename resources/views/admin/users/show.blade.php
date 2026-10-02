@@ -120,7 +120,18 @@
                         @endphp
                         <x-ui.description-item label="Remembered devices" empty="None">{{ $devicesText }}</x-ui.description-item>
                     @endif
+                    @if (\App\Support\SessionPolicy::tracked())
+                        <x-ui.description-item label="Signed in on" empty="No device right now">{{ $signedIn ? \App\Support\SessionPolicy::count($signedIn, 'device') : '' }}</x-ui.description-item>
+                    @endif
                 </x-ui.description-list>
+                @if ($canTouch && $signedIn && auth()->id() !== $user->id)
+                    <form method="POST" action="{{ route('admin.users.sign-out', $user) }}" class="mt-3"
+                          data-confirm="{{ $user->name }} is signed out on every device, including ones kept signed in, and has to sign in again."
+                          data-confirm-title="Sign out everywhere?" data-confirm-variant="primary" data-confirm-button="Sign out">
+                        @csrf
+                        <x-ui.button type="submit" variant="secondary" size="sm" icon="box-arrow-right">Sign out everywhere</x-ui.button>
+                    </form>
+                @endif
                 @if ($canTouch && $devices->isNotEmpty())
                     <form method="POST" action="{{ route('admin.users.forget-devices', $user) }}" class="mt-3"
                           data-confirm="{{ $user->name }} will be asked for a sign-in code the next time they sign in, on every device."

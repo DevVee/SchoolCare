@@ -131,6 +131,8 @@ Route::middleware(['auth', 'check.active', 'password.changed'])->group(function 
     Route::post('/profile/avatar',      [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
     Route::delete('/profile/avatar',    [ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
     Route::put('/profile/password',     [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::delete('/profile/sessions',  [ProfileController::class, 'destroyOtherSessions'])->name('profile.sessions.destroy')
+         ->middleware('throttle:10,1');
     Route::delete('/profile',           [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // ─── Patient Log (Clinic Logbook) ─────────────────────────────────────────
@@ -360,6 +362,8 @@ Route::middleware(['auth', 'check.active', 'password.changed'])->group(function 
                  ->middleware('throttle:10,1');
             Route::post('users/{user}/forget-devices', [UserController::class, 'forgetDevices'])
                  ->name('users.forget-devices');
+            Route::post('users/{user}/sign-out', [UserController::class, 'signOut'])
+                 ->name('users.sign-out');
         });
 
         Route::resource('roles', RoleController::class)

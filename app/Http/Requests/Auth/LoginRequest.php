@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\User;
+use App\Support\SessionPolicy;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -33,6 +34,14 @@ class LoginRequest extends FormRequest
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ];
+    }
+
+    /** "Keep me signed in" turned off in Settings > Security: a posted `remember` is ignored. */
+    protected function prepareForValidation(): void
+    {
+        if (! SessionPolicy::rememberEnabled()) {
+            $this->merge(['remember' => false]);
+        }
     }
 
     /**

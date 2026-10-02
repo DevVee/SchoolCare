@@ -93,6 +93,31 @@
                 </x-ui.card>
             </form>
 
+            {{-- Where this account is signed in (App\Support\SessionPolicy, database sessions) --}}
+            @if (\App\Support\SessionPolicy::tracked())
+                <x-ui.card title="Where you're signed in" subtitle="Devices that used your account recently. If you don't recognise one, sign out of the others and change your password.">
+                    <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+                        @foreach ($sessions as $s)
+                            <li class="d-flex align-items-center gap-3">
+                                <x-ui.icon :name="str_contains($s['device'], 'iPhone') || str_contains($s['device'], 'Android') ? 'phone' : 'laptop'" class="text-muted fs-5" />
+                                <div class="min-w-0">
+                                    <p class="mb-0 fw-semibold">
+                                        {{ $s['device'] }}
+                                        @if ($s['current'])<span class="badge text-bg-success ms-1">This device</span>@endif
+                                    </p>
+                                    <p class="mb-0 text-muted fs-sm">
+                                        {{ $s['ip'] ?: 'Unknown address' }} · {{ $s['current'] ? 'Active now' : 'Last active '.$s['last_active']->diffForHumans() }}
+                                    </p>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <x-slot:footer>
+                        <x-ui.button variant="secondary" size="sm" icon="box-arrow-right" data-bs-toggle="modal" data-bs-target="#otherSessionsModal">Sign out of other devices</x-ui.button>
+                    </x-slot:footer>
+                </x-ui.card>
+            @endif
+
             <x-ui.card title="Delete account" subtitle="Permanently removes your account. This cannot be undone.">
                 <p class="text-ink-2 mb-0">
                     Accounts linked to clinic records cannot be deleted. Ask an administrator to deactivate your account instead.
@@ -118,6 +143,15 @@
     <x-slot:footer>
         <x-ui.button variant="secondary" data-bs-dismiss="modal">Cancel</x-ui.button>
         <x-ui.button type="submit" icon="upload" id="avatarSubmitBtn" disabled>Upload photo</x-ui.button>
+    </x-slot:footer>
+</x-ui.modal>
+
+{{-- Sign out of other devices --}}
+<x-ui.modal id="otherSessionsModal" title="Sign out of other devices?" subtitle="You stay signed in here. Devices kept signed in with &quot;Keep me signed in&quot; are signed out too." :action="route('profile.sessions.destroy')" method="DELETE" size="sm">
+    <x-ui.input name="password" id="otherSessionsPassword" type="password" label="Enter your password to confirm" bag="otherSessions" required autocomplete="current-password" />
+    <x-slot:footer>
+        <x-ui.button variant="secondary" data-bs-dismiss="modal">Cancel</x-ui.button>
+        <x-ui.button type="submit" icon="box-arrow-right">Sign out other devices</x-ui.button>
     </x-slot:footer>
 </x-ui.modal>
 
@@ -187,6 +221,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Reopen the delete dialog when the password was wrong.
     @if ($errors->userDeletion->any())
         if (window.bootstrap) window.bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteAccountModal')).show();
+    @endif
+    @if ($errors->otherSessions->any())
+        if (window.bootstrap) window.bootstrap.Modal.getOrCreateInstance(document.getElementById('otherSessionsModal')).show();
     @endif
 });
 </script>

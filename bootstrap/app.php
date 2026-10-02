@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Adds CSP, X-Frame-Options, HSTS, etc. to all web responses.
         $middleware->web(append: [
             \App\Http\Middleware\SecurityHeaders::class,
+            // Sign out after the inactivity limit in Settings > Security (keep-alive is not use).
+            \App\Http\Middleware\EnforceIdleTimeout::class,
         ]);
 
         // ── Register custom middleware aliases ─────────────────────────────────

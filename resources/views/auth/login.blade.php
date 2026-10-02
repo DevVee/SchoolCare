@@ -31,7 +31,11 @@
                 : null,
         ])
 
-        <x-ui.checkbox name="remember" id="remember_me" label="Keep me signed in on this device" />
+        {{-- Settings > Security > "Keep me signed in" lasts (Off hides it) --}}
+        @if (\App\Support\SessionPolicy::rememberEnabled())
+            <x-ui.checkbox name="remember" id="remember_me"
+                label="Keep me signed in on this device for {{ \App\Support\SessionPolicy::count(\App\Support\SessionPolicy::rememberDays(), 'day') }}" />
+        @endif
 
         <x-ui.button type="submit" size="lg" block>Sign in</x-ui.button>
     </form>

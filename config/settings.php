@@ -792,9 +792,22 @@ return [
         'security' => [
             'label'       => 'Security',
             'icon'        => 'bi-shield-lock',
-            'description' => 'Extra checks when people sign in.',
+            'description' => 'How long people stay signed in, and extra checks when they sign in.',
             'partial'     => 'admin.settings.partials.security',
             'fields'      => [
+                // App\Support\SessionPolicy + App\Http\Middleware\EnforceIdleTimeout.
+                'session_idle_minutes' => [
+                    'type' => 'select', 'label' => 'Sign out after inactivity', 'default' => '480',
+                    'options' => ['30' => '30 minutes', '60' => '1 hour', '120' => '2 hours', '240' => '4 hours', '480' => '8 hours (a school day)', '720' => '12 hours', '1440' => '24 hours'],
+                    'help' => 'Someone who has not used the system for this long is signed out and asked for their password again. A tab left open does not count as use. Devices signed in with "Keep me signed in" are not signed out.',
+                    'rules' => ['required', 'in:30,60,120,240,480,720,1440'],
+                ],
+                'session_remember_days' => [
+                    'type' => 'select', 'label' => '"Keep me signed in" lasts', 'default' => '30',
+                    'options' => ['0' => 'Off: hide the option', '1' => '1 day', '7' => '7 days', '14' => '14 days', '30' => '30 days', '90' => '90 days'],
+                    'help' => 'How long a device stays signed in when "Keep me signed in on this device" is ticked at sign-in. Use it only on the clinic\'s own computers, not shared ones.',
+                    'rules' => ['required', 'in:0,1,7,14,30,90'],
+                ],
                 'otp_enabled' => [
                     'type' => 'boolean', 'label' => 'Ask for a sign-in code by email', 'default' => false,
                     'help' => 'After the password, people type a 6-digit code that is emailed to them. Email must be working first: send yourself a test email from Settings > Email. In an emergency, the person who manages the server can turn this off with the command php artisan auth:otp-off.',

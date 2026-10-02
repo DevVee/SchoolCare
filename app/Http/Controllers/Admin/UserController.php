@@ -11,13 +11,12 @@ use App\Notifications\InviteUserNotification;
 use App\Services\AuditLogService;
 use App\Services\SignInCodes;
 use App\Support\PermissionCatalog;
+use App\Support\SessionPolicy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
@@ -147,7 +146,24 @@ class UserController extends Controller
         // Browsers remembered for the email sign-in code (Settings > Security).
         $devices = $user->trustedDevices()->active()->latest('last_used_at')->get(['id', 'last_used_at', 'expires_at']);
 
-        return view('admin.users.show', compact('user', 'recentLogs', 'lastLogin', 'clinicalRecords', 'isSuperAdmin', 'devices'));
+        // Devices signed in right now (database sessions).
+        $signedIn = SessionPolicy::sessionsOf($user)->count();
+
+        return view('admin.users.show', compact('user', 'recentLogs', 'lastLogin', 'clinicalRecords', 'isSuperAdmin', 'devices', 'signedIn'));
+    }
+
+    /** Sign the user out on every device, including ones kept signed in. */
+    public function signOut(User $user): RedirectResponse
+    {
+        $this->authorize('manage-users');
+        $this->ensureCanTouchAdmin($user);
+        abort_if($user->id === auth()->id(), 403, 'Use Profile > Sign out of other devices for your own account.');
+
+        $ended = SessionPolicy::endAllSessions($user);
+
+        AuditLogService::log('updated', 'users', "Signed out everywhere: {$user->name} ({$user->email}), {$ended} ".Str::plural('session', $ended));
+
+        return back()->with('success', "{$user->name} is signed out on every device.");
     }
 
     /**
@@ -377,20 +393,10 @@ class UserController extends Controller
             : $roles->reject(fn ($r) => PermissionCatalog::isSuperAdminRole($r->name))->values();
     }
 
-    /** Sign the user out everywhere. */
+    /** Sign the user out everywhere, "remember me" cookies included. */
     private function terminateSessions(User $user): void
     {
-        $table = config('session.table', 'sessions');
-
-        if (config('session.driver') === 'database' && Schema::hasTable($table)) {
-            DB::connection(config('session.connection'))
-                ->table($table)
-                ->where('user_id', $user->getKey())
-                ->delete();
-        }
-
-        // Invalidate "remember me" cookies as well.
-        $user->forceFill(['remember_token' => Str::random(60)])->saveQuietly();
+        SessionPolicy::endAllSessions($user);
     }
 
     /** Email an invitation; false (and a log entry) when it could not be sent. */

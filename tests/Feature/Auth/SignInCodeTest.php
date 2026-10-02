@@ -464,7 +464,8 @@ class SignInCodeTest extends TestCase
     public function test_codes_cannot_be_turned_on_while_email_is_not_set_up(): void
     {
         $admin = $this->userWithRole('administrator');
-        $form = ['otp_enabled' => '1', 'otp_applies_to' => 'everyone', 'otp_remember_days' => '30'];
+        $form = ['otp_enabled' => '1', 'otp_applies_to' => 'everyone', 'otp_remember_days' => '30',
+            'session_idle_minutes' => '480', 'session_remember_days' => '30'];
 
         foreach ([['mail.default' => 'log'], ['mail.default' => 'array'], ['mail.default' => 'brevo', 'services.brevo.key' => null]] as $mail) {
             config($mail);

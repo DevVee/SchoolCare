@@ -128,6 +128,10 @@ class AppServiceProvider extends ServiceProvider
             if ($replyTo !== null) {
                 config(['mail.reply_to' => ['address' => $replyTo, 'name' => \App\Support\MailBrand::senderName()]]);
             }
+
+            // Settings > Security: how long a session and "Keep me signed in" last
+            // (instead of SESSION_LIFETIME, which was 120 minutes on the server).
+            \App\Support\SessionPolicy::applyToConfig();
         } catch (\Throwable) {
             // Settings unavailable (no table / no DB yet) — keep .env config.
         }
