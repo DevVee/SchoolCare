@@ -59,6 +59,9 @@
             @endif
             <li>Sent from: {{ $status['from_name'] }} &lt;{{ $status['from_address'] }}&gt;. Leave the fields below empty to use the server settings <code>MAIL_FROM_NAME</code> and <code>MAIL_FROM_ADDRESS</code>.</li>
             <li>Emails are sent right away, not through the background queue.</li>
+            @foreach ($status['switches'] ?? [] as $switch)
+                <li>{{ $switch }}.</li>
+            @endforeach
             <li>On the server, <code>php artisan mail:check</code> shows the same checks and the latest failures.</li>
         </ul>
     </details>

@@ -195,6 +195,7 @@ class SettingsController extends Controller
             'ready'         => MailHealth::ready(),
             'problems'      => MailHealth::problems(),
             'failures'      => MailHealth::recentFailures(3),
+            'switches'      => MailHealth::switches(),
         ];
     }
 }

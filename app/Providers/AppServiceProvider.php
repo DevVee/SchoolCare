@@ -12,7 +12,10 @@ use App\Observers\MedicineObserver;
 use App\Observers\PatientObserver;
 use App\Repositories\Contracts\PatientRepositoryInterface;
 use App\Repositories\PatientRepository;
+use App\Support\MailHealth;
 use Composer\CaBundle\CaBundle;
+use Illuminate\Log\Events\MessageLogged;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -83,6 +86,7 @@ class AppServiceProvider extends ServiceProvider
     /**
      * MAIL_MAILER=brevo sends through the Brevo HTTP API (services.brevo.key),
      * verifying TLS against the same CA bundle as the Http client above.
+     * Email failures are also kept in storage/logs/mail-failures.log (MailHealth).
      */
     private function bootMail(): void
     {
@@ -90,6 +94,8 @@ class AppServiceProvider extends ServiceProvider
             null,
             HttpClient::create(['cafile' => CaBundle::getSystemCaRootBundlePath()])
         ))->create(new Dsn('brevo+api', 'default', (string) config('services.brevo.key'))));
+
+        Event::listen(MessageLogged::class, [MailHealth::class, 'record']);
     }
 
     /**

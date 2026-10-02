@@ -9,9 +9,11 @@
 #            -wal/-shm files) aside as *.malformed-<time>, copies `source` in,
 #            migrates, clears caches and brings the site back up. Refuses unless
 #            `confirm` is RESTORE and `source` passes quick_check.
-#   mail     READ ONLY. `php artisan mail:check`: the mailer, whether the Brevo key
-#            is set (never the key), From and site domains, and the latest email
-#            failures from the log with addresses masked.
+#   mail     `php artisan mail:check`: the mailer, whether the Brevo key is set
+#            (never the key), From and site domains, which emails are on, and the
+#            latest email failures with addresses masked. Read only, unless
+#            `confirm` is SEND: then one test email goes to the first active
+#            administrator and the provider's answer is printed.
 name: Maintenance
 
 on:
@@ -27,7 +29,7 @@ on:
         required: false
         default: ''
       confirm:
-        description: 'restore only: type RESTORE'
+        description: 'restore: type RESTORE. mail: type SEND to also send a test email to the first administrator'
         required: false
         default: ''
 
@@ -52,10 +54,13 @@ jobs:
           echo "SSH=ssh -i $HOME/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" >> "$GITHUB_ENV"
           echo "TARGET=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" >> "$GITHUB_ENV"
 
-      - name: Email check (read only)
+      - name: Email check
         if: inputs.action == 'mail'
+        env:
+          CONFIRM: ${{ inputs.confirm }}
         run: |
-          $SSH "$TARGET" "cd ~/$APP_DIR && php artisan mail:check" || echo "::warning::Email is not ready, see the lines above."
+          flag=""; [ "$CONFIRM" = "SEND" ] && flag="--send-test"
+          $SSH "$TARGET" "cd ~/$APP_DIR && php artisan mail:check $flag" || echo "::warning::Email is not ready, see the lines above."
 
       - name: Check databases (read only)
         if: inputs.action != 'mail'
