@@ -48,6 +48,9 @@ class NewPasswordController extends Controller
                     'remember_token' => Str::random(60),
                 ])->save();
 
+                // Whoever is signed in with the old password is signed out everywhere.
+                \App\Support\SessionPolicy::endAllSessions($user);
+
                 event(new PasswordReset($user));
             }
         );
