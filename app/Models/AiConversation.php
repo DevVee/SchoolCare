@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AiConversation extends Model
 {
@@ -26,5 +27,11 @@ class AiConversation extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Action cards the assistant proposed in this answer (App\Services\Coco\CocoActions). */
+    public function actions(): HasMany
+    {
+        return $this->hasMany(AiPendingAction::class, 'conversation_id');
     }
 }

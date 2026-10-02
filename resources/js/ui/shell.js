@@ -8,7 +8,7 @@
  * Drawer (<lg) behaviour, Esc and focus trapping come from Bootstrap's
  * .offcanvas-lg on #appSidebar.
  */
-import { Tooltip } from 'bootstrap';
+import { Offcanvas, Tooltip } from 'bootstrap';
 
 const STORAGE_KEY = 'schoolcare.sidebar';
 const root = document.documentElement;
@@ -70,7 +70,14 @@ if (sidebar) {
         });
     });
 
-    desktop.addEventListener('change', syncTips);
+    // Drawer opened on a narrow screen, then the screen widens (tablet turned, window
+    // resized): Bootstrap only closes it when it stops being position: fixed, which never
+    // happens here (the desktop sidebar is fixed too). Its backdrop and scroll lock
+    // would stay over the topbar and sidebar and swallow clicks, so close it.
+    desktop.addEventListener('change', (e) => {
+        syncTips();
+        if (e.matches) Offcanvas.getInstance(sidebar)?.hide();
+    });
     syncToggles();
     syncTips();
 }

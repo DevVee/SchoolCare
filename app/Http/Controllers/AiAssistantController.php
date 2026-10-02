@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\AiConversation;
+use App\Models\AiPendingAction;
 use App\Services\AiAssistantService;
+use App\Services\Coco\CocoActions;
 use Illuminate\Http\Request;
 
 class AiAssistantController extends Controller
 {
-    public function __construct(private readonly AiAssistantService $ai) {}
+    public function __construct(
+        private readonly AiAssistantService $ai,
+        private readonly CocoActions $actions,
+    ) {}
 
     public function index()
     {
@@ -19,11 +24,18 @@ class AiAssistantController extends Controller
         }
 
         $conversations = AiConversation::where('user_id', auth()->id())
+            ->with('actions')
             ->latest()
             ->limit(30)
             ->get();
 
-        return view('ai-assistant.index', compact('conversations'));
+        // Action cards under past answers: conversation id => cards.
+        $cards = $conversations
+            ->filter(fn ($c) => $c->actions->isNotEmpty())
+            ->mapWithKeys(fn ($c) => [$c->id => $c->actions->sortBy('created_at')->map(fn ($a) => $this->actions->card($a))->values()])
+            ->all();
+
+        return view('ai-assistant.index', compact('conversations', 'cards'));
     }
 
     public function chat(Request $request)
@@ -41,8 +53,9 @@ class AiAssistantController extends Controller
             'message' => ['required', 'string', 'max:4000'],
         ]);
 
-        // Past turns for context; the service also caps their total length.
+        // Past turns for context (with what became of their cards); the service also caps their total length.
         $history = AiConversation::where('user_id', auth()->id())
+            ->with('actions')
             ->latest()
             ->limit(AiAssistantService::HISTORY_LIMIT)
             ->get();
@@ -62,10 +75,17 @@ class AiAssistantController extends Controller
         /** @var int $convoId */
         $convoId = $convo->id;
 
+        // Cards prepared while answering belong to this question and answer.
+        $actions = collect($result['actions'] ?? []);
+        if ($actions->isNotEmpty()) {
+            AiPendingAction::whereIn('id', $actions->pluck('id'))->update(['conversation_id' => $convoId]);
+        }
+
         return response()->json([
             'response'   => $result['response'],
             'id'         => $convoId,
             'delete_url' => route('ai-assistant.destroy', $convoId),
+            'actions'    => $actions->map(fn (AiPendingAction $a) => $this->actions->card($a))->values(),
         ]);
     }
 
@@ -77,6 +97,8 @@ class AiAssistantController extends Controller
         // 404 rather than 403 so other users' conversation IDs are not revealed.
         abort_unless((int) $conversation->user_id === (int) auth()->id(), 404);
 
+        // A card that disappears from the chat can no longer be confirmed.
+        $conversation->actions()->where('status', AiPendingAction::PENDING)->update(['status' => AiPendingAction::CANCELLED]);
         $conversation->delete();
 
         return $request->expectsJson()
@@ -88,6 +110,7 @@ class AiAssistantController extends Controller
     {
         $this->authorize('use-ai-assistant');
 
+        AiPendingAction::where('user_id', auth()->id())->where('status', AiPendingAction::PENDING)->update(['status' => AiPendingAction::CANCELLED]);
         AiConversation::where('user_id', auth()->id())->delete();
 
         return response()->json(['success' => true]);

@@ -13,6 +13,7 @@ use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Tests\TestCase;
 
 class AiAssistantServiceTest extends TestCase
@@ -55,6 +56,12 @@ class AiAssistantServiceTest extends TestCase
         return Http::recorded()[$index][0]->data();
     }
 
+    /** Groq's built-in web search in a sent payload (function tools are offered next to it). */
+    private function searches(array $payload): bool
+    {
+        return in_array(['type' => 'browser_search'], $payload['tools'] ?? [], true);
+    }
+
     public function test_retired_saved_model_falls_back_to_the_default(): void
     {
         Setting::create(['key' => 'ai_model', 'value' => 'llama-3.3-70b-versatile', 'type' => 'string', 'group' => 'ai']);
@@ -81,7 +88,8 @@ class AiAssistantServiceTest extends TestCase
         $this->assertSame('medium', $payload['reasoning_effort']);
         $this->assertFalse($payload['include_reasoning']);
         $this->assertSame(8192, $payload['max_tokens']);
-        $this->assertSame([['type' => 'browser_search']], $payload['tools']);
+        $this->assertTrue($this->searches($payload));
+        $this->assertContains('find_patient', array_column(array_column($payload['tools'], 'function'), 'name'));
         $this->assertArrayNotHasKey('reasoning_format', $payload);
     }
 
@@ -93,7 +101,7 @@ class AiAssistantServiceTest extends TestCase
 
         $this->chat();
 
-        $this->assertArrayNotHasKey('tools', $this->sentPayload());
+        $this->assertFalse($this->searches($this->sentPayload()));
     }
 
     public function test_qwen_gets_hidden_reasoning_and_no_web_search(): void
@@ -107,7 +115,7 @@ class AiAssistantServiceTest extends TestCase
         $this->assertSame('hidden', $payload['reasoning_format']);
         $this->assertArrayNotHasKey('reasoning_effort', $payload);
         $this->assertArrayNotHasKey('include_reasoning', $payload);
-        $this->assertArrayNotHasKey('tools', $payload);
+        $this->assertFalse($this->searches($payload));
     }
 
     public function test_failed_web_search_is_answered_again_without_it(): void
@@ -120,8 +128,8 @@ class AiAssistantServiceTest extends TestCase
 
         $this->assertSame('Answer without search.', $result['response']);
         Http::assertSentCount(2);
-        $this->assertArrayHasKey('tools', $this->sentPayload(0));
-        $this->assertArrayNotHasKey('tools', $this->sentPayload(1));
+        $this->assertTrue($this->searches($this->sentPayload(0)));
+        $this->assertArrayNotHasKey('tools', $this->sentPayload(1)); // a 400 can come from any tool: plain chat
     }
 
     public function test_slow_web_search_is_dropped_and_answered_without_it(): void
@@ -134,7 +142,7 @@ class AiAssistantServiceTest extends TestCase
 
         $this->assertSame('Answer without search.', $result['response']);
         Http::assertSentCount(2);
-        $this->assertArrayNotHasKey('tools', $this->sentPayload(1));
+        $this->assertFalse($this->searches($this->sentPayload(1)));
     }
 
     public function test_reply_is_cleaned_of_reasoning_citations_and_dashes(): void
@@ -160,7 +168,7 @@ class AiAssistantServiceTest extends TestCase
         $this->assertSame('Answer from the other model.', $this->chat()['response']);
         $this->assertSame('openai/gpt-oss-120b', $this->sentPayload(1)['model']);
         $this->assertSame('openai/gpt-oss-20b', $this->sentPayload(2)['model']);
-        $this->assertArrayNotHasKey('tools', $this->sentPayload(2));
+        $this->assertFalse($this->searches($this->sentPayload(2)));
     }
 
     public function test_errors_are_short_and_plain(): void
@@ -185,7 +193,31 @@ class AiAssistantServiceTest extends TestCase
         $this->assertSame('Answer from the faster model.', $result['response']);
         $this->assertSame('openai/gpt-oss-120b', $this->sentPayload(0)['model']);
         $this->assertSame('openai/gpt-oss-20b', $this->sentPayload(1)['model']);
-        $this->assertArrayHasKey('tools', $this->sentPayload(1));
+        $this->assertTrue($this->searches($this->sentPayload(1)));
+    }
+
+    public function test_a_short_per_minute_limit_on_both_models_is_waited_out_once(): void
+    {
+        Sleep::fake();
+        Http::fake([self::API => Http::sequence()
+            ->push(['error' => ['message' => 'Rate limit reached for model `openai/gpt-oss-120b` on tokens per minute (TPM). Please try again in 9.1s.']], 429)
+            ->push(['error' => ['message' => 'Rate limit reached for model `openai/gpt-oss-20b` on tokens per minute (TPM). Please try again in 3.2s.']], 429)
+            ->push(['choices' => [['message' => ['content' => 'Answer after waiting.']]], 'usage' => ['total_tokens' => 30]])]);
+
+        $this->assertSame('Answer after waiting.', $this->chat()['response']);
+        Sleep::assertSleptTimes(1);
+        Sleep::assertSequence([Sleep::for(4)->seconds()]);
+        $this->assertSame('openai/gpt-oss-20b', $this->sentPayload(2)['model']);
+    }
+
+    public function test_a_long_rate_limit_is_not_waited_for(): void
+    {
+        Sleep::fake();
+        Http::fake([self::API => Http::response(['error' => ['message' => 'Rate limit reached on tokens per day (TPD). Please try again in 7m12.5s.']], 429)]);
+
+        $this->assertSame('The assistant is busy right now. Please wait a minute and try again.', $this->chat()['response']);
+        Sleep::assertNeverSlept();
+        Http::assertSentCount(2);
     }
 
     public function test_missing_key_gives_a_setup_message_without_calling_the_api(): void

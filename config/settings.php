@@ -856,6 +856,33 @@ return [
                     'help' => 'Lets it look up news, advisories and other recent information. Searching uses far more of your Groq allowance, and on the free plan one or two searches can use up the day, so turn this on with a paid Groq plan. Works with the GPT-OSS models.',
                     'rules' => ['boolean'],
                 ],
+                // Records and actions (App\Services\Coco). Reading is on by default (owner),
+                // actions are off until an administrator turns them on.
+                'ai_read_patients' => [
+                    'type' => 'boolean', 'label' => 'Let the assistant read patient records', 'default' => true,
+                    'help' => 'When someone asks about a specific patient, it may look up the name, patient number, course or grade and section, the last few clinic visits, allergies and existing conditions, and send them to Groq to answer. Every lookup is recorded in the audit logs. When off, no patient details are sent.',
+                    'rules' => ['boolean'],
+                ],
+                'ai_actions_enabled' => [
+                    'type' => 'boolean', 'label' => 'Let the assistant take actions', 'default' => false,
+                    'help' => 'It can prepare a text message, an email, an appointment or a settings change. Nothing happens until the person chatting checks the details and taps Confirm, and each confirmed action is recorded in the audit logs.',
+                    'rules' => ['boolean'],
+                ],
+                'ai_actions_messages' => [
+                    'type' => 'boolean', 'label' => 'Text messages and emails', 'default' => true,
+                    'help' => 'One person at a time: a patient, a guardian or a staff member. Needs the Send SMS permission.',
+                    'rules' => ['boolean'],
+                ],
+                'ai_actions_appointments' => [
+                    'type' => 'boolean', 'label' => 'Appointments', 'default' => true,
+                    'help' => 'Book, move or cancel an appointment, with the same permissions and limits as the Appointments page.',
+                    'rules' => ['boolean'],
+                ],
+                'ai_actions_settings' => [
+                    'type' => 'boolean', 'label' => 'Settings changes', 'default' => true,
+                    'help' => 'Administrators only. Everyday settings such as clinic hours, contact details, SMS messages and website text. API keys, security and sign-in settings can never be changed this way.',
+                    'rules' => ['boolean'],
+                ],
             ],
         ],
 

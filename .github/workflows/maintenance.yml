@@ -9,15 +9,18 @@
 #            -wal/-shm files) aside as *.malformed-<time>, copies `source` in,
 #            migrates, clears caches and brings the site back up. Refuses unless
 #            `confirm` is RESTORE and `source` passes quick_check.
+#   mail     READ ONLY. `php artisan mail:check`: the mailer, whether the Brevo key
+#            is set (never the key), From and site domains, and the latest email
+#            failures from the log with addresses masked.
 name: Maintenance
 
 on:
   workflow_dispatch:
     inputs:
       action:
-        description: check (read only) or restore
+        description: check (read only), restore, or mail (read only)
         type: choice
-        options: [check, restore]
+        options: [check, restore, mail]
         default: check
       source:
         description: 'restore only: database file to restore, e.g. ~/backups/schoolcare-20260930-100512.sqlite'
@@ -49,7 +52,13 @@ jobs:
           echo "SSH=ssh -i $HOME/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" >> "$GITHUB_ENV"
           echo "TARGET=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" >> "$GITHUB_ENV"
 
+      - name: Email check (read only)
+        if: inputs.action == 'mail'
+        run: |
+          $SSH "$TARGET" "cd ~/$APP_DIR && php artisan mail:check" || echo "::warning::Email is not ready, see the lines above."
+
       - name: Check databases (read only)
+        if: inputs.action != 'mail'
         run: |
           $SSH "$TARGET" "APP_DIR='$APP_DIR' OLD_DIR='$OLD_DIR' bash -s" <<'EOS'
           set -u

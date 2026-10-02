@@ -48,7 +48,21 @@
                     Web search is off{{ settings('ai_web_search') ? ' because the chosen model cannot search' : '' }}.
                 @endif
             </li>
-            <li>With each question, the assistant also gets today's date, the asking user's first name and role, and today's clinic numbers (appointment and visit counts, low stock and expiring medicines). No patient names or details are included.</li>
+            <li>With each question, the assistant also gets today's date, the asking user's first name and role, and today's clinic numbers (appointment and visit counts, low stock and expiring medicines). No patient names or details are included in these.</li>
+            <li>
+                @if (settings('ai_read_patients', true))
+                    Patient records: when someone asks about a patient, the assistant may look up the name, patient number, course or grade and section, the last 3 clinic visits (date, complaint, action taken), allergies and existing conditions, and send them to Groq. It can also see medicine stock and the appointment schedule, within the asking user's permissions. Every lookup is recorded in the audit logs.
+                @else
+                    Patient records: off. No patient names or details are sent to Groq. The assistant can still see medicine stock and free appointment times, within the asking user's permissions.
+                @endif
+            </li>
+            <li>
+                @if (settings('ai_actions_enabled', false))
+                    Actions: on. The assistant can prepare a text message, email, appointment or settings change as a card. It happens only when the person chatting taps Confirm, and each one is recorded in the audit logs. The text of a message it prepares is written by Groq.
+                @else
+                    Actions: off. The assistant cannot prepare messages, appointments or settings changes.
+                @endif
+            </li>
             <li>
                 @if (($status['api_key_source'] ?? null) === 'settings')
                     The Groq API key is saved here, encrypted. It is never shown, only its last 4 characters.

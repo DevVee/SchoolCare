@@ -224,7 +224,7 @@ if (dlg && typeof dlg.showModal === 'function') {
             return;
         }
         if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && !dlg.open && !isTyping(e.target)
-            && !document.querySelector('.modal.show, .offcanvas.show')) {
+            && !document.querySelector('.modal.show, .offcanvas.show, .offcanvas-lg.show')) {
             e.preventDefault();
             open();
         }

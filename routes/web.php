@@ -330,6 +330,17 @@ Route::middleware(['auth', 'check.active', 'password.changed'])->group(function 
         Route::post('/chat', [AiAssistantController::class, 'chat'])
              ->name('chat')
              ->middleware('throttle:30,1');
+
+        // Cards the assistant prepared: nothing runs until the user confirms here
+        // (also limited to 20 confirmed actions an hour per user, in CocoActions).
+        Route::post('/actions/{action}/confirm', [\App\Http\Controllers\AiAssistantActionController::class, 'confirm'])
+             ->whereUuid('action')
+             ->name('actions.confirm')
+             ->middleware('throttle:30,1');
+        Route::post('/actions/{action}/cancel', [\App\Http\Controllers\AiAssistantActionController::class, 'cancel'])
+             ->whereUuid('action')
+             ->name('actions.cancel')
+             ->middleware('throttle:30,1');
     });
 
     // ─── Admin ────────────────────────────────────────────────────────────────
