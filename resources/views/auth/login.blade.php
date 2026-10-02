@@ -36,8 +36,5 @@
         <x-ui.button type="submit" size="lg" block>Sign in</x-ui.button>
     </form>
 
-    <p class="auth-note">
-        <x-ui.icon name="shield-lock" />
-        For clinic staff only. Ask your administrator if you need an account.
-    </p>
+    <p class="auth-note">For clinic staff only. Ask your administrator if you need an account.</p>
 </x-guest-layout>

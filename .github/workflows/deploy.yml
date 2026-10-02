@@ -46,10 +46,13 @@ jobs:
           node-version: 24
           cache: npm
 
+      # check:build refuses a bundle the browser cannot parse: one syntax error
+      # stops every script on every page (it happened on 30 September).
       - name: Build assets
         run: |
           npm ci
           npm run build
+          npm run check:build
 
       - name: Configure SSH
         run: |
