@@ -112,12 +112,12 @@ class CheckMail extends Command
             }
 
             $this->line('Recent emails (Brevo, last 30 days, newest first):');
-            foreach (array_slice($brevo['events'], 0, 10) as $e) {
+            foreach (array_slice($brevo['emails'], 0, 10) as $e) {
                 $this->line("  [{$e['time']}] {$e['label']}: {$e['email']}"
                     .($e['subject'] !== '' ? ' "'.$e['subject'].'"' : '')
                     .($e['reason'] !== '' ? " ({$e['reason']})" : ''));
             }
-            if ($brevo['events'] === []) {
+            if ($brevo['emails'] === []) {
                 $this->line('  none');
             }
         }

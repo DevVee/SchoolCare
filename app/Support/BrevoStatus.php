@@ -62,8 +62,9 @@ class BrevoStatus
      *   account: ?string,
      *   domain: ?array{name: string, exists: bool, authenticated: bool, verified: bool, records: list<array{name: string, type: string, host: string, value: string, ok: bool}>},
      *   sender: ?array{email: string, verified: bool, via_domain: bool},
-     *   events: list<array{time: string, event: string, label: string, bad: bool, email: string, subject: string, reason: string}>,
-     *   problems: list<array{level: 'error'|'warning', text: string}>
+     *   events: list<array{time: string, event: string, label: string, bad: bool, email: string, subject: string, reason: string, message_id: string}>,
+     *   emails: list<array{time: string, event: string, label: string, bad: bool, email: string, subject: string, reason: string, message_id: string}>,
+     *   problems: list<array{level: 'error'|'warning', kind: string, text: string}>
      * }|null  null when Brevo is not the mailer
      */
     public static function report(bool $fresh = false): ?array
@@ -119,13 +120,14 @@ class BrevoStatus
             'domain'     => null,
             'sender'     => null,
             'events'     => [],
+            'emails'     => [],
             'problems'   => [],
         ];
 
         $account = self::get('/account');
         if ($account === null) {
             $out['error'] = 'Could not reach Brevo from the server.';
-            $out['problems'][] = ['level' => 'warning', 'text' => 'Could not reach Brevo from the server to check the account. Try again in a minute.'];
+            $out['problems'][] = ['level' => 'warning', 'kind' => 'reach', 'text' => 'Could not reach Brevo from the server to check the account. Try again in a minute.'];
 
             return $out;
         }
@@ -134,13 +136,13 @@ class BrevoStatus
         if (in_array($account->status(), [401, 403], true)) {
             $message = (string) ($account->json('message') ?: 'Key not accepted');
             $out['error'] = $message;
-            $out['problems'][] = ['level' => 'error', 'text' => "Brevo does not accept the API key on the server ({$message}). Every email fails. Create a new key in Brevo (SMTP & API > API keys), put it in BREVO_API_KEY on the server, and if Brevo limits keys to authorised IPs, add the server's IP there."];
+            $out['problems'][] = ['level' => 'error', 'kind' => 'key', 'text' => "Brevo does not accept the API key on the server ({$message}). Every email fails. Create a new key in Brevo (SMTP & API > API keys), put it in BREVO_API_KEY on the server, and if Brevo limits keys to authorised IPs, add the server's IP there."];
 
             return $out;
         }
         if (! $account->successful()) {
             $out['error'] = 'Brevo answered '.$account->status().'.';
-            $out['problems'][] = ['level' => 'warning', 'text' => 'Brevo answered '.$account->status().' when checking the account. Try again in a minute.'];
+            $out['problems'][] = ['level' => 'warning', 'kind' => 'reach', 'text' => 'Brevo answered '.$account->status().' when checking the account. Try again in a minute.'];
 
             return $out;
         }
@@ -153,6 +155,7 @@ class BrevoStatus
 
         $events = self::get('/smtp/statistics/events', ['limit' => 15, 'sort' => 'desc', 'days' => 30]);
         $out['events'] = $events?->successful() ? self::events($events->json('events') ?? []) : [];
+        $out['emails'] = self::latestPerEmail($out['events']);
 
         $out['problems'] = self::problemsFrom($out);
 
@@ -218,7 +221,7 @@ class BrevoStatus
         return ['email' => $email, 'verified' => $verified, 'via_domain' => $viaDomain];
     }
 
-    /** @return list<array{level: 'error'|'warning', text: string}> */
+    /** @return list<array{level: 'error'|'warning', kind: string, text: string}> */
     private static function problemsFrom(array $report): array
     {
         $out = [];
@@ -226,25 +229,37 @@ class BrevoStatus
         $sender = $report['sender'];
 
         if ($sender !== null && ! $sender['verified']) {
-            $out[] = ['level' => 'error', 'text' => "Brevo rejects or blocks emails from {$sender['email']}: it is not a verified sender and its domain is not authenticated. Authenticate the domain (records below), or add the address under Brevo > Senders, Domains & Dedicated IPs > Senders."];
+            $out[] = ['level' => 'error', 'kind' => 'sender', 'text' => "Brevo is rejecting emails from {$sender['email']}: the address is not a verified sender and its domain is not authenticated."];
         }
 
         if ($domain !== null && ! $domain['exists']) {
-            $out[] = ['level' => 'warning', 'text' => "The domain {$domain['name']} is not added in Brevo, so emails are not signed for it and often land in spam or are rejected by Gmail. In Brevo, go to Senders, Domains & Dedicated IPs > Domains > Add a domain, then add the DNS records it shows at your domain host (Hostinger: Domains > DNS / Nameservers)."];
+            $out[] = ['level' => 'warning', 'kind' => 'domain', 'text' => "The domain {$domain['name']} is not added in Brevo, so emails land in spam or are rejected. Add it in Brevo (Senders, Domains & Dedicated IPs > Domains), then add the DNS records it shows at your domain host."];
         } elseif ($domain !== null && ! $domain['authenticated']) {
             $missing = collect($domain['records'])->where('ok', false)->pluck('name')->implode(', ');
-            $out[] = ['level' => 'warning', 'text' => "The domain {$domain['name']} is not authenticated in Brevo yet".($missing !== '' ? " (missing: {$missing})" : '').'. Add the DNS records below at your domain host (Hostinger: Domains > DNS / Nameservers), then press Authenticate in Brevo. Until then emails often land in spam or are rejected.'];
+            $out[] = ['level' => 'warning', 'kind' => 'domain', 'text' => "The domain {$domain['name']} is not authenticated in Brevo yet".($missing !== '' ? " (missing: {$missing})" : '').', so emails land in spam or are rejected.'];
         }
 
-        $bad = collect($report['events'])->where('bad', true)->first();
+        $bad = collect($report['emails'])->where('bad', true)->first();
         if ($bad !== null) {
-            $out[] = ['level' => 'warning', 'text' => "Latest problem Brevo logged ({$bad['time']}): {$bad['label']} for {$bad['email']}".($bad['reason'] !== '' ? ": {$bad['reason']}" : '').'.'];
+            $out[] = ['level' => 'warning', 'kind' => 'event', 'text' => "Latest problem Brevo logged ({$bad['time']}): {$bad['label']} for {$bad['email']}".($bad['reason'] !== '' ? ": {$bad['reason']}" : '').'.'];
         }
 
         return $out;
     }
 
-    /** @return list<array{time: string, event: string, label: string, bad: bool, email: string, subject: string, reason: string}> */
+    /**
+     * One row per email: Brevo logs "Sent to Brevo" and then the outcome as two
+     * events with the same message id; keep only the newest (events are newest first).
+     */
+    private static function latestPerEmail(array $events): array
+    {
+        return collect($events)
+            ->unique(fn ($e) => $e['message_id'] !== '' ? $e['message_id'] : $e['time'].$e['email'].$e['subject'])
+            ->values()
+            ->all();
+    }
+
+    /** @return list<array{time: string, event: string, label: string, bad: bool, email: string, subject: string, reason: string, message_id: string}> */
     private static function events(array $events): array
     {
         return collect($events)
@@ -259,6 +274,7 @@ class BrevoStatus
                 'email'   => MailHealth::mask((string) ($e['email'] ?? '')),
                 'subject' => mb_strimwidth((string) ($e['subject'] ?? ''), 0, 80, '...'),
                 'reason'  => MailHealth::mask(mb_strimwidth(trim((string) ($e['reason'] ?? '')), 0, 200, '...')),
+                'message_id' => (string) ($e['messageId'] ?? ''),
             ])
             ->values()
             ->all();

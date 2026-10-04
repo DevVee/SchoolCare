@@ -84,7 +84,8 @@ class BrevoStatusTest extends TestCase
         $this->actingAs($this->admin)->get(route('admin.settings.edit', 'email'))
             ->assertOk()
             ->assertSee('Email is set up, but may not reach inboxes')
-            ->assertSee('DNS records to add at your domain host')
+            ->assertSee('How to fix it')
+            ->assertSee('Emails may land in spam')
             ->assertSee('b1.schoolcare-online.dkim.brevo.com')
             ->assertSee('brevo1._domainkey');
 
@@ -107,7 +108,8 @@ class BrevoStatusTest extends TestCase
         $this->actingAs($this->admin)->get(route('admin.settings.edit', 'email'))
             ->assertOk()
             ->assertSee('Email cannot be sent')
-            ->assertSee('schoolcare.online not added in Brevo');
+            ->assertSee('Brevo is rejecting your emails')
+            ->assertSee('schoolcare.online is not added in Brevo');
 
         $this->artisan('mail:check')
             ->expectsOutputToContain('NOT ADDED in Brevo')
@@ -140,6 +142,7 @@ class BrevoStatusTest extends TestCase
         $report = BrevoStatus::report();
 
         $this->assertCount(2, $report['events']); // opens are left out
+        $this->assertCount(1, $report['emails']); // "Sent to Brevo" and "Blocked" are one email
         $this->assertSame('Blocked by Brevo', $report['events'][0]['label']);
         $this->assertSame('***@gmail.com', $report['events'][0]['email']);
         $this->assertStringContainsString('Blocked by Brevo for ***@gmail.com: sender domain not authenticated', $report['problems'][0]['text']);
@@ -178,7 +181,7 @@ class BrevoStatusTest extends TestCase
             ->assertOk()
             ->assertSee('Test email to nurse.admin@school.test')
             ->assertSee('Delivered')
-            ->assertSee('look in Spam or Promotions');
+            ->assertSee('Look in Spam or Promotions');
 
         Http::assertSent(fn ($r) => str_contains($r->url(), 'messageId=%3Ct1%40relay%3E'));
     }
