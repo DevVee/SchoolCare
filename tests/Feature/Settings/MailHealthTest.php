@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Tests\Concerns\FakesBrevo;
 use Tests\TestCase;
 
 /**
@@ -18,6 +19,7 @@ use Tests\TestCase;
  */
 class MailHealthTest extends TestCase
 {
+    use FakesBrevo;
     use RefreshDatabase;
 
     private User $admin;
@@ -42,6 +44,9 @@ class MailHealthTest extends TestCase
             'mail.from.address'   => 'no-reply@schoolcare.online',
             'services.brevo.key'  => 'xkeysib-test',
         ]);
+
+        // A healthy Brevo account (see BrevoStatusTest for what Brevo can report).
+        $this->fakeBrevo();
     }
 
     protected function tearDown(): void

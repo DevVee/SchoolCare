@@ -36,17 +36,20 @@ class SettingsTest extends TestCase
         return $user;
     }
 
-    public function test_index_redirects_to_first_group_and_every_group_renders(): void
+    public function test_index_lists_every_group_and_every_group_renders_without_a_side_menu(): void
     {
-        $this->actingAs($this->admin)
-            ->get(route('admin.settings.index'))
-            ->assertRedirect(route('admin.settings.edit', 'general'));
+        $home = $this->actingAs($this->admin)->get(route('admin.settings.index'))->assertOk();
 
         foreach (array_keys(settings()->visibleGroups()) as $group) {
+            $label = settings()->groups()[$group]['label'];
+            $home->assertSee($label)->assertSee(route('admin.settings.edit', $group), false);
+
             $this->actingAs($this->admin)
                 ->get(route('admin.settings.edit', $group))
                 ->assertOk()
-                ->assertSee(settings()->groups()[$group]['label']);
+                ->assertSee($label)
+                ->assertSee('All settings')
+                ->assertDontSee('settings-nav', false);
         }
     }
 

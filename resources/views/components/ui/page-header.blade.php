@@ -9,6 +9,8 @@
 
     <x-ui.page-header title="Edit patient" :back="route('patients.index')" back-label="Patients" />
 
+    <x-ui.page-header title="Email" icon="bi-envelope" />        (icon chip before the title, as on settings pages)
+
     breadcrumbs: ['Label' => url|null, ...] or [['label' => 'X', 'url' => '...'], ...]; the last item is the current page.
     Default slot: extra meta under the description (badges, timestamps).
 --}}
@@ -19,6 +21,7 @@
     'breadcrumbs' => [],
     'back' => null,           // URL for a "back" link above the title
     'backLabel' => 'Back',
+    'icon' => null,           // optional icon chip before the title
 ])
 @php
     $desc = $description ?? $subtitle;
@@ -53,7 +56,11 @@
         @elseif ($back)
             <a href="{{ $back }}" class="page-back"><x-ui.icon name="arrow-left" />{{ $backLabel }}</a>
         @endif
-        <h1 class="page-title">{{ $title }}</h1>
+        @if ($icon)
+            <h1 class="page-title d-flex align-items-center gap-2"><x-ui.icon-chip :icon="$icon" /><span class="min-w-0">{{ $title }}</span></h1>
+        @else
+            <h1 class="page-title">{{ $title }}</h1>
+        @endif
         @if ($desc)
             <p class="page-subtitle">{{ $desc }}</p>
         @endif

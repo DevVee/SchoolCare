@@ -5,6 +5,10 @@
     $problems = $status['problems'] ?? [];
     $failures = $status['failures'] ?? [];
     $warnings = collect($problems)->where('level', 'warning');
+    // Brevo's own answer: a rejected key or unverified sender means nothing is delivered.
+    $brevoProblems = collect($status['brevo']['problems'] ?? []);
+    $ready    = $ready && $brevoProblems->doesntContain('level', 'error');
+    $warnings = $warnings->merge($brevoProblems->where('level', 'warning'));
 @endphp
 <x-ui.card class="status-card">
     <div class="status-card-main">
@@ -15,6 +19,8 @@
                     Email sending is not set up yet
                 @elseif (! $ready)
                     Email cannot be sent
+                @elseif ($warnings->isNotEmpty())
+                    Email is set up, but may not reach inboxes
                 @else
                     Email is set up
                 @endif
@@ -66,3 +72,5 @@
         </ul>
     </details>
 </x-ui.card>
+
+@include('admin.settings.partials.email-brevo')

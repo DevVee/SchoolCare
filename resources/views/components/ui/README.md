@@ -410,8 +410,10 @@ Dashboard: `x-ui.hero` with 1 or 2 actions, then `x-ui.stat-cards`, then `x-ui.c
 Show page: `row g-4` → `col-lg-4` card with avatar, name, badges, `x-ui.description-list` → `col-lg-8` card with
 `x-ui.tabs variant="underline"` and dense tables.
 
-Settings: `row g-4` → `col-lg-3` `x-ui.section-nav` → `col-lg-9` cards; switches via `x-ui.switch`; a sticky `.save-bar`
-(`<div class="save-bar">...buttons...</div>` as the last child of the form) for long forms.
+Settings: a home page (`admin.settings.index`) of `flush` cards, one per section, each with `.list-row` links (icon chip,
+label and description, chevron). Each group page is full width, with no side menu: `x-ui.page-header` with the group's
+`icon` and an "All settings" button, then the status card, one form card (sections inside, unsaved-changes count,
+Discard and Save in the footer) and the action cards. Switches via `x-ui.switch`.
 
 ## 6. Legacy compatibility
 

@@ -2,16 +2,9 @@
 
 @section('title', 'Settings: '.$meta['label'])
 
+{{-- One settings group, full width (guidance_v2 layout): header with the group's icon and an
+     "All settings" button back to the settings home, then status, form card and actions. --}}
 @php
-    $navItems = [];
-    foreach ($groups as $name => $g) {
-        $navItems[$name] = [
-            'label' => $g['label'],
-            'icon' => $g['icon'] ?? 'gear',
-            'href' => route('admin.settings.edit', $name),
-        ];
-    }
-
     // Plain-language sections for the generic groups: title => [description, [keys]].
     // Keys not listed here fall into a final "Other settings" section.
     $layouts = [
@@ -72,53 +65,50 @@
 @section('content')
 <div class="vstack gap-3">
 
-    <x-ui.page-header title="Settings" :description="'Set up how '.settings('app_name').' works for your clinic.'"
-        :breadcrumbs="['Dashboard' => route('dashboard'), 'Settings' => route('admin.settings.index'), $meta['label'] => null]" />
+    <x-ui.page-header :title="$meta['label']" :icon="$meta['icon'] ?? 'gear'" :description="$meta['description'] ?? null"
+        :breadcrumbs="['Dashboard' => route('dashboard'), 'Settings' => route('admin.settings.index'), $meta['label'] => null]">
+        <x-slot:actions>
+            <x-ui.button variant="secondary" icon="arrow-left" :href="route('admin.settings.index')">All settings</x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <div class="row g-4">
-        <div class="col-lg-3 settings-nav-col">
-            <x-ui.section-nav class="settings-nav" title="Settings" :active="$group" :items="$navItems" />
-        </div>
+    @if ($errors->any() && ! $errors->has('test_number'))
+        <x-ui.alert variant="danger" title="Please fix the errors below">Nothing was saved. Check the highlighted fields and try again.</x-ui.alert>
+    @endif
 
-        <div class="col-lg-9 vstack gap-3 min-w-0">
-            @if ($errors->any() && ! $errors->has('test_number'))
-                <x-ui.alert variant="danger" title="Please fix the errors below">Nothing was saved. Check the highlighted fields and try again.</x-ui.alert>
+    {{-- Status card above the form (SMS, Email, AI): plain words, technical details collapsed. --}}
+    @includeIf('admin.settings.partials.'.$group.'-status')
+
+    <form method="POST" action="{{ route('admin.settings.update', $group) }}" enctype="multipart/form-data" id="settingsForm">
+        @csrf
+        @method('PUT')
+
+        <x-ui.card :title="$meta['label']" :icon="$meta['icon'] ?? 'gear'">
+
+            @if (! empty($meta['partial']))
+                @include($meta['partial'])
+            @else
+                @foreach ($sections as $section)
+                    <x-ui.section :title="$section['title']" :description="$section['description']">
+                        <div class="row g-3">
+                            @foreach ($section['keys'] as $key)
+                                @include('admin.settings.partials.field', ['key' => $key, 'def' => $fields[$key]])
+                            @endforeach
+                        </div>
+                    </x-ui.section>
+                @endforeach
             @endif
 
-            {{-- Status card above the form (SMS, Email, AI): plain words, technical details collapsed. --}}
-            @includeIf('admin.settings.partials.'.$group.'-status')
+            <x-slot:footer>
+                <span class="me-auto text-muted fs-sm" role="status" aria-live="polite" data-settings-dirty>No unsaved changes</span>
+                <x-ui.button variant="secondary" :href="route('admin.settings.edit', $group)">Discard changes</x-ui.button>
+                <x-ui.button type="submit" icon="check-lg">Save changes</x-ui.button>
+            </x-slot:footer>
+        </x-ui.card>
+    </form>
 
-            <form method="POST" action="{{ route('admin.settings.update', $group) }}" enctype="multipart/form-data" id="settingsForm">
-                @csrf
-                @method('PUT')
-
-                <x-ui.card :title="$meta['label']" :subtitle="$meta['description'] ?? null">
-
-                    @if (! empty($meta['partial']))
-                        @include($meta['partial'])
-                    @else
-                        @foreach ($sections as $section)
-                            <x-ui.section :title="$section['title']" :description="$section['description']">
-                                <div class="row g-3">
-                                    @foreach ($section['keys'] as $key)
-                                        @include('admin.settings.partials.field', ['key' => $key, 'def' => $fields[$key]])
-                                    @endforeach
-                                </div>
-                            </x-ui.section>
-                        @endforeach
-                    @endif
-
-                    <x-slot:footer>
-                        <x-ui.button variant="secondary" :href="route('admin.settings.edit', $group)">Discard changes</x-ui.button>
-                        <x-ui.button type="submit" icon="check-lg">Save changes</x-ui.button>
-                    </x-slot:footer>
-                </x-ui.card>
-            </form>
-
-            {{-- Actions outside the settings form (test messages). --}}
-            @includeIf('admin.settings.partials.'.$group.'-actions')
-        </div>
-    </div>
+    {{-- Actions outside the settings form (test messages). --}}
+    @includeIf('admin.settings.partials.'.$group.'-actions')
 </div>
 @endsection
 
@@ -150,6 +140,36 @@ document.addEventListener('DOMContentLoaded', function () {
             if (/^#[0-9A-Fa-f]{6}$/.test(text.value)) picker.value = text.value;
         });
     });
+
+    // Footer: how many fields differ from what was loaded.
+    var form = document.getElementById('settingsForm');
+    var status = form && form.querySelector('[data-settings-dirty]');
+    if (form && status) {
+        // Every setting (name without [..]) -> its values as one string.
+        var snapshot = function () {
+            var out = {};
+            Array.prototype.forEach.call(form.elements, function (el) {
+                if (!el.name || el.name === '_token' || el.name === '_method' || el.disabled || el.type === 'submit' || el.type === 'button') return;
+                var name = el.name.replace(/\[.*$/, '');
+                var value = el.type === 'checkbox' || el.type === 'radio' ? (el.checked ? el.value : '') : (el.type === 'file' ? (el.files && el.files.length ? 'file' : '') : el.value);
+                out[name] = (out[name] || '') + '\u0001' + value;
+            });
+            return out;
+        };
+        var initial = snapshot();
+        var update = function () {
+            var now = snapshot(), names = {};
+            Object.keys(now).concat(Object.keys(initial)).forEach(function (name) {
+                if (now[name] !== initial[name]) names[name] = true;
+            });
+            var n = Object.keys(names).length;
+            status.textContent = n === 0 ? 'No unsaved changes' : (n === 1 ? '1 unsaved change' : n + ' unsaved changes');
+        };
+        form.addEventListener('input', update);
+        form.addEventListener('change', update);
+        // List editors add or remove rows without an input event.
+        new MutationObserver(update).observe(form, { childList: true, subtree: true });
+    }
 });
 </script>
 @endpush

@@ -6,7 +6,7 @@
 @php
     $type = $def['type'];
     $id = 'setting_'.$key;
-    $col = $col ?? (in_array($type, ['text', 'json_list', 'options', 'image', 'boolean'], true) ? 'col-12' : 'col-12 col-md-6 col-xl-4');
+    $col = $col ?? (in_array($type, ['text', 'json_list', 'options', 'image', 'boolean'], true) ? 'col-12' : 'col-12 col-md-6');
     $label = $def['label'] ?? $key;
     $help = ($def['help'] ?? '') !== '' ? $def['help'] : null;
     $required = in_array('required', $def['rules'] ?? [], true);

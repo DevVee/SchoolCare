@@ -3,9 +3,6 @@
 // Page-specific pieces only; everything else comes from the x-ui components.
 // ═════════════════════════════════════════════════════════════════════════════
 
-// Settings section nav: group icons in the brand blue (one colour theme).
-.settings-nav .section-nav-link .c-icon { color: var(--brand-600); }
-
 // Role icon / assistant avatar in lists: plain brand glyph, no background.
 .role-icon {
     width: 32px;
@@ -272,21 +269,6 @@
 }
 
 // AI assistant chat: see components/_coco.scss
-
-// ─── Settings: sticky section nav column (desktop) ───────────────────────────
-// The column itself sticks (align-self: flex-start so it is not stretched to the row height),
-// and scrolls on its own if the list is taller than the window.
-@include media-breakpoint-up(lg) {
-    .settings-nav-col {
-        position: sticky;
-        top: var(--c-sticky-top, calc(var(--c-topbar-h, 58px) + 1rem));
-        align-self: flex-start;
-        max-height: calc(100vh - var(--c-topbar-h, 58px) - 2rem);
-        overflow-y: auto;
-        scrollbar-width: thin;
-        .section-nav { position: static; }
-    }
-}
 
 // Weekly opening hours grid.
 .hours-grid {

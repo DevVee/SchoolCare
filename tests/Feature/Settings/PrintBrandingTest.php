@@ -35,7 +35,7 @@ class PrintBrandingTest extends ClinicalTestCase
 
     // ─── Settings page ───────────────────────────────────────────────────────
 
-    public function test_printing_page_renders_in_the_settings_nav(): void
+    public function test_printing_page_renders_and_is_listed_on_the_settings_home(): void
     {
         $this->actingAs($this->admin)
             ->get(route('admin.settings.edit', 'printing'))
@@ -44,10 +44,10 @@ class PrintBrandingTest extends ClinicalTestCase
             ->assertSee('Signatory 3')
             ->assertSee('Footer text')
             ->assertSee('data-print-settings', false)
-            ->assertSee(route('admin.settings.edit', 'printing'));
+            ->assertSee(route('admin.settings.update', 'printing'));
 
         $this->actingAs($this->admin)
-            ->get(route('admin.settings.edit', 'general'))
+            ->get(route('admin.settings.index'))
             ->assertSee(route('admin.settings.edit', 'printing'));
     }
 
