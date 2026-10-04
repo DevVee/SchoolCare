@@ -7,6 +7,18 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Deploying SchoolCare
+
+Every push to `main` deploys to https://schoolcare.online through GitHub Actions (`.github/workflows/deploy.yml`, "Deploy to Hostinger"):
+it builds the CSS/JS, uploads the code over SSH, keeps the server's `.env`, SQLite database and `storage/`, backs the database up to `~/backups`,
+then runs the migrations. A failed run changes nothing on the server; re-run it from the Actions tab.
+
+Keep Hostinger's own Git deployment (hPanel > Websites > schoolcare.online > Advanced > GIT) **disconnected, with Auto-deployment off**.
+It cannot build this app (Hostinger blocks `proc_open`, which Composer needs) and it deploys into the same `public_html`.
+
+Email goes through Brevo (`MAIL_MAILER=brevo`, `BREVO_API_KEY`). Settings > Email and `php artisan mail:check` show what Brevo says:
+key, domain authentication and the DNS records it needs, and what happened to recent emails.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
