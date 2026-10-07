@@ -24,6 +24,10 @@
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
     <x-ui.brand-style />
     @stack('styles')
+    @if (request()->routeIs('admin.settings.*'))
+        {{-- Settings to settings: the rail, panel and top bar stay put, only the page cross-fades --}}
+        <style>@view-transition{navigation:auto}</style>
+    @endif
 </head>
 <body class="app">
     <a href="#main" class="skip-link">Skip to main content</a>

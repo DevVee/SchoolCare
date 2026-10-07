@@ -46,3 +46,21 @@ if (panel && input) {
     window.addEventListener('pageshow', filter);
     filter();
 }
+
+// The panel keeps its scroll position from page to page (Security at the bottom
+// stays in view after you open it); the first time, the current area is brought
+// into view. A per-tab convenience: fine if storage is blocked.
+const scroller = panel?.querySelector('.settings-panel-scroll');
+if (scroller) {
+    const KEY = 'schoolcare.settings-panel-scroll';
+    let saved = null;
+    try { saved = sessionStorage.getItem(KEY); } catch (e) { /* storage blocked */ }
+    if (saved !== null) {
+        scroller.scrollTop = parseInt(saved, 10) || 0;
+    } else {
+        scroller.querySelector('.settings-panel-link.active')?.scrollIntoView({ block: 'nearest' });
+    }
+    const save = () => { try { sessionStorage.setItem(KEY, String(scroller.scrollTop)); } catch (e) { /* storage blocked */ } };
+    scroller.addEventListener('click', (e) => { if (e.target.closest('a')) save(); });
+    window.addEventListener('pagehide', save);
+}

@@ -6,6 +6,15 @@
      label per section, one rounded card per section, a row per area with a chevron. On phones this
      is the settings menu; on desktop the settings panel beside the rail lists the same areas and this
      page is the overview (two columns from xl). Styles: resources/scss/pages/_settings.scss. --}}
+@php $firstArea = $sections[0]['items'][0]['href'] ?? null; @endphp
+@if ($firstArea)
+    {{-- Desktop: the panel beside the rail is the menu, so Settings opens its first area (General).
+         Phones keep this page as the menu. Runs in <head>, before anything paints. --}}
+    @push('styles')
+        <script>if(matchMedia('(min-width: 992px)').matches){location.replace(@json($firstArea))}</script>
+    @endpush
+@endif
+
 @section('content')
 <div class="vstack gap-3 settings-home">
 

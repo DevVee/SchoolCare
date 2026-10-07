@@ -12,7 +12,6 @@
     $panelUser = auth()->user();
     $panelSections = $panelUser ? \App\Http\Controllers\Admin\SettingsController::sections($panelUser) : [];
     $panelGroup = request()->route('group');
-    $panelHome = request()->routeIs('admin.settings.index');
 @endphp
 <aside class="settings-panel" aria-label="Settings menu" data-settings-panel>
     <div class="settings-panel-head">
@@ -27,12 +26,6 @@
             placeholder="Search settings" data-settings-search />
 
         <nav class="settings-panel-nav" aria-label="Settings">
-            <a href="{{ route('admin.settings.index') }}" @class(['settings-panel-link', 'active' => $panelHome])
-               @if ($panelHome) aria-current="page" @endif data-settings-home>
-                <x-ui.icon name="grid" />
-                <span class="settings-panel-label">All settings</span>
-            </a>
-
             @foreach ($panelSections as $section)
                 <div class="settings-panel-group" data-settings-group>
                     <p class="settings-panel-section">{{ $section['title'] }}</p>

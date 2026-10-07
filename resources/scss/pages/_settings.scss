@@ -153,22 +153,16 @@
     .form-section {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
-        gap: .875rem;
-        padding: 2rem 0;
-        border-top: 0;
-        border-bottom: 1px solid var(--c-border);
+        gap: .75rem;
+        padding: 1.5rem 0;
+        border: 0;
         &:first-child { padding-top: .5rem; }
         &:last-child { padding-bottom: .5rem; border-bottom: 0; }
 
-        @include media-breakpoint-up(lg) {
-            grid-template-columns: var(--c-settings-block-aside) minmax(0, 1fr);
-            gap: 2.5rem;
-        }
     }
     .form-section-head,
     .form-section-full > :first-child { min-width: 0; margin-bottom: 0 !important; }
     .form-section-title { font-size: 1.0625rem; font-weight: 650; }
-    .form-section-desc { margin-top: .25rem; font-size: .875rem; line-height: 1.5; color: var(--c-muted); }
 
     // The fields: a white card
     .form-section-body {
@@ -325,3 +319,19 @@
 @media print {
     .settings-panel, .settings-savebar { display: none !important; }
 }
+
+// ─── Moving between settings pages ──────────────────────────────────────────
+// Instant and calm, like Shopify: no page-enter slide, no card reveal, and (where
+// the browser supports cross-document view transitions) the rail, panel and top
+// bar stay still while only the page content cross-fades.
+.settings-mode {
+    .app-content { animation: none; }
+    &.js-reveal .app-content :is(.stat-tile, .card) { opacity: 1 !important; transform: none !important; animation: none !important; }
+    .app-sidebar { view-transition-name: app-rail; }
+    .settings-panel { view-transition-name: settings-panel; }
+    .app-topbar { view-transition-name: app-topbar; }
+}
+::view-transition-group(root) { animation-duration: .14s; }
+::view-transition-old(app-rail), ::view-transition-new(app-rail),
+::view-transition-old(settings-panel), ::view-transition-new(settings-panel),
+::view-transition-old(app-topbar), ::view-transition-new(app-topbar) { animation: none; }
