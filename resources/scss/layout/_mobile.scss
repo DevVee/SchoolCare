@@ -1,0 +1,418 @@
+// =============================================================================
+// Phones and tablets (< lg): the app feels native (ServiceCo_v2's portal patterns).
+// Imported last, so it wins over components; nothing here applies from lg up
+// except rules for elements that only exist on phones (tab bar, phone lists,
+// sheets), which are hidden there.
+//
+//   1. Tokens: tab bar height, compact top bar with the safe area
+//   2. Bottom tab bar (layouts/partials/tab-bar.blade.php) + room for it
+//   3. Top bar: 52px + notch, big bold title, account sheet (topbar partial)
+//   4. Modals are bottom sheets below sm (grabber, rounded top, safe area)
+//   5. Tables are lists on phones (resources/js/ui/phone-list.js) + the details sheet
+//   6. Menus and the Ctrl K spotlight on phones
+//   7. Page headers, tabs (many tabs = one dropdown, ui/mobile.js), buttons, forms
+//   8. Press feedback, nothing wider than the screen
+// =============================================================================
+
+$sheet-ease: cubic-bezier(.22, 1, .36, 1);
+$ios-gray:   #8e8e93;   // inactive tab bar items (Apple system gray)
+$ios-fill:   #f2f2f5;   // pressed list row
+$ios-sep:    #e5e5ea;   // list separators
+
+// ─── 1. Tokens ──────────────────────────────────────────────────────────────
+@include media-breakpoint-down(lg) {
+    :root {
+        --c-tabbar-h: 3.5rem;   // 56px, without the home-indicator inset
+        --c-tabbar-space: calc(var(--c-tabbar-h) + env(safe-area-inset-bottom, 0px));
+        --c-topbar-h: calc(#{$topbar-height} + env(safe-area-inset-top, 0px));
+    }
+}
+@include media-breakpoint-down(sm) {
+    :root { --c-topbar-h: calc(3.25rem + env(safe-area-inset-top, 0px)); }   // 52px
+}
+
+// ─── 2. Bottom tab bar ─────────────────────────────────────────────────────
+.app-tabbar { display: none; }
+
+@include media-breakpoint-down(lg) {
+    .app-tabbar {
+        display: block;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1030;   // over sticky bars (1010-1020), under the drawer (1045) and modals
+        padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+        background: rgba(255, 255, 255, .95);
+        -webkit-backdrop-filter: var(--c-blur);
+        backdrop-filter: var(--c-blur);
+        border-top: 1px solid rgba(0, 0, 0, .08);
+        @media (prefers-reduced-transparency: reduce) { background: #fff; }
+    }
+    .app-tabbar-inner {
+        display: grid;
+        grid-template-columns: repeat(var(--tabbar-cols, 5), minmax(0, 1fr));
+        max-width: 32rem;
+        margin: 0 auto;
+    }
+    .app-tab {
+        position: relative;
+        height: var(--c-tabbar-h);
+        min-width: 0;
+        padding: 0 .125rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: .125rem;
+        border: 0;
+        background: none;
+        color: $ios-gray;
+        font-family: $font-ui;
+        font-size: .6875rem;   // 11px
+        font-weight: 500;
+        letter-spacing: -.01em;
+        text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: color $dur-fast ease-out, opacity $dur-press ease-out;
+        &:hover { color: $ios-gray; }
+        &:active { opacity: .6; }
+        &.active, &.active:hover { color: var(--brand-600); }
+        &:focus-visible { outline: 2px solid rgba(var(--brand-rgb), .5); outline-offset: -4px; border-radius: $radius-md; }
+    }
+    .app-tab-icon { position: relative; font-size: 1.375rem; line-height: 1; }   // 22px
+    .app-tab-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .app-tab-badge {
+        position: absolute;
+        top: -.25rem;
+        right: -.625rem;
+        min-width: 1rem;
+        height: 1rem;
+        padding: 0 .25rem;
+        border-radius: $border-radius-pill;
+        background: tone("danger", 600);
+        color: #fff;
+        box-shadow: 0 0 0 2px #fff;
+        font-size: .625rem;
+        font-weight: 700;
+        line-height: 1rem;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+    }
+
+    // Room for the bar: page content and footer scroll clear of it
+    .app-column { padding-bottom: var(--c-tabbar-space); }
+    // Bars pinned to the bottom of the page sit on top of the tab bar
+    .save-bar, .coco-compose { bottom: var(--c-tabbar-space); }
+    .bulk-bar { bottom: calc(var(--c-tabbar-space) + .75rem); }
+
+    // Typing on a touch screen: the keyboard needs the room (Android lifts fixed bars over it)
+    @media (pointer: coarse) {
+        body:has(:is(input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea, select, [contenteditable="true"]):focus) {
+            .app-tabbar { display: none; }
+            .save-bar, .coco-compose { bottom: 0; }
+        }
+    }
+}
+
+// ─── 3. Top bar ────────────────────────────────────────────────────────────
+@include media-breakpoint-down(lg) {
+    .app-topbar {
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-left: max(1rem, env(safe-area-inset-left, 0px));
+        padding-right: max(1rem, env(safe-area-inset-right, 0px));
+    }
+    // Toasts clear the notch
+    .c-toasts { top: calc(.75rem + env(safe-area-inset-top, 0px)); }
+}
+@include media-breakpoint-down(sm) {
+    .app-topbar {
+        gap: .25rem;
+        padding: env(safe-area-inset-top, 0px) max(.5rem, env(safe-area-inset-right, 0px)) 0 max(.5rem, env(safe-area-inset-left, 0px));
+        .topbar-title { padding-left: .125rem; }
+        .topbar-title .title { font-size: 1.0625rem; letter-spacing: -.015em; }   // 17px, bold
+        .btn-cobi-pill { width: 2.5rem; height: 2.5rem; min-height: 0; }
+        .user-trigger-compact { min-height: 0; padding: .25rem; -webkit-tap-highlight-color: transparent; &:active { transform: scale($press-scale); } }
+    }
+}
+
+// Account sheet (phones)
+.account-sheet {
+    .account-sheet-who { display: flex; align-items: center; gap: .875rem; min-width: 0; }
+    .account-sheet-name { margin: 0; font-size: 1rem; font-weight: 600; color: var(--c-ink); }
+    .account-sheet-sub { margin: .125rem 0 0; font-size: .875rem; color: var(--c-muted); }
+}
+
+// ─── 4. Modals are bottom sheets below sm ──────────────────────────────────
+@include media-breakpoint-down(sm) {
+    .modal > .modal-dialog:not(.modal-fullscreen):not(.modal-fullscreen-sm-down) {
+        margin: 0;
+        width: 100%;
+        max-width: none;
+        min-height: 100%;
+        height: auto;
+        display: flex;
+        align-items: flex-end;
+        transition: transform .3s $sheet-ease;
+
+        > .modal-content {
+            max-height: 92dvh;
+            border: 0;
+            border-radius: $radius-xl $radius-xl 0 0;   // 20px top corners
+            padding-top: .875rem;                       // room for the grabber
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            box-shadow: 0 -12px 40px -12px rgba(0, 0, 0, .25);
+            // Grabber bar
+            &::before {
+                content: "";
+                position: absolute;
+                top: .5rem;
+                left: 50%;
+                width: 2.5rem;
+                height: .25rem;
+                margin-left: -1.25rem;
+                border-radius: $border-radius-pill;
+                background: #d1d1d6;
+            }
+        }
+        .modal-header { padding-top: .625rem; flex-shrink: 0; }
+        .modal-body { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+        .modal-footer {
+            flex-shrink: 0;
+            flex-wrap: nowrap;
+            > .btn, > form > .btn { flex: 1 1 0; min-height: 2.75rem; }
+        }
+    }
+    // Slide up from the bottom edge, back down on close
+    .modal.fade > .modal-dialog:not(.modal-fullscreen):not(.modal-fullscreen-sm-down) { transform: translateY(100%); }
+    .modal.show > .modal-dialog:not(.modal-fullscreen):not(.modal-fullscreen-sm-down) { transform: none; }
+    .modal.modal-static > .modal-dialog:not(.modal-fullscreen):not(.modal-fullscreen-sm-down) { transform: translateY(-.5rem); }
+
+    // Confirm dialog: its own padding plus the home indicator; buttons side by side
+    .modal-confirm .modal-content { padding: 1.5rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px)); }
+    .modal-confirm .confirm-actions > .btn { min-height: 2.75rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .modal > .modal-dialog { transition: none !important; }
+}
+
+// ─── 5. Tables are lists on phones (ui/phone-list.js) ──────────────────────
+.phone-list-wrap { display: none; }
+
+@include media-breakpoint-down(sm) {
+    .has-phone-list { display: none !important; }
+
+    // One rounded white card with hairlines between rows; flush inside a card that already is one
+    .phone-list-wrap {
+        display: block;
+        background: var(--c-surface);
+        border: 1px solid var(--c-hairline);
+        border-radius: var(--c-radius-lg);
+        box-shadow: var(--c-shadow-card);
+        overflow: hidden;
+        &.is-flush { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+    }
+    .phone-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        > li + li { border-top: 1px solid $ios-sep; }
+        > li.is-muted .phone-row-title { color: var(--c-muted); }
+        // Details shown in the row itself (tables inside modals)
+        > li > .sheet-facts { padding: 0 1rem .625rem; margin-top: -.375rem; font-size: .875rem; }
+    }
+    .phone-list-heading {
+        padding: .75rem 1rem .375rem;
+        background: $gray-50;
+        font-family: $font-ui;
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--c-ink-2);
+    }
+    .phone-list-empty { padding: .25rem 0; }
+
+    .phone-row {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        width: 100%;
+        min-height: 3.75rem;   // 60px
+        padding: .75rem 1rem;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: background-color $dur-fast ease-out;
+    }
+    :is(a, button).phone-row {
+        cursor: pointer;
+        &:hover { color: inherit; }
+        &:active { background: $ios-fill; }
+        &:focus-visible { outline: 2px solid rgba(var(--brand-rgb), .5); outline-offset: -2px; }
+    }
+    .phone-row-main { flex: 1 1 auto; min-width: 0; }
+    .phone-row-title, .phone-row-sub { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .phone-row-title { font-size: .9375rem; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; color: var(--c-ink); }   // 15px
+    .phone-row-sub { margin-top: .125rem; font-size: .8125rem; line-height: 1.35; color: var(--c-muted); }                          // 13px
+    .phone-row-right {
+        flex-shrink: 0;
+        max-width: 45%;
+        overflow: hidden;
+        text-align: right;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: .9375rem;
+        font-weight: 600;
+        color: var(--c-ink);
+        font-variant-numeric: tabular-nums;
+    }
+    .phone-row-chev { flex-shrink: 0; margin-right: -.25rem; font-size: .875rem; color: var(--c-faint); }
+
+    // Tables of form fields stay tables, stacked into label / value cards
+    .table-phone-stack { @include table-stack; }
+    .has-phone-stack { overflow-x: visible; }
+
+    // Matrices that keep their columns (data-no-cards) scroll inside their card, never the page
+    .table-responsive { max-width: 100%; }
+}
+
+// Details sheet (ui/phone-list.js) and other sheets: label / value lines, full-width actions
+.sheet-facts {
+    margin: 0;
+    font-size: .9375rem;
+    > div {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: .625rem 0;
+    }
+    > div + div { border-top: 1px solid #eeeef1; }
+    dt { flex-shrink: 0; max-width: 45%; font-weight: 400; color: var(--c-muted); }
+    dd {
+        min-width: 0;
+        margin: 0;
+        text-align: right;
+        color: var(--c-ink);
+        overflow-wrap: anywhere;
+        .identity { justify-content: flex-end; }
+        .identity-title { white-space: normal; }
+    }
+}
+.sheet-actions {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin-top: 1.25rem;
+    &:first-child { margin-top: 0; }
+    > form { margin: 0; }
+}
+.sheet-action {
+    width: 100%;
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    font-size: .9375rem;
+    white-space: nowrap;
+    .c-icon { font-size: 1rem; }
+}
+.btn.sheet-action-danger {
+    --bs-btn-color: #{tone("danger", 700)};
+    --bs-btn-border-color: #{tone("danger", 200)};
+    --bs-btn-hover-color: #{tone("danger", 700)};
+    --bs-btn-hover-bg: #{tone("danger", 50)};
+    --bs-btn-hover-border-color: #{tone("danger", 200)};
+    --bs-btn-active-color: #{tone("danger", 700)};
+    --bs-btn-active-bg: #{tone("danger", 50)};
+    --bs-btn-active-border-color: #{tone("danger", 200)};
+}
+.phone-sheet .modal-body { padding-top: .25rem; }
+
+// ─── 6. Menus and the spotlight on phones ──────────────────────────────────
+@include media-breakpoint-down(sm) {
+    // Menus never run off the screen; long ones scroll
+    .dropdown-menu { max-width: calc(100vw - 1.5rem); }
+    .dropdown-menu:not(.dropdown-panel) { max-height: min(70dvh, 28rem); overflow-y: auto; overscroll-behavior: contain; }
+    .dropdown-panel { width: min(20rem, calc(100vw - 1.5rem)); }
+    .filter-panel { width: min(22rem, calc(100vw - 1.5rem)); }
+    .dropdown-item { min-height: 2.75rem; -webkit-tap-highlight-color: transparent; }
+
+    // Spotlight: a full-width panel under the notch; keyboard hints are for keyboards
+    .spotlight {
+        width: calc(100vw - 1rem);
+        max-height: min(70dvh, 36rem);
+        margin-top: calc(env(safe-area-inset-top, 0px) + .5rem);
+    }
+    .spotlight-panel { border-radius: var(--c-radius-lg); }
+    .spotlight-field { padding: .75rem 1rem; input { font-size: 1.0625rem; } }
+    .spotlight-field kbd, .spotlight-foot { display: none; }
+}
+
+// ─── 7. Page headers, tabs, buttons, forms ─────────────────────────────────
+@include media-breakpoint-down(sm) {
+    .page-title { font-size: 1.375rem; letter-spacing: -.025em; }   // 22px
+    .page-subtitle { font-size: .9375rem; margin-top: .375rem; }
+    .page-header .breadcrumb { margin-bottom: .25rem; font-size: .8125rem; }
+    // Actions: one row that fills the width, never wrapping a label
+    .page-header .page-actions {
+        > .btn, > .dropdown, > form { flex: 1 1 auto; min-width: 0; }
+        > .dropdown > .btn, > form > .btn { width: 100%; }
+    }
+
+    // More than three tabs: one dropdown (ui/mobile.js), never a row running off the edge
+    .has-tabs-select { display: none !important; }
+    .c-tabs-select { display: block; width: 100%; font-weight: 600; }
+}
+.c-tabs-select { display: none; }
+
+@include media-breakpoint-down(lg) {
+    // Tab rows that stay rows scroll sideways without a scrollbar
+    .nav-segmented, .nav-underline, .nav-tabs, .nav-pills {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        &::-webkit-scrollbar { display: none; }
+        .nav-link { white-space: nowrap; flex-shrink: 0; }
+    }
+
+    // Small action buttons never wrap or shrink
+    .btn-sm, .btn-xs, .btn-more, .btn-action, .btn-icon, .btn-topbar,
+    .page-actions .btn, .table-toolbar .btn, .filter-bar .btn, .card-header .btn, .c-card-header .btn {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    // Form fields: 16px text (no iOS zoom on focus); 44px targets come from _forms.scss
+    .form-control-sm, .form-select-sm,
+    .input-group-sm > .form-control, .input-group-sm > .form-select, .input-group-sm > .input-group-text { font-size: 1rem; }
+    textarea.form-control { resize: none; }   // grows as you type (ui/mobile.js)
+}
+
+// ─── 8. Press feedback, nothing wider than the screen ──────────────────────
+@include media-breakpoint-down(lg) {
+    a, button, summary, label, [role="button"], .nav-link, .dropdown-item { -webkit-tap-highlight-color: transparent; }
+    .dash-row-link, .list-group-item-action { transition: background-color $dur-fast ease-out, transform $dur-press ease-out; }
+    .dash-row-link:active, .list-group-item-action:active { background: $ios-fill; transform: scale(.99); }
+
+    // Long option text or a wide child must never widen the page (the page would zoom out)
+    body { overflow-x: clip; }
+    .form-control, .form-select, .select-search, .combobox, .input-group { min-width: 0; max-width: 100%; }
+    .c-field, .card, .card-body, .row > *, .form-grid > *, .vstack > *, .hstack > * { min-width: 0; }
+}
+@include media-breakpoint-down(sm) {
+    .form-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media print {
+    .app-tabbar, .phone-list-wrap, .c-tabs-select { display: none !important; }
+    .has-phone-list, .has-tabs-select { display: revert !important; }
+    .app-column { padding-bottom: 0 !important; }
+}

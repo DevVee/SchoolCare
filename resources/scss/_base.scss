@@ -4,6 +4,11 @@
 
 html { scroll-behavior: smooth; }
 
+// System-wide 90% scale on desktop (see $ui-scale in tokens)
+@include media-breakpoint-up(lg) {
+    html { font-size: percentage($ui-scale); }
+}
+
 body {
     background-color: var(--c-canvas);
     -webkit-font-smoothing: antialiased;

@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+
+<html lang="en" class="">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="csrf-token" content="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY">
+            
+        <meta name="session-keepalive" content="http://localhost:8765/session/token">
+    
+    <title>Patients | SchoolCare</title>
+
+    <link rel="icon" type="image/png" sizes="32x32" href="http://localhost:8765/brand/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="http://localhost:8765/brand/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="http://localhost:8765/brand/logo-192.png">
+    <link rel="apple-touch-icon" href="http://localhost:8765/brand/apple-touch-icon.png">
+
+    
+    <script>try{if(localStorage.getItem('schoolcare.sidebar')==='collapsed'){document.documentElement.classList.add('sidebar-collapsed')}}catch(e){}</script>
+    
+    <script>if('IntersectionObserver' in window&&'animate' in document.documentElement){document.documentElement.classList.add('js-reveal')}</script>
+
+    <link rel="preload" as="style" href="http://localhost:8765/build/assets/app-B9UMVdK1.css" /><link rel="modulepreload" href="http://localhost:8765/build/assets/app-zvX3CpfR.js" /><link rel="stylesheet" href="http://localhost:8765/build/assets/app-B9UMVdK1.css" /><script type="module" src="http://localhost:8765/build/assets/app-zvX3CpfR.js"></script>    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..700;1,14..32,400&display=swap">
+    </head>
+<body class="app">
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <aside class="app-sidebar offcanvas-lg offcanvas-start" id="appSidebar" tabindex="-1" aria-label="Main menu">
+    
+    <div class="sidebar-brand">
+        <a  href="http://localhost:8765/dashboard"  class="c-logo c-logo-sidebar">
+    <img src="http://localhost:8765/brand/logo.png" alt="" width="38" height="38" class="c-logo-mark c-logo-mark-default" decoding="async">
+            <span class="c-logo-text">
+            <span class="c-logo-name">SchoolCare</span>
+            <span class="c-logo-sub">Smart School Clinic Management System</span>                    </span>
+    </a>
+        <button type="button" class="sidebar-collapse-btn d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#appSidebar" aria-label="Close menu">
+            <i aria-hidden="true" class="bi bi-x-lg c-icon"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-scroll">
+        
+                    <div class="sidebar-profile dropdown">
+                <button type="button" class="sidebar-profile-trigger" data-bs-toggle="dropdown" data-bs-offset="0,6"
+                        data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" data-rail-tip="System Administrator">
+                    <span class="sidebar-profile-avatar">
+                        <span class="avatar avatar-xl"  role="img" aria-label="System Administrator" >
+            <span aria-hidden="true">SA</span>
+    </span>
+                        <span class="online-dot" aria-hidden="true"></span>
+                    </span>
+                    <span class="sidebar-profile-name">System Administrator</span>
+                    <span class="sidebar-profile-role">Administrator</span>
+                    <span class="visually-hidden">Open account menu</span>
+                </button>
+                <div class="dropdown-menu dropdown-panel user-menu">
+                    <div class="panel-header user-menu-head">
+    <span class="avatar avatar-md"  role="img" aria-label="System Administrator" >
+            <span aria-hidden="true">SA</span>
+    </span>
+    <div class="min-w-0">
+        <p class="panel-title text-truncate">System Administrator</p>
+        <p class="panel-sub text-truncate">admin@iccbiclinic.site</p>        <p class="panel-sub">Administrator</p>
+    </div>
+</div>
+<div class="user-menu-body">
+    <a href="http://localhost:8765/profile" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-person-circle c-icon"></i>
+<span class="dropdown-item-label">My profile</span>    </a>
+    <hr class="dropdown-divider">
+    <form method="POST" action="http://localhost:8765/logout" >
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">                 <button type="submit" class="dropdown-item" >
+            <i aria-hidden="true" class="bi bi-box-arrow-right c-icon"></i>
+<span class="dropdown-item-label">Sign out</span>        </button>
+    </form>
+</div>
+                </div>
+            </div>
+        
+        <nav class="sidebar-nav" aria-label="Main">
+                                                <p class="sidebar-section">Overview</p>
+                                                    <a href="http://localhost:8765/dashboard"
+                       class="sidebar-link"
+                                               data-module="overview"                        data-rail-tip="Dashboard">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-house c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Dashboard</span>
+                                            </a>
+                                                                <p class="sidebar-section">Clinic</p>
+                                                    <a href="http://localhost:8765/patient-logs"
+                       class="sidebar-link"
+                                               data-module="logbook"                        data-rail-tip="Daily patient log">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-journal-medical c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Daily patient log</span>
+                                            </a>
+                                    <a href="http://localhost:8765/patients"
+                       class="sidebar-link active"
+                        aria-current="page"                         data-module="patients"                        data-rail-tip="Patients">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-people c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Patients</span>
+                                            </a>
+                                    <a href="http://localhost:8765/appointments"
+                       class="sidebar-link"
+                                               data-module="appointments"                        data-rail-tip="Appointments (148 pending)">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-calendar-check c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Appointments</span>
+                        <span class="count-chip"
+           aria-label="148 pending" >99+</span>
+                    </a>
+                                    <a href="http://localhost:8765/specialist-visits"
+                       class="sidebar-link"
+                                               data-module="appointments"                        data-rail-tip="Specialist visits">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-person-badge c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Specialist visits</span>
+                                            </a>
+                                    <a href="http://localhost:8765/consultations"
+                       class="sidebar-link"
+                                               data-module="consultations"                        data-rail-tip="Consultations">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-clipboard2-pulse c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Consultations</span>
+                                            </a>
+                                                                <p class="sidebar-section">Pharmacy and inventory</p>
+                                                    <a href="http://localhost:8765/medicines"
+                       class="sidebar-link"
+                                               data-module="medicines"                        data-rail-tip="Medicines">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-capsule c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Medicines</span>
+                                            </a>
+                                    <a href="http://localhost:8765/inventory"
+                       class="sidebar-link"
+                                               data-module="inventory"                        data-rail-tip="Inventory">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-box-seam c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Inventory</span>
+                                            </a>
+                                    <a href="http://localhost:8765/dispensing"
+                       class="sidebar-link"
+                                               data-module="dispensing"                        data-rail-tip="Dispensing">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-prescription2 c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Dispensing</span>
+                                            </a>
+                                    <a href="http://localhost:8765/assets"
+                       class="sidebar-link"
+                                               data-module="inventory"                        data-rail-tip="Assets and equipment">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-tools c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Assets and equipment</span>
+                                            </a>
+                                                                <p class="sidebar-section">Reports and messaging</p>
+                                                    <a href="http://localhost:8765/reports"
+                       class="sidebar-link"
+                                               data-module="reports"                        data-rail-tip="Reports">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-bar-chart c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Reports</span>
+                                            </a>
+                                    <a href="http://localhost:8765/sms"
+                       class="sidebar-link"
+                                               data-module="sms"                        data-rail-tip="SMS">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-chat-dots c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">SMS</span>
+                                            </a>
+                                    <a href="http://localhost:8765/ai-assistant"
+                       class="sidebar-link"
+                                               data-module="ai"                        data-rail-tip="Ask Coco">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-chat-square-text c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Ask Coco</span>
+                                            </a>
+                                                                <p class="sidebar-section">Administration</p>
+                                                    <a href="http://localhost:8765/admin/users"
+                       class="sidebar-link"
+                                               data-module="admin"                        data-rail-tip="Users">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-person-gear c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Users</span>
+                                            </a>
+                                    <a href="http://localhost:8765/admin/roles"
+                       class="sidebar-link"
+                                               data-module="admin"                        data-rail-tip="Roles and permissions">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-shield-lock c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Roles and permissions</span>
+                                            </a>
+                                    <a href="http://localhost:8765/admin/appointment-slots"
+                       class="sidebar-link"
+                                               data-module="admin"                        data-rail-tip="Appointment time slots">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-clock c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Appointment time slots</span>
+                                            </a>
+                                    <a href="http://localhost:8765/admin/settings"
+                       class="sidebar-link"
+                                               data-module="admin"                        data-rail-tip="Settings">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-gear c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Settings</span>
+                                            </a>
+                                    <a href="http://localhost:8765/admin/website"
+                       class="sidebar-link"
+                                               data-module="admin"                        data-rail-tip="Website">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-globe2 c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Website</span>
+                                            </a>
+                                    <a href="http://localhost:8765/admin/audit-logs"
+                       class="sidebar-link"
+                                               data-module="admin"                        data-rail-tip="Audit logs">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-journal-text c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">Audit logs</span>
+                                            </a>
+                                    <a href="http://localhost:8765/ui-kit"
+                       class="sidebar-link"
+                                               data-module="admin"                        data-rail-tip="UI kit">
+                        <span class="sidebar-link-icon"><i aria-hidden="true" class="bi bi-grid-1x2 c-icon"></i>
+</span>
+                        <span class="sidebar-link-label">UI kit</span>
+                                            </a>
+                                    </nav>
+    </div>
+</aside>
+    
+    <div class="app-column">
+        <header class="app-topbar">
+    
+    <button type="button" class="btn-topbar d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#appSidebar"
+            aria-controls="appSidebar" aria-label="Open menu">
+        <i aria-hidden="true" class="bi bi-list c-icon"></i>
+    </button>
+    <button type="button" class="btn-topbar d-none d-lg-inline-flex" data-sidebar-toggle
+            aria-controls="appSidebar" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar">
+        <i aria-hidden="true" class="bi bi-layout-sidebar c-icon"></i>
+    </button>
+    <span class="topbar-divider d-none d-lg-block" aria-hidden="true"></span>
+
+    
+    <div class="topbar-title">
+                    <p class="title">Patients</p>
+            </div>
+
+    <div class="topbar-spacer" aria-hidden="true"></div>
+
+    
+    
+    
+    <button type="button" class="btn-topbar btn-spotlight" data-spotlight-open aria-label="Search (Ctrl K)" title="Search (Ctrl K)">
+        <i aria-hidden="true" class="bi bi-search c-icon"></i>
+    </button>
+
+    
+            <a href="http://localhost:8765/ai-assistant" class="btn-cobi-pill" aria-label="Ask Coco">
+            <span class="c-ask-ring" aria-hidden="true"></span>
+            <span class="coco-orb coco-orb-xs" aria-hidden="true">
+    <span class="coco-orb-core">
+        <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">
+            <path d="M10.5 2.5C11 7.4 13.6 10 18.5 10.5 13.6 11 11 13.6 10.5 18.5 10 13.6 7.4 11 2.5 10.5 7.4 10 10 7.4 10.5 2.5Z"/>
+            <path d="M18 14.5c.2 2.1 1.4 3.3 3.5 3.5-2.1.2-3.3 1.4-3.5 3.5-.2-2.1-1.4-3.3-3.5-3.5 2.1-.2 3.3-1.4 3.5-3.5Z" opacity=".8"/>
+        </svg>
+    </span>
+    </span>
+            <span class="d-none d-md-inline">Ask Coco</span>
+        </a>
+    
+    
+            <button type="button" class="user-trigger user-trigger-compact d-sm-none" data-bs-toggle="modal" data-bs-target="#accountSheet"
+                aria-label="Account" title="Account">
+            <span class="avatar avatar-sm"  role="img" aria-label="System Administrator" >
+            <span aria-hidden="true">SA</span>
+    </span>
+        </button>
+        <div class="dropdown d-none d-sm-block">
+            <button type="button" class="user-trigger user-trigger-compact" data-bs-toggle="dropdown" data-bs-offset="0,8" aria-expanded="false">
+                <span class="avatar avatar-sm"  role="img" aria-label="System Administrator" >
+            <span aria-hidden="true">SA</span>
+    </span>
+                
+                <span class="visually-hidden">Account menu for System Administrator</span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end dropdown-panel user-menu">
+                <div class="panel-header user-menu-head">
+    <span class="avatar avatar-md"  role="img" aria-label="System Administrator" >
+            <span aria-hidden="true">SA</span>
+    </span>
+    <div class="min-w-0">
+        <p class="panel-title text-truncate">System Administrator</p>
+        <p class="panel-sub text-truncate">admin@iccbiclinic.site</p>        <p class="panel-sub">Administrator</p>
+    </div>
+</div>
+<div class="user-menu-body">
+    <a href="http://localhost:8765/profile" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-person-circle c-icon"></i>
+<span class="dropdown-item-label">My profile</span>    </a>
+    <hr class="dropdown-divider">
+    <form method="POST" action="http://localhost:8765/logout" >
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">                 <button type="submit" class="dropdown-item" >
+            <i aria-hidden="true" class="bi bi-box-arrow-right c-icon"></i>
+<span class="dropdown-item-label">Sign out</span>        </button>
+    </form>
+</div>
+            </div>
+        </div>
+    </header>
+
+
+    <div class="modal fade modal-sheet account-sheet" id="accountSheet" tabindex="-1" aria-hidden="true"
+      aria-labelledby="accountSheet-title"      >
+    <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+                                        <div class="modal-header">
+                                            <div class="min-w-0">
+                            <h2 class="modal-title" id="accountSheet-title">Account</h2>
+                                                    </div>
+                                        <button type="button" class="btn-close-c" data-bs-dismiss="modal" aria-label="Close"><i aria-hidden="true" class="bi bi-x-lg c-icon"></i>
+</button>
+                </div>
+                        <div class="modal-body">
+                <div class="account-sheet-who">
+            <span class="avatar avatar-lg"  role="img" aria-label="System Administrator" >
+            <span aria-hidden="true">SA</span>
+    </span>
+            <div class="min-w-0">
+                <p class="account-sheet-name text-truncate">System Administrator</p>
+                <p class="account-sheet-sub text-truncate">admin@iccbiclinic.site</p>                <p class="account-sheet-sub">Administrator</p>
+            </div>
+        </div>
+        <div class="sheet-actions">
+            <a href="http://localhost:8765/profile" class="btn btn-secondary sheet-action"><i aria-hidden="true" class="bi bi-person-circle c-icon"></i>
+My profile</a>
+            <form method="POST" action="http://localhost:8765/logout">
+                <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">                <button type="submit" class="btn btn-secondary sheet-action sheet-action-danger w-100"><i aria-hidden="true" class="bi bi-box-arrow-right c-icon"></i>
+Sign out</button>
+            </form>
+        </div>
+            </div>
+                                </div>
+    </div>
+</div>
+
+
+<dialog class="spotlight" data-spotlight aria-label="Search"
+    data-lookup-url="http://localhost:8765/patients/lookup"
+    data-patient-url="http://localhost:8765/patients/__ID__"
+    data-patients-url="http://localhost:8765/patients"
+    data-ask-url="http://localhost:8765/ai-assistant"
+    data-ai-name="Coco">
+    <div class="spotlight-panel">
+        <div class="spotlight-field">
+            <i aria-hidden="true" class="bi bi-search c-icon"></i>
+            <input type="text" data-spotlight-input role="combobox" aria-expanded="true" aria-controls="spotlightList"
+                   aria-autocomplete="list" autocomplete="off" spellcheck="false" enterkeyhint="go"
+                   placeholder="Search patients, pages, or ask Coco"
+                   aria-label="Search">
+            <kbd>Esc</kbd>
+        </div>
+        <div class="spotlight-results" id="spotlightList" role="listbox" aria-label="Results" data-spotlight-list></div>
+        <div class="spotlight-foot" aria-hidden="true">
+            <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> to move</span>
+            <span><kbd>Enter</kbd> to open</span>
+            <span class="ms-auto"><kbd>Ctrl</kbd><kbd>K</kbd> anywhere</span>
+        </div>
+    </div>
+</dialog>
+
+        <main class="app-main" id="main" tabindex="-1">
+            <div class="app-content">
+                <div class="vstack gap-3">
+
+    <header class="page-header">
+    <span class="c-grid-backdrop" aria-hidden="true"></span>
+    <div class="page-header-main">
+                    <nav aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                                                                        <li class="breadcrumb-item">
+                                <a href="http://localhost:8765/dashboard">Dashboard</a>                            </li>
+                                                                                                <li class="breadcrumb-item active" aria-current="page">Patients</li>
+                                                            </ol>
+            </nav>
+                            <h1 class="page-title">Patients</h1>
+                            <p class="page-subtitle">290 patients on record.</p>
+                    </div>
+            <div class="page-actions"><div class="dropdown">
+            <button type="button" class="btn btn-secondary dropdown-toggle"
+                data-bs-toggle="dropdown" data-bs-offset="0,6" aria-expanded="false"
+                >
+            More
+        </button>
+        <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/promote" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-arrow-up-circle c-icon"></i>
+<span class="dropdown-item-label">Year-end promotion</span>    </a>
+                                                                <a href="http://localhost:8765/patients/import" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-upload c-icon"></i>
+<span class="dropdown-item-label">Import from Excel</span>    </a>
+    </div>
+</div>
+                                        <div class="dropdown">
+            <button type="button" class="btn btn-secondary dropdown-toggle"
+                data-bs-toggle="dropdown" data-bs-offset="0,6" aria-expanded="false"
+                >
+            <i aria-hidden="true" class="bi bi-download c-icon"></i>
+Export
+        </button>
+        <div class="dropdown-menu dropdown-menu-end">
+        <h6 class="dropdown-header">Export the filtered list</h6>
+                    <a href="http://localhost:8765/patients/export?format=xlsx" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-file-earmark-spreadsheet c-icon"></i>
+<span class="dropdown-item-label">Excel (.xlsx)</span>    </a>
+                    <a href="http://localhost:8765/patients/export?format=csv" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-filetype-csv c-icon"></i>
+<span class="dropdown-item-label">CSV</span>    </a>
+    </div>
+</div>
+                                        <a href="http://localhost:8765/patients/create" class="btn btn-primary" >
+            <i aria-hidden="true" class="bi bi-person-plus c-icon"></i>
+        New patient    </a></div>
+    </header>
+
+    <nav aria-label="Patient views" class="c-tabs">
+    <div class="nav nav-segmented">
+                                <a href="http://localhost:8765/patients" class="nav-link active"  aria-current="page" >
+                                <span>Patients</span>
+                            </a>
+                                <a href="http://localhost:8765/patients/intake" class="nav-link" >
+                                <span>Health forms</span>
+                            </a>
+            </div>
+</nav>
+
+        <div style="--stat-cols: 5; --stat-cols-lg: 4;" class="stat-cards">
+    <div  class="stat-tile tone-patients">
+    <div class="stat-head">
+        <span class="stat-label">Total patients</span>
+                    <span class="stat-icon" aria-hidden="true"><i aria-hidden="true" class="bi bi-people c-icon"></i>
+</span>
+            </div>
+    <div class="stat-value">290</div>
+            <div class="stat-meta">
+                                    <span class="stat-meta-item"><span class="stat-dot tone-sky"></span>140 male</span>
+                                    <span class="stat-meta-item"><span class="stat-dot tone-rose"></span>150 female</span>
+        </div>
+    </div>
+        <a  href="http://localhost:8765/patients?is_active=1"  class="stat-tile tone-patients">
+    <div class="stat-head">
+        <span class="stat-label">Active</span>
+                    <span class="stat-icon" aria-hidden="true"><i aria-hidden="true" class="bi bi-person-check c-icon"></i>
+</span>
+            </div>
+    <div class="stat-value">290</div>
+            <div class="stat-meta">
+                                    <span class="stat-meta-item"><span class="stat-dot tone-amber"></span>Inactive 0</span>
+            <span class="stat-meta-item"><span class="stat-dot tone-slate"></span>Archived 0</span>
+        </div>
+    </a>
+                    <a  href="http://localhost:8765/patients?category=college"  class="stat-tile tone-patients">
+    <div class="stat-head">
+        <span class="stat-label">College</span>
+                    <span class="stat-icon" aria-hidden="true"><i aria-hidden="true" class="bi bi-mortarboard c-icon"></i>
+</span>
+            </div>
+    <div class="stat-value">80</div>
+            <div class="stat-meta">
+                                    28% of current patients
+        </div>
+    </a>
+                    <a  href="http://localhost:8765/patients?category=senior_high"  class="stat-tile tone-patients">
+    <div class="stat-head">
+        <span class="stat-label">Senior High School</span>
+                    <span class="stat-icon" aria-hidden="true"><i aria-hidden="true" class="bi bi-mortarboard c-icon"></i>
+</span>
+            </div>
+    <div class="stat-value">55</div>
+            <div class="stat-meta">
+                                    19% of current patients
+        </div>
+    </a>
+                <div  class="stat-tile tone-patients">
+    <div class="stat-head">
+        <span class="stat-label">New this month</span>
+                    <span class="stat-icon" aria-hidden="true"><i aria-hidden="true" class="bi bi-person-plus c-icon"></i>
+</span>
+            </div>
+    <div class="stat-value">0</div>
+            <div class="stat-meta">
+                                    Added since Oct 1
+        </div>
+    </div>
+</div>
+
+    <form method="GET" action="http://localhost:8765/patients" role="search" data-filter-form  data-autosubmit       class="card filter-bar">
+        <div class="filter-bar-main">
+                    <div class="search-input">
+    <i aria-hidden="true" class="bi bi-search c-icon"></i>
+    <label for="search-search" class="visually-hidden">Name, patient no. or student ID</label>
+    <input class="form-control"
+        type="search" name="search" id="search-search" value="" placeholder="Name, patient no. or student ID"
+        autocomplete="off" enterkeyhint="search">
+    </div>
+                            <div class="filter-inline"><select name="category" id="f-category" class="form-select form-select-sm" aria-label="Category" data-category-filter="data-category-filter"   >
+            <option value="" selected>All categories</option>
+                            <option value="college" >College</option>
+                                <option value="senior_high" >Senior High School</option>
+                                <option value="junior_high" >Junior High School</option>
+                                <option value="elementary" >Elementary</option>
+                                <option value="kinder" >Kinder</option>
+                                <option value="daycare" >Daycare</option>
+                                <option value="teacher" >Teacher</option>
+                                <option value="employee" >Employee</option>
+                                <option value="visitor" >Visitor</option>
+                                <option value="other" >Other</option>
+                
+</select></div>
+                                    <div class="filter-bar-end">
+                                                    <div class="dropdown filter-bar-toggle">
+                        <button type="button" class="btn btn-secondary"
+                                data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-offset="0,6" aria-expanded="false"
+                                aria-controls="filters-fea82503">
+                            <i aria-hidden="true" class="bi bi-sliders c-icon"></i>
+Filters
+                                                    </button>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-panel filter-panel" id="filters-fea82503">
+                            <div class="panel-header"><p class="panel-title">Filters</p></div>
+                            <div class="filter-panel-body"><div class="c-field">
+            <label for="flt-year" class="form-label">Grade / year level</label>
+        <select name="year_level" id="flt-year" class="form-select form-select-sm" data-reset-on-category="data-reset-on-category"   >
+            <option value="" selected>All</option>
+                            <option value="Kinder 1" >Kinder 1</option>
+                                <option value="Kinder 2" >Kinder 2</option>
+                                <option value="Grade 1" >Grade 1</option>
+                                <option value="Grade 2" >Grade 2</option>
+                                <option value="Grade 3" >Grade 3</option>
+                                <option value="Grade 4" >Grade 4</option>
+                                <option value="Grade 5" >Grade 5</option>
+                                <option value="Grade 6" >Grade 6</option>
+                                <option value="Grade 7" >Grade 7</option>
+                                <option value="Grade 8" >Grade 8</option>
+                                <option value="Grade 9" >Grade 9</option>
+                                <option value="Grade 10" >Grade 10</option>
+                                <option value="Grade 11" >Grade 11</option>
+                                <option value="Grade 12" >Grade 12</option>
+                                <option value="1st Year" >1st Year</option>
+                                <option value="2nd Year" >2nd Year</option>
+                                <option value="3rd Year" >3rd Year</option>
+                                <option value="4th Year" >4th Year</option>
+                                <option value="5th Year" >5th Year</option>
+                
+</select>
+                    </div>
+        <div class="c-field">
+            <label for="flt-section" class="form-label">Section</label>
+        <select name="section" id="flt-section" class="form-select form-select-sm" data-reset-on-category="data-reset-on-category"   >
+            <option value="" selected>All</option>
+                            <option value="Section A" >Section A</option>
+                                <option value="Section B" >Section B</option>
+                                <option value="Section C" >Section C</option>
+                                <option value="Section D" >Section D</option>
+                                <option value="Block 1" >Block 1</option>
+                                <option value="Block 2" >Block 2</option>
+                                <option value="Block 3" >Block 3</option>
+                                <option value="Block 4" >Block 4</option>
+                
+</select>
+                    </div>
+        <div class="c-field">
+            <label for="flt-sex" class="form-label">Sex</label>
+        <select name="sex" id="flt-sex" class="form-select form-select-sm"   >
+            <option value="" selected>All</option>
+                            <option value="male" >Male</option>
+                                <option value="female" >Female</option>
+                                <option value="other" >Other</option>
+                
+</select>
+                    </div>
+        <div class="c-field">
+            <label for="flt-status" class="form-label">Status</label>
+        <select name="is_active" id="flt-status" aria-describedby="flt-status-help" class="form-select form-select-sm"   >
+            <option value="" selected>All</option>
+                            <option value="1" >Active</option>
+                                <option value="0" >Inactive</option>
+                                <option value="archived" >Archived</option>
+                
+</select>
+            <div class="form-text"  id="flt-status-help" >Archived shows records that were removed from the list.</div>
+                    </div></div>
+                            <div class="panel-footer">
+                                <a href="http://localhost:8765/patients" class="filter-clear">Clear all</a>
+                                <button type="submit" class="btn btn-primary btn-sm" >
+        Apply    </button>
+                            </div>
+                        </div>
+                    </div>
+                                            </div>
+                            <button type="submit" class="visually-hidden">Search</button>
+            </div>
+    </form>
+
+    
+    <div  class="card card-flush">
+        <div class="card-body card-body-none ">
+        <div class="c-table">
+        <div class="table-responsive table-shell" >
+        <table class="table table-c align-middle mb-0 table-hover table-stack-sm " >
+            <caption class="visually-hidden">Patients</caption>                            <thead><tr><th scope="col" style="width: 44px" class="">
+            <input type="checkbox" class="form-check-input" id="selectAll" aria-label="Select all patients on this page">
+    </th>
+                                <th scope="col" class="">
+            Patient
+    </th>
+                <th scope="col" class="priority-md">
+            Category
+    </th>
+                <th scope="col" class="priority-md">
+            Grade and section
+    </th>
+                <th scope="col" class="priority-xl">
+            Sex
+    </th>
+                <th scope="col" class="priority-lg">
+            Age
+    </th>
+                <th scope="col" class="">
+            Status
+    </th>
+                <th scope="col" class="text-end">
+            <span class="visually-hidden">Actions</span>
+    </th></tr></thead>
+                        <tbody>
+                                    <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="290" form="bulkForm"
+                                   aria-label="Select Maria E. Chua">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Maria E. Chua" >
+            <span aria-hidden="true">MC</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/290" class="identity-title">Maria E. Chua</a>
+                                <span class="identity-sub tabular">2025-00290</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Other</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">51 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Maria E. Chua" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/290" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/290/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=290" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/290" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Maria E. Chua?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="289" form="bulkForm"
+                                   aria-label="Select Lovely D. Espiritu">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Lovely D. Espiritu" >
+            <span aria-hidden="true">LE</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/289" class="identity-title">Lovely D. Espiritu</a>
+                                <span class="identity-sub tabular">2025-00289</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Other</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">46 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Lovely D. Espiritu" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/289" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/289/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=289" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/289" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Lovely D. Espiritu?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="288" form="bulkForm"
+                                   aria-label="Select Elaine M. Chua">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Elaine M. Chua" >
+            <span aria-hidden="true">EC</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/288" class="identity-title">Elaine M. Chua</a>
+                                <span class="identity-sub tabular">2025-00288</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Other</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">45 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Elaine M. Chua" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/288" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/288/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=288" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/288" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Elaine M. Chua?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="287" form="bulkForm"
+                                   aria-label="Select Nadia A. Pangilinan">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Nadia A. Pangilinan" >
+            <span aria-hidden="true">NP</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/287" class="identity-title">Nadia A. Pangilinan</a>
+                                <span class="identity-sub tabular">2025-00287</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Other</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">47 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Nadia A. Pangilinan" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/287" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/287/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=287" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/287" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Nadia A. Pangilinan?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="286" form="bulkForm"
+                                   aria-label="Select Jenny Peralta">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Jenny Peralta" >
+            <span aria-hidden="true">JP</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/286" class="identity-title">Jenny Peralta</a>
+                                <span class="identity-sub tabular">2025-00286</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Other</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">37 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Jenny Peralta" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/286" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/286/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=286" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/286" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Jenny Peralta?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="285" form="bulkForm"
+                                   aria-label="Select Nicole D. Tolentino">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Nicole D. Tolentino" >
+            <span aria-hidden="true">NT</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/285" class="identity-title">Nicole D. Tolentino</a>
+                                <span class="identity-sub tabular">2025-00285</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Employee</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">47 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Nicole D. Tolentino" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/285" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/285/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=285" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/285" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Nicole D. Tolentino?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="284" form="bulkForm"
+                                   aria-label="Select Bianca D. Villanueva">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Bianca D. Villanueva" >
+            <span aria-hidden="true">BV</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/284" class="identity-title">Bianca D. Villanueva</a>
+                                <span class="identity-sub tabular">2025-00284</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Employee</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">32 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Bianca D. Villanueva" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/284" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/284/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=284" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/284" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Bianca D. Villanueva?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="283" form="bulkForm"
+                                   aria-label="Select Francine R. Santos">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Francine R. Santos" >
+            <span aria-hidden="true">FS</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/283" class="identity-title">Francine R. Santos</a>
+                                <span class="identity-sub tabular">2025-00283</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Employee</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">36 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Francine R. Santos" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/283" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/283/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=283" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/283" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Francine R. Santos?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="282" form="bulkForm"
+                                   aria-label="Select Adrian R. Pascual">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Adrian R. Pascual" >
+            <span aria-hidden="true">AP</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/282" class="identity-title">Adrian R. Pascual</a>
+                                <span class="identity-sub tabular">2025-00282</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Employee</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Male</td>
+                    <td data-label="Age" class="priority-lg cell-muted">31 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Adrian R. Pascual" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/282" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/282/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=282" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/282" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Adrian R. Pascual?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="281" form="bulkForm"
+                                   aria-label="Select Veronica R. Zamora">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Veronica R. Zamora" >
+            <span aria-hidden="true">VZ</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/281" class="identity-title">Veronica R. Zamora</a>
+                                <span class="identity-sub tabular">2025-00281</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Employee</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">44 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Veronica R. Zamora" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/281" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/281/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=281" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/281" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Veronica R. Zamora?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="280" form="bulkForm"
+                                   aria-label="Select Maria S. Chua">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Maria S. Chua" >
+            <span aria-hidden="true">MC</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/280" class="identity-title">Maria S. Chua</a>
+                                <span class="identity-sub tabular">2025-00280</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Employee</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">48 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Maria S. Chua" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/280" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/280/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=280" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/280" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Maria S. Chua?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="279" form="bulkForm"
+                                   aria-label="Select Riza D. Delos Reyes">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Riza D. Delos Reyes" >
+            <span aria-hidden="true">RR</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/279" class="identity-title">Riza D. Delos Reyes</a>
+                                <span class="identity-sub tabular">2025-00279</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Employee</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">32 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Riza D. Delos Reyes" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/279" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/279/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=279" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/279" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Riza D. Delos Reyes?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="278" form="bulkForm"
+                                   aria-label="Select Eduardo S. Garcia">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Eduardo S. Garcia" >
+            <span aria-hidden="true">EG</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/278" class="identity-title">Eduardo S. Garcia</a>
+                                <span class="identity-sub tabular">2025-00278</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Employee</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Male</td>
+                    <td data-label="Age" class="priority-lg cell-muted">45 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Eduardo S. Garcia" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/278" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/278/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=278" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/278" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Eduardo S. Garcia?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="277" form="bulkForm"
+                                   aria-label="Select Tricia Villanueva">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Tricia Villanueva" >
+            <span aria-hidden="true">TV</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/277" class="identity-title">Tricia Villanueva</a>
+                                <span class="identity-sub tabular">2025-00277</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Employee</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">40 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Tricia Villanueva" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/277" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/277/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=277" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/277" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Tricia Villanueva?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                                            <tr>
+                                            <td class="cell-check">
+                            <input type="checkbox" class="form-check-input row-check" name="ids[]" value="276" form="bulkForm"
+                                   aria-label="Select Irene Co">
+                        </td>
+                                        <td class="cell-identity"><div class="identity">
+                            <span class="avatar avatar-sm"  role="img" aria-label="Irene Co" >
+            <span aria-hidden="true">IC</span>
+    </span>
+                            <div class="identity-text">
+                                <a href="http://localhost:8765/patients/276" class="identity-title">Irene Co</a>
+                                <span class="identity-sub tabular">2025-00276</span>
+                            </div>
+                        </div></td>
+                    <td data-label="Category" class="priority-md"><span class="pill pill-neutral pill-nodot">Employee</span></td>
+                    <td data-label="Grade and section" class="priority-md"><span class="cell-truncate" title="-"><span class="text-muted">-</span></span></td>
+                    <td data-label="Sex" class="priority-xl">Female</td>
+                    <td data-label="Age" class="priority-lg cell-muted">47 yrs</td>
+                    <td data-label="Status" class=""><span class="pill pill-success">Active</span></td>
+                    <td class="cell-actions text-end"><div class="dropdown action-menu">
+    <button type="button" class="btn-more" data-bs-toggle="dropdown" data-bs-offset="0,4"
+            data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-haspopup="menu"
+            aria-label="Actions for Irene Co" title="Actions">
+        <i aria-hidden="true" class="bi bi-three-dots c-icon"></i>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="http://localhost:8765/patients/276" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-eye c-icon"></i>
+<span class="dropdown-item-label">View</span>    </a>
+                                                                                                <a href="http://localhost:8765/patients/276/edit" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-pencil c-icon"></i>
+<span class="dropdown-item-label">Edit</span>    </a>
+                                                                                                    <a href="http://localhost:8765/patient-logs/create?patient_id=276" class="dropdown-item"         >
+        <i aria-hidden="true" class="bi bi-journal-plus c-icon"></i>
+<span class="dropdown-item-label">Log visit</span>    </a>
+                                                                                                    <hr class="dropdown-divider">
+                                    <form method="POST" action="http://localhost:8765/patients/276" data-confirm="The record is hidden from the list and can be restored later. Clinic history is kept." data-confirm-title="Archive Irene Co?" data-confirm-button="Archive" data-confirm-variant="danger">
+         <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">          <input type="hidden" name="_method" value="DELETE">         <button type="submit" class="dropdown-item dropdown-item-danger" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+<span class="dropdown-item-label">Archive</span>        </button>
+    </form>
+    </div>
+</div></td>
+                </tr>
+                            </tbody>
+                    </table>
+    </div>
+            <div class="table-footer">
+                            <nav class="c-pagination" role="navigation" aria-label="Pagination">
+    <p class="c-pagination-info">
+        Showing <strong>1</strong> to <strong>15</strong>
+        of <strong>290</strong> patients
+    </p>
+
+            <div class="c-pagination-controls">
+                            <span class="btn-action btn-action-neutral disabled" aria-disabled="true" aria-label="Previous page"><i class="bi bi-chevron-left c-icon" aria-hidden="true"></i></span>
+            
+            <ul class="pagination d-none d-sm-flex">
+                                                                                                                                            <li class="page-item active" aria-current="page"><span class="page-link">1</span></li>
+                                                                                                                <li class="page-item"><a class="page-link" href="http://localhost:8765/patients?page=2" aria-label="Page 2">2</a></li>
+                                                                                                                <li class="page-item"><a class="page-link" href="http://localhost:8765/patients?page=3" aria-label="Page 3">3</a></li>
+                                                                                                                <li class="page-item"><a class="page-link" href="http://localhost:8765/patients?page=4" aria-label="Page 4">4</a></li>
+                                                                                                                <li class="page-item"><a class="page-link" href="http://localhost:8765/patients?page=5" aria-label="Page 5">5</a></li>
+                                                                                                                <li class="page-item"><a class="page-link" href="http://localhost:8765/patients?page=6" aria-label="Page 6">6</a></li>
+                                                                                                                                    <li class="page-item disabled" aria-disabled="true"><span class="page-link">...</span></li>
+                                                                                                                                                                                    <li class="page-item"><a class="page-link" href="http://localhost:8765/patients?page=19" aria-label="Page 19">19</a></li>
+                                                                                                                <li class="page-item"><a class="page-link" href="http://localhost:8765/patients?page=20" aria-label="Page 20">20</a></li>
+                                                                                                    </ul>
+
+            <span class="page-status d-sm-none">Page <strong>1</strong> of 20</span>
+
+                            <a class="btn-action btn-action-neutral" href="http://localhost:8765/patients?page=2" rel="next" aria-label="Next page" title="Next page"><i class="bi bi-chevron-right c-icon" aria-hidden="true"></i></a>
+                    </div>
+    </nav>
+
+                    </div>
+    </div>
+    </div>
+    </div>
+
+    
+            <form method="POST" action="http://localhost:8765/patients/bulk" id="bulkForm">
+            <input type="hidden" name="_token" value="oXtBMsigErnLagn58ZTLEXcpmzyb48bs8MK7BqZY" autocomplete="off">            <input type="hidden" name="action" id="bulkAction" value="">
+            <input type="hidden" name="format" id="bulkFormat" value="">
+        </form>
+
+        <div class="bulk-bar" id="bulkBar" role="region" aria-label="Actions for selected patients" hidden>
+            <strong class="bulk-bar-count"><span id="bulkCount">0</span> selected</strong>
+            <div class="bulk-bar-actions">
+                                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#moveModal" >
+            <i aria-hidden="true" class="bi bi-arrow-left-right c-icon"></i>
+        Move or promote    </button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bulk="activate" >
+            <i aria-hidden="true" class="bi bi-check-circle c-icon"></i>
+        Activate    </button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bulk="deactivate" >
+            <i aria-hidden="true" class="bi bi-slash-circle c-icon"></i>
+        Deactivate    </button>
+                                                                        <div class="dropdown">
+            <button type="button" class="btn btn-secondary btn-sm dropdown-toggle"
+                data-bs-toggle="dropdown" data-bs-offset="0,6" aria-expanded="false"
+                >
+            <i aria-hidden="true" class="bi bi-download c-icon"></i>
+Export
+        </button>
+        <div class="dropdown-menu dropdown-menu-end">
+        <button type="button" class="dropdown-item" data-bulk="export" data-format="xlsx" >
+        <i aria-hidden="true" class="bi bi-file-earmark-spreadsheet c-icon"></i>
+<span class="dropdown-item-label">Excel (.xlsx)</span>    </button>
+                        <button type="button" class="dropdown-item" data-bulk="export" data-format="csv" >
+        <i aria-hidden="true" class="bi bi-filetype-csv c-icon"></i>
+<span class="dropdown-item-label">CSV</span>    </button>
+    </div>
+</div>
+                                                                            <button type="button" class="btn btn-secondary btn-sm text-danger" data-bulk="archive" data-bulk-confirm="data-bulk-confirm" >
+            <i aria-hidden="true" class="bi bi-archive c-icon"></i>
+        Archive    </button>
+                                                </div>
+            <button type="button" class="btn btn-link btn-sm bulk-bar-clear" id="bulkClear">Clear selection</button>
+        </div>
+    </div>
+            </div>
+        </main>
+
+                <footer class="app-footer">
+            <div class="app-footer-inner">
+                <div class="app-footer-brand">
+                    <img src="/brand/logo.png" alt="" width="24" height="24" decoding="async">
+                    <div class="min-w-0">
+                        <p class="app-footer-name">School Clinic</p>
+                                            </div>
+                </div>
+                <nav class="app-footer-links" aria-label="Footer">
+                    <a href="http://localhost:8765/clinic" target="_blank" rel="noopener">Clinic page</a>                    <a href="http://localhost:8765/privacy" target="_blank" rel="noopener">Privacy</a>                    <a href="http://localhost:8765/ai-assistant">Ask Coco</a>                    <button type="button" class="app-footer-search" data-spotlight-open><kbd>Ctrl</kbd><kbd>K</kbd> Search</button>
+                </nav>
+            </div>
+            <div class="app-footer-meta">
+                <span>&copy; 2026 School Clinic. Health records in this system are confidential.</span>
+                <span>Powered by SchoolCare</span>
+            </div>
+        </footer>
+    </div>
+
+    <nav class="app-tabbar" aria-label="Main">
+    <div class="app-tabbar-inner" style="--tabbar-cols: 5">
+                    <a href="http://localhost:8765/dashboard" class="app-tab" >
+                <span class="app-tab-icon">
+                    <i aria-hidden="true" class="bi bi-house c-icon"></i>
+                                    </span>
+                <span class="app-tab-label">Dashboard</span>
+            </a>
+                    <a href="http://localhost:8765/patients" class="app-tab active"  aria-current="page" >
+                <span class="app-tab-icon">
+                    <i aria-hidden="true" class="bi bi-people-fill c-icon"></i>
+                                    </span>
+                <span class="app-tab-label">Patients</span>
+            </a>
+                    <a href="http://localhost:8765/patient-logs" class="app-tab" >
+                <span class="app-tab-icon">
+                    <i aria-hidden="true" class="bi bi-journal-medical c-icon"></i>
+                                    </span>
+                <span class="app-tab-label">Visits</span>
+            </a>
+                    <a href="http://localhost:8765/appointments" class="app-tab" >
+                <span class="app-tab-icon">
+                    <i aria-hidden="true" class="bi bi-calendar-check c-icon"></i>
+                                            <span class="app-tab-badge" aria-label="148 pending">9+</span>
+                                    </span>
+                <span class="app-tab-label">Appointments</span>
+            </a>
+                <button type="button" class="app-tab" data-bs-toggle="offcanvas" data-bs-target="#appSidebar"
+                aria-controls="appSidebar" aria-label="More pages">
+            <span class="app-tab-icon"><i aria-hidden="true" class="bi bi-grid c-icon"></i>
+</span>
+            <span class="app-tab-label">More</span>
+        </button>
+    </div>
+</nav>
+
+    <div class="modal fade modal-confirm" id="confirmModal" tabindex="-1" aria-hidden="true"
+     aria-labelledby="confirmModalTitle" aria-describedby="confirmModalBody" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="confirm-icon tone-brand" data-confirm-el="icon"><i class="bi bi-question-circle-fill c-icon" aria-hidden="true"></i></div>
+            <h2 class="confirm-title" id="confirmModalTitle" data-confirm-el="title">Are you sure?</h2>
+            <p class="confirm-body" id="confirmModalBody" data-confirm-el="body"></p>
+            <div class="mb-3 d-none" data-confirm-el="input-wrap">
+                <label class="form-label" for="confirmModalInput" data-confirm-el="input-label">Reason</label>
+                <textarea class="form-control" id="confirmModalInput" rows="3" maxlength="1000" data-confirm-el="input"></textarea>
+                <div class="invalid-feedback">This field is required.</div>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-confirm-el="cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" data-confirm-el="ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="toastStack" class="toast-container c-toasts" aria-live="polite" aria-atomic="false">
+    </div>
+                <div class="modal fade" id="moveModal" tabindex="-1" aria-hidden="true"
+      aria-labelledby="moveModal-title"      >
+    <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+                                        <div class="modal-header">
+                                            <div class="min-w-0">
+                            <h2 class="modal-title" id="moveModal-title">Move selected patients</h2>
+                            <p class="modal-subtitle">Only the fields you choose are changed.</p>                        </div>
+                                        <button type="button" class="btn-close-c" data-bs-dismiss="modal" aria-label="Close"><i aria-hidden="true" class="bi bi-x-lg c-icon"></i>
+</button>
+                </div>
+                        <div class="modal-body">
+                <p class="small text-muted">Use this to move a class to a new section. To move a whole category one level up, use
+                    <a href="http://localhost:8765/patients/promote">Year-end promotion</a>.</p>
+                <div class="row g-3" id="moveFields" data-academic="{&quot;flat&quot;:{&quot;levels&quot;:[&quot;Kinder 1&quot;,&quot;Kinder 2&quot;,&quot;Grade 1&quot;,&quot;Grade 2&quot;,&quot;Grade 3&quot;,&quot;Grade 4&quot;,&quot;Grade 5&quot;,&quot;Grade 6&quot;,&quot;Grade 7&quot;,&quot;Grade 8&quot;,&quot;Grade 9&quot;,&quot;Grade 10&quot;,&quot;Grade 11&quot;,&quot;Grade 12&quot;,&quot;1st Year&quot;,&quot;2nd Year&quot;,&quot;3rd Year&quot;,&quot;4th Year&quot;,&quot;5th Year&quot;],&quot;sections&quot;:[&quot;Section A&quot;,&quot;Section B&quot;,&quot;Section C&quot;,&quot;Section D&quot;,&quot;Block 1&quot;,&quot;Block 2&quot;,&quot;Block 3&quot;,&quot;Block 4&quot;],&quot;programs&quot;:[&quot;BSIT&quot;,&quot;BSCS&quot;,&quot;BSN&quot;,&quot;BSED&quot;,&quot;BSHM&quot;,&quot;BSBA&quot;,&quot;ABM&quot;,&quot;STEM&quot;,&quot;HUMSS&quot;,&quot;GAS&quot;,&quot;TVL&quot;,&quot;SPORTS&quot;,&quot;A&amp;D&quot;]},&quot;byCategory&quot;:{&quot;college&quot;:{&quot;levels&quot;:[&quot;1st Year&quot;,&quot;2nd Year&quot;,&quot;3rd Year&quot;,&quot;4th Year&quot;,&quot;5th Year&quot;],&quot;sections&quot;:[&quot;Block 1&quot;,&quot;Block 2&quot;,&quot;Block 3&quot;,&quot;Block 4&quot;],&quot;programs&quot;:[&quot;BSIT&quot;,&quot;BSCS&quot;,&quot;BSN&quot;,&quot;BSED&quot;,&quot;BSHM&quot;,&quot;BSBA&quot;]},&quot;senior_high&quot;:{&quot;levels&quot;:[&quot;Grade 11&quot;,&quot;Grade 12&quot;],&quot;sections&quot;:[&quot;Section A&quot;,&quot;Section B&quot;,&quot;Section C&quot;,&quot;Section D&quot;],&quot;programs&quot;:[&quot;ABM&quot;,&quot;STEM&quot;,&quot;HUMSS&quot;,&quot;GAS&quot;,&quot;TVL&quot;,&quot;SPORTS&quot;,&quot;A&amp;D&quot;]},&quot;junior_high&quot;:{&quot;levels&quot;:[&quot;Grade 7&quot;,&quot;Grade 8&quot;,&quot;Grade 9&quot;,&quot;Grade 10&quot;],&quot;sections&quot;:[&quot;Section A&quot;,&quot;Section B&quot;,&quot;Section C&quot;,&quot;Section D&quot;],&quot;programs&quot;:[]},&quot;elementary&quot;:{&quot;levels&quot;:[&quot;Grade 1&quot;,&quot;Grade 2&quot;,&quot;Grade 3&quot;,&quot;Grade 4&quot;,&quot;Grade 5&quot;,&quot;Grade 6&quot;],&quot;sections&quot;:[&quot;Section A&quot;,&quot;Section B&quot;,&quot;Section C&quot;,&quot;Section D&quot;],&quot;programs&quot;:[]},&quot;kinder&quot;:{&quot;levels&quot;:[&quot;Kinder 1&quot;,&quot;Kinder 2&quot;],&quot;sections&quot;:[&quot;Section A&quot;,&quot;Section B&quot;],&quot;programs&quot;:[]},&quot;daycare&quot;:{&quot;levels&quot;:[],&quot;sections&quot;:[],&quot;programs&quot;:[]},&quot;teacher&quot;:{&quot;levels&quot;:[],&quot;sections&quot;:[],&quot;programs&quot;:[]},&quot;employee&quot;:{&quot;levels&quot;:[],&quot;sections&quot;:[],&quot;programs&quot;:[]},&quot;visitor&quot;:{&quot;levels&quot;:[],&quot;sections&quot;:[],&quot;programs&quot;:[]},&quot;other&quot;:{&quot;levels&quot;:[&quot;Kinder 1&quot;,&quot;Kinder 2&quot;,&quot;Grade 1&quot;,&quot;Grade 2&quot;,&quot;Grade 3&quot;,&quot;Grade 4&quot;,&quot;Grade 5&quot;,&quot;Grade 6&quot;,&quot;Grade 7&quot;,&quot;Grade 8&quot;,&quot;Grade 9&quot;,&quot;Grade 10&quot;,&quot;Grade 11&quot;,&quot;Grade 12&quot;,&quot;1st Year&quot;,&quot;2nd Year&quot;,&quot;3rd Year&quot;,&quot;4th Year&quot;,&quot;5th Year&quot;],&quot;sections&quot;:[&quot;Section A&quot;,&quot;Section B&quot;,&quot;Section C&quot;,&quot;Section D&quot;,&quot;Block 1&quot;,&quot;Block 2&quot;,&quot;Block 3&quot;,&quot;Block 4&quot;],&quot;programs&quot;:[&quot;BSIT&quot;,&quot;BSCS&quot;,&quot;BSN&quot;,&quot;BSED&quot;,&quot;BSHM&quot;,&quot;BSBA&quot;,&quot;ABM&quot;,&quot;STEM&quot;,&quot;HUMSS&quot;,&quot;GAS&quot;,&quot;TVL&quot;,&quot;SPORTS&quot;,&quot;A&amp;D&quot;]}}}">
+                    <div class="col-12">
+                        <div class="c-field">
+            <label for="mv-category" class="form-label">Category</label>
+        <select name="category" id="mv-category" class="form-select" form="bulkForm">
+                                <option value="">Keep current category</option>
+                                                                    <option value="college">College</option>
+                                                                    <option value="senior_high">Senior High School</option>
+                                                                    <option value="junior_high">Junior High School</option>
+                                                                    <option value="elementary">Elementary</option>
+                                                                    <option value="kinder">Kinder</option>
+                                                                    <option value="daycare">Daycare</option>
+                                                                    <option value="teacher">Teacher</option>
+                                                                    <option value="employee">Employee</option>
+                                                                    <option value="visitor">Visitor</option>
+                                                                    <option value="other">Other</option>
+                                                            </select>
+        </div>
+                    </div>
+                                            <div class="col-12">
+                            <div class="c-field">
+            <label for="mv-year_level" class="form-label">Grade / year level</label>
+        <select name="year_level" id="mv-year_level" class="form-select" form="bulkForm" data-list="levels">
+                                    <option value="">Keep current</option>
+                                                                            <option value="Kinder 1">Kinder 1</option>
+                                                                            <option value="Kinder 2">Kinder 2</option>
+                                                                            <option value="Grade 1">Grade 1</option>
+                                                                            <option value="Grade 2">Grade 2</option>
+                                                                            <option value="Grade 3">Grade 3</option>
+                                                                            <option value="Grade 4">Grade 4</option>
+                                                                            <option value="Grade 5">Grade 5</option>
+                                                                            <option value="Grade 6">Grade 6</option>
+                                                                            <option value="Grade 7">Grade 7</option>
+                                                                            <option value="Grade 8">Grade 8</option>
+                                                                            <option value="Grade 9">Grade 9</option>
+                                                                            <option value="Grade 10">Grade 10</option>
+                                                                            <option value="Grade 11">Grade 11</option>
+                                                                            <option value="Grade 12">Grade 12</option>
+                                                                            <option value="1st Year">1st Year</option>
+                                                                            <option value="2nd Year">2nd Year</option>
+                                                                            <option value="3rd Year">3rd Year</option>
+                                                                            <option value="4th Year">4th Year</option>
+                                                                            <option value="5th Year">5th Year</option>
+                                                                    </select>
+        </div>
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" name="clear_year_level" value="1" id="mv-clear-year_level" form="bulkForm">
+                                <label class="form-check-label small" for="mv-clear-year_level">Clear grade / year level</label>
+                            </div>
+                        </div>
+                                            <div class="col-12">
+                            <div class="c-field">
+            <label for="mv-section" class="form-label">Section</label>
+        <select name="section" id="mv-section" class="form-select" form="bulkForm" data-list="sections">
+                                    <option value="">Keep current</option>
+                                                                            <option value="Section A">Section A</option>
+                                                                            <option value="Section B">Section B</option>
+                                                                            <option value="Section C">Section C</option>
+                                                                            <option value="Section D">Section D</option>
+                                                                            <option value="Block 1">Block 1</option>
+                                                                            <option value="Block 2">Block 2</option>
+                                                                            <option value="Block 3">Block 3</option>
+                                                                            <option value="Block 4">Block 4</option>
+                                                                    </select>
+        </div>
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" name="clear_section" value="1" id="mv-clear-section" form="bulkForm">
+                                <label class="form-check-label small" for="mv-clear-section">Clear section</label>
+                            </div>
+                        </div>
+                                            <div class="col-12">
+                            <div class="c-field">
+            <label for="mv-program_strand" class="form-label">Program or strand</label>
+        <select name="program_strand" id="mv-program_strand" class="form-select" form="bulkForm" data-list="programs">
+                                    <option value="">Keep current</option>
+                                                                            <option value="BSIT">BSIT</option>
+                                                                            <option value="BSCS">BSCS</option>
+                                                                            <option value="BSN">BSN</option>
+                                                                            <option value="BSED">BSED</option>
+                                                                            <option value="BSHM">BSHM</option>
+                                                                            <option value="BSBA">BSBA</option>
+                                                                            <option value="ABM">ABM</option>
+                                                                            <option value="STEM">STEM</option>
+                                                                            <option value="HUMSS">HUMSS</option>
+                                                                            <option value="GAS">GAS</option>
+                                                                            <option value="TVL">TVL</option>
+                                                                            <option value="SPORTS">SPORTS</option>
+                                                                            <option value="A&amp;D">A&amp;D</option>
+                                                                    </select>
+        </div>
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" name="clear_program_strand" value="1" id="mv-clear-program_strand" form="bulkForm">
+                                <label class="form-check-label small" for="mv-clear-program_strand">Clear program or strand</label>
+                            </div>
+                        </div>
+                                    </div>
+            </div>
+                            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >
+        Cancel    </button>
+                    <button type="button" class="btn btn-primary" data-bulk="move" >
+            <i aria-hidden="true" class="bi bi-arrow-left-right c-icon"></i>
+        Move patients    </button></div>
+                                </div>
+    </div>
+</div>
+            <script>
+(function () {
+    // Changing the category clears grade and section (their lists depend on it).
+    const cat = document.querySelector('[data-category-filter]');
+    if (cat) {
+        cat.addEventListener('change', () => {
+            cat.form.querySelectorAll('[data-reset-on-category]').forEach(e => e.value = '');
+        });
+    }
+
+    const form = document.getElementById('bulkForm');
+    if (!form) return;
+
+    const bar = document.getElementById('bulkBar');
+    const count = document.getElementById('bulkCount');
+    const all = document.getElementById('selectAll');
+    const checks = () => Array.from(document.querySelectorAll('.row-check'));
+    const selected = () => checks().filter(c => c.checked).length;
+
+    function refresh() {
+        const n = selected();
+        count.textContent = n;
+        bar.hidden = n === 0;
+        checks().forEach(c => c.closest('tr')?.classList.toggle('is-selected', c.checked));
+        if (all) {
+            all.checked = n > 0 && n === checks().length;
+            all.indeterminate = n > 0 && n < checks().length;
+        }
+    }
+
+    checks().forEach(c => c.addEventListener('change', refresh));
+    if (all) all.addEventListener('change', () => { checks().forEach(c => c.checked = all.checked); refresh(); });
+    document.getElementById('bulkClear').addEventListener('click', () => { checks().forEach(c => c.checked = false); refresh(); });
+
+    document.querySelectorAll('[data-bulk]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (btn.hasAttribute('data-bulk-confirm') && window.confirmDialog) {
+                const n = selected();
+                const ok = await window.confirmDialog({
+                    title: n === 1 ? 'Archive the selected patient?' : 'Archive ' + n + ' patients?',
+                    message: 'They are hidden from the patient list. Their clinic history is kept and they can be restored from the Archived filter.',
+                    variant: 'danger',
+                    confirmText: 'Archive',
+                    icon: 'archive',
+                });
+                if (!ok) return;
+            }
+            document.getElementById('bulkAction').value = btn.dataset.bulk;
+            document.getElementById('bulkFormat').value = btn.dataset.format || '';
+            if (btn.dataset.bulk !== 'export') {
+                btn.disabled = true;
+            }
+            form.submit();
+        });
+    });
+
+    // Move modal: grade / section / program follow the chosen category.
+    const move = document.getElementById('moveFields');
+    if (move) {
+        let cfg = {};
+        try { cfg = JSON.parse(move.dataset.academic || '{}'); } catch (e) {}
+        const mvCat = document.getElementById('mv-category');
+        mvCat.addEventListener('change', () => {
+            const lists = (cfg.byCategory && cfg.byCategory[mvCat.value]) || cfg.flat || {};
+            move.querySelectorAll('select[data-list]').forEach(sel => {
+                const opts = lists[sel.dataset.list] || [];
+                sel.innerHTML = '<option value="">Keep current</option>';
+                opts.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+            });
+        });
+    }
+
+    refresh();
+})();
+</script>
+</body>
+</html>

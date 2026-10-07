@@ -77,9 +77,9 @@ $tones: (
 }
 
 // -- Layout --------------------------------------------------------------------
-$sidebar-width:           260px;
-$sidebar-collapsed-width: 72px;
-$topbar-height:           64px;
+$sidebar-width:           16.25rem;   // 260px at 100%
+$sidebar-collapsed-width: 4.5rem;
+$topbar-height:           4rem;
 $content-max-width:       1400px;
 
 // -- Motion (Apple: 150-250ms, ease-out enter, ease-in exit, press 100ms) ------
@@ -159,6 +159,9 @@ $link-hover-decoration: underline;
 $font-family-sans-serif: $font-body;
 $headings-font-family:   $font-display;
 $font-size-root:   null;
+// Desktop UI scale (lg and up): the whole system at 90%, like browser zoom 90%.
+// Everything sized in rem follows; phones and tablets keep 16px (no iOS input zoom).
+$ui-scale:         .9;
 $font-size-base:   1rem;       // 16px body
 $font-size-sm:     .875rem;    // 14px
 $font-size-lg:     1.125rem;
@@ -315,10 +318,10 @@ $modal-header-border-color:      $hairline;
 $modal-footer-border-color:      $hairline;
 $modal-backdrop-bg:              #000;
 $modal-backdrop-opacity:         .32;
-$modal-sm: 440px;
-$modal-md: 520px;
-$modal-lg: 640px;
-$modal-xl: 800px;
+$modal-sm: 27.5rem;
+$modal-md: 32.5rem;
+$modal-lg: 40rem;
+$modal-xl: 50rem;
 $modal-fade-transform: scale(.97);
 $modal-transition:     transform $dur-slow $ease-out;
 
@@ -368,7 +371,7 @@ $pagination-disabled-bg:    transparent;
 $pagination-disabled-color: $gray-400;
 
 // -- Toasts --------------------------------------------------------------------
-$toast-max-width:     380px;
+$toast-max-width:     23.75rem;
 $toast-padding-x:     .875rem;
 $toast-padding-y:     .75rem;
 $toast-font-size:     .9375rem;
@@ -377,7 +380,7 @@ $toast-box-shadow:    0 2px 4px rgba(0, 0, 0, .03), 0 22px 48px -14px rgba(0, 0,
 $toast-spacing:       .5rem;
 
 // -- Offcanvas (mobile sidebar drawer) -------------------------------------------
-$offcanvas-horizontal-width:    280px;
+$offcanvas-horizontal-width:    17.5rem;
 $offcanvas-backdrop-bg:         #000;
 $offcanvas-backdrop-opacity:    .32;
 $offcanvas-transition-duration: $dur-slow;

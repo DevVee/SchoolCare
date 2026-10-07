@@ -70,10 +70,10 @@
         align-items: center;
         gap: .5rem;
         min-width: 0;
-        max-width: 360px;
+        max-width: 22.5rem;
         flex-shrink: 1;
         font-family: $font-ui;
-        .topbar-school-logo { width: 24px; height: 24px; border-radius: $radius-xs; object-fit: contain; flex-shrink: 0; }
+        .topbar-school-logo { width: 1.5rem; height: 1.5rem; border-radius: $radius-xs; object-fit: contain; flex-shrink: 0; }
         .topbar-school-name {
             font-size: .875rem;
             font-weight: 600;

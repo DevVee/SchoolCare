@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Concerns\SavesSettingsGroup;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSettingsRequest;
+use App\Models\User;
 use App\Services\AiAssistantService;
 use App\Services\SettingsService;
 use App\Services\SignInCodes;
@@ -27,12 +28,12 @@ class SettingsController extends Controller
 
     public function __construct(private readonly SettingsService $settings) {}
 
-    /** Settings home: every settings area as a list of cards. Group pages have no side menu. */
+    /** Settings home: every settings area as a list of cards (on desktop the settings panel lists them too). */
     public function index(Request $request)
     {
         $this->authorize('manage-settings');
 
-        return view('admin.settings.index', ['sections' => $this->navSections($request)]);
+        return view('admin.settings.index', ['sections' => self::sections($request->user())]);
     }
 
     public function edit(Request $request, string $group)
@@ -158,12 +159,17 @@ class SettingsController extends Controller
     ];
 
     /**
-     * @return list<array{title: string, items: list<array{label: string, icon: string, href: string, description: ?string}>}>
+     * Every settings area by section, for the settings home and the settings panel beside the
+     * rail (layouts/partials/settings-nav). `key` is the settings group; null for pages set up
+     * elsewhere (appointment slots, website).
+     *
+     * @return list<array{title: string, items: list<array{key: ?string, label: string, icon: string, href: string, description: ?string}>}>
      */
-    private function navSections(Request $request): array
+    public static function sections(User $user): array
     {
-        $groups = $this->settings->visibleGroups();
+        $groups = app(SettingsService::class)->visibleGroups();
         $item = fn (string $key) => [
+            'key'         => $key,
             'label'       => $groups[$key]['label'],
             'icon'        => $groups[$key]['icon'] ?? 'gear',
             'href'        => route('admin.settings.edit', $key),
@@ -179,13 +185,12 @@ class SettingsController extends Controller
         }
 
         // Pages set up elsewhere that people look for under Settings.
-        $user = $request->user();
         if ($user->can('manage-appointment-slots')) {
-            $sections['Clinic work'][] = ['label' => 'Appointment time slots', 'icon' => 'clock', 'href' => route('admin.appointment-slots.index'),
+            $sections['Clinic work'][] = ['key' => null, 'label' => 'Appointment time slots', 'icon' => 'clock', 'href' => route('admin.appointment-slots.index'),
                 'description' => 'The times offered when booking, how many people fit in each, and on which days.'];
         }
         if ($user->can('manage-landing')) {
-            $sections['Website'] = [['label' => 'Website', 'icon' => 'globe2', 'href' => route('admin.website.edit'),
+            $sections['Website'] = [['key' => null, 'label' => 'Website', 'icon' => 'globe2', 'href' => route('admin.website.edit'),
                 'description' => 'The public clinic page: text, photos and what visitors can do there.']];
         }
 

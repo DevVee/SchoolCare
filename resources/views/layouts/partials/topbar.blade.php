@@ -79,9 +79,13 @@
         </a>
     @endif
 
-    {{-- Account --}}
+    {{-- Account: a menu from sm up, a bottom sheet on phones (#accountSheet below) --}}
     @if ($user)
-        <div class="dropdown">
+        <button type="button" class="user-trigger user-trigger-compact d-sm-none" data-bs-toggle="modal" data-bs-target="#accountSheet"
+                aria-label="Account" title="Account">
+            <x-ui.avatar :src="$avatarSrc" :name="$user->name" size="sm" />
+        </button>
+        <div class="dropdown d-none d-sm-block">
             <button type="button" class="user-trigger user-trigger-compact" data-bs-toggle="dropdown" data-bs-offset="0,8" aria-expanded="false">
                 <x-ui.avatar :src="$avatarSrc" :name="$user->name" size="sm" />
                 {{-- Name and role live in the sidebar profile card; avatar only here --}}
@@ -93,6 +97,27 @@
         </div>
     @endif
 </header>
+
+{{-- Phones: who is signed in, profile and sign out, as a sheet (outside the header: its blur would trap a fixed sheet) --}}
+@if ($user)
+    <x-ui.modal id="accountSheet" title="Account" sheet class="account-sheet">
+        <div class="account-sheet-who">
+            <x-ui.avatar :src="$avatarSrc" :name="$user->name" size="lg" />
+            <div class="min-w-0">
+                <p class="account-sheet-name text-truncate">{{ $user->name }}</p>
+                @if ($user->email)<p class="account-sheet-sub text-truncate">{{ $user->email }}</p>@endif
+                <p class="account-sheet-sub">{{ $roleLabel }}</p>
+            </div>
+        </div>
+        <div class="sheet-actions">
+            <a href="{{ route('profile.edit') }}" class="btn btn-secondary sheet-action"><x-ui.icon name="person-circle" />My profile</a>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="btn btn-secondary sheet-action sheet-action-danger w-100"><x-ui.icon name="box-arrow-right" />Sign out</button>
+            </form>
+        </div>
+    </x-ui.modal>
+@endif
 
 {{-- Spotlight palette. A native <dialog> opens in the top layer, above modals and the topbar. --}}
 <dialog class="spotlight" data-spotlight aria-label="Search"

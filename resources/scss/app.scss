@@ -71,3 +71,5 @@ $bootstrap-icons-font-dir: "/fonts";
 @import "pages/patients";
 @import "pages/print-settings";
 @import "pages/website-admin";
+@import "pages/settings";   // settings panel beside the rail, settings blocks
+@import "layout/mobile";   // phones last: native tab bar, sheets, table cards

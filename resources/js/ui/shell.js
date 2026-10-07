@@ -2,6 +2,8 @@
  * App shell behaviour (layouts/app.blade.php):
  *   - desktop sidebar collapse to a 72px icon rail, remembered in localStorage
  *     (the <head> no-flash script applies it before first paint);
+ *   - settings pages (html.settings-mode) always show the rail, rendered by the
+ *     server: the toggle is hidden there and never changes the remembered choice;
  *   - tooltips on rail items while collapsed;
  *   - (search lives in ./spotlight: Ctrl K or "/");
  *   - time-of-day greeting for #dashGreeting (dashboard hero).
@@ -58,6 +60,7 @@ if (sidebar) {
 
     toggles.forEach((btn) => {
         btn.addEventListener('click', () => {
+            if (root.classList.contains('settings-mode')) return;
             const collapsed = !isCollapsed();
             root.classList.toggle('sidebar-collapsed', collapsed);
             try {

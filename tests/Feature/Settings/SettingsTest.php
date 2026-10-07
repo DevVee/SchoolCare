@@ -36,9 +36,11 @@ class SettingsTest extends TestCase
         return $user;
     }
 
-    public function test_index_lists_every_group_and_every_group_renders_without_a_side_menu(): void
+    public function test_index_lists_every_group_and_every_group_renders_with_the_settings_panel(): void
     {
-        $home = $this->actingAs($this->admin)->get(route('admin.settings.index'))->assertOk();
+        $home = $this->actingAs($this->admin)->get(route('admin.settings.index'))->assertOk()
+            ->assertSee('settings-mode', false)
+            ->assertSee('data-settings-panel', false);
 
         foreach (array_keys(settings()->visibleGroups()) as $group) {
             $label = settings()->groups()[$group]['label'];
@@ -49,8 +51,15 @@ class SettingsTest extends TestCase
                 ->assertOk()
                 ->assertSee($label)
                 ->assertSee('All settings')
-                ->assertDontSee('settings-nav', false);
+                // The panel beside the rail lists every area and highlights this one.
+                ->assertSee('data-settings-panel', false)
+                ->assertSee('class="settings-panel-link active"', false);
         }
+
+        // Other pages keep the remembered sidebar and have no settings panel.
+        $this->actingAs($this->admin)->get(route('dashboard'))->assertOk()
+            ->assertDontSee('settings-mode', false)
+            ->assertDontSee('data-settings-panel', false);
     }
 
     public function test_unknown_or_empty_group_is_404(): void

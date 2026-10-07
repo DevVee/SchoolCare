@@ -13,6 +13,7 @@ import './ui/scroll-edge'; // .app-topbar divider appears once the page scrolls
 import './ui/charts';    // [data-chart] → ApexCharts (loaded on demand); window.charts
 import './ui/clock';     // [data-live-clock] (x-ui.hero), pauses when the tab is hidden
 import './ui/shell';     // sidebar collapse rail, topbar search, greeting
+import './ui/settings-nav'; // settings panel beside the rail: filter the settings areas
 import './ui/session';   // CSRF refresh + session keep-alive (signed-in layout only)
 import './ui/password-toggle'; // [data-password-toggle] show / hide password
 import './ui/otp-input'; // [data-otp-form] six-box email sign-in code + resend countdown
@@ -22,6 +23,8 @@ import './ui/life';      // reveal on scroll, count up, pointer spotlight, word 
 import './ui/brief';     // dashboard: Coco's brief of what is happening today
 import './ui/spotlight'; // Ctrl K / "/": find a patient, jump to a page, or ask the assistant
 import './ui/select-search'; // long select.form-select lists become type-to-filter dropdowns
+import './ui/phone-list'; // phones: tables become tappable lists with a details sheet
+import './ui/mobile';    // phones: many tabs become one dropdown, text boxes grow as you type
 
 window.axios = axios;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';

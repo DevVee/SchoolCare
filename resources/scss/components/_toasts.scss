@@ -13,7 +13,7 @@
     flex-direction: column;
     gap: .5rem;
     pointer-events: none;
-    @include media-breakpoint-up(sm) { left: auto; right: 1rem; top: 1rem; width: 380px; }
+    @include media-breakpoint-up(sm) { left: auto; right: 1rem; top: 1rem; width: 23.75rem; }
 }
 
 .c-toasts .toast {

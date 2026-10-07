@@ -1,0 +1,327 @@
+// ═════════════════════════════════════════════════════════════════════════════
+// Settings (Shopify style, after ServiceCo's admin): admin/settings/* and
+// layouts/partials/settings-nav.blade.php.
+//
+//   >= lg: html.settings-mode (+ server-rendered .sidebar-collapsed, so the
+//          sidebar is its 72px icon rail without touching the remembered
+//          choice) and the settings panel fixed beside the rail. The content
+//          column starts after both.
+//   Group page: every x-ui.section inside .settings-blocks is a settings block
+//          (title + description left, fields in a white card right; stacked
+//          below lg), then a sticky save bar.
+//   Home: grouped list (iOS Settings): label, one card per section, rows.
+// ═════════════════════════════════════════════════════════════════════════════
+
+:root {
+    --c-settings-panel-w: 16.5rem;   // 264px at 100%
+    --c-settings-block-aside: 17.5rem; // 280px: block title + description column
+}
+
+// ─── Shell: rail + panel (lg and up) ────────────────────────────────────────
+.settings-panel { display: none; }
+
+@include media-breakpoint-up(lg) {
+    // The rail is forced here: the collapse toggle (and the divider after it) has nothing to do.
+    .settings-mode .app-topbar [data-sidebar-toggle],
+    .settings-mode .app-topbar [data-sidebar-toggle] + .topbar-divider { display: none !important; }
+
+    html.settings-mode .app-column { margin-left: calc(var(--c-sidebar-cw) + var(--c-settings-panel-w)); }
+    // Narrower reading width, like Shopify's settings
+    .settings-mode .app-content { max-width: 72rem; }
+
+    .settings-panel {
+        position: fixed;
+        inset: 0 auto 0 var(--c-sidebar-cw);
+        z-index: 1030;   // under the sidebar (1035) so rail tooltips sit on top
+        width: var(--c-settings-panel-w);
+        display: flex;
+        flex-direction: column;
+        background: #FBFBFC;
+        border-right: 1px solid var(--c-hairline);
+    }
+}
+
+.settings-panel {
+    .settings-panel-head {
+        height: var(--c-topbar-h);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: .25rem;
+        padding: 0 .75rem;
+        border-bottom: 1px solid var(--c-hairline);
+    }
+    .settings-panel-back {
+        width: 2.25rem;
+        height: 2.25rem;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: $radius-sm;
+        color: var(--c-ink-2);
+        font-size: 1.0625rem;
+        text-decoration: none;
+        transition: background-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
+        &:hover { background: rgba(0, 0, 0, .05); color: var(--c-ink); }
+        &:active { transform: scale($press-scale); }
+        &:focus-visible { outline: 0; box-shadow: var(--c-glow); }
+    }
+    .settings-panel-title {
+        font-family: $font-ui;
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: -.01em;
+        color: var(--c-ink);
+    }
+
+    .settings-panel-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        padding: .75rem .75rem 1rem;
+    }
+    .settings-panel-search {
+        flex: none;
+        min-width: 0;
+        margin-bottom: .75rem;
+        .form-control { background: #fff; }
+    }
+
+    .settings-panel-nav { display: flex; flex-direction: column; gap: 2px; }
+    .settings-panel-group { display: flex; flex-direction: column; gap: 2px; }
+    .settings-panel-section {
+        margin: 0;
+        padding: 1rem .625rem .375rem;
+        font-family: $font-ui;
+        font-size: .6875rem;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--c-muted);
+    }
+    .settings-panel-link {
+        display: flex;
+        align-items: center;
+        gap: .625rem;
+        min-height: 2.375rem;
+        padding: 0 .625rem;
+        border-radius: $radius-sm;
+        font-family: $font-ui;
+        font-size: .9375rem;
+        font-weight: 500;
+        letter-spacing: -.01em;
+        color: $gray-700;
+        text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: background-color $dur-fast ease-out, color $dur-fast ease-out, transform $dur-press ease-out;
+        .c-icon { width: 1.125rem; flex-shrink: 0; text-align: center; font-size: 1rem; line-height: 1; }
+        .settings-panel-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        &:hover { background: rgba(0, 0, 0, .045); color: var(--c-ink); }
+        &:active { transform: scale(.98); }
+        &:focus-visible { outline: 0; box-shadow: var(--c-glow); }
+        // Current area: soft brand tint (the main sidebar keeps the solid pill)
+        &.active {
+            background: rgba(var(--brand-rgb), .1);
+            color: var(--brand-700);
+            font-weight: 600;
+        }
+    }
+    .settings-panel-empty { margin: 0; padding: .5rem .625rem; font-size: .875rem; color: var(--c-muted); }
+
+    .settings-panel-foot {
+        flex-shrink: 0;
+        padding: .875rem 1.25rem 1rem;
+        border-top: 1px solid var(--c-hairline);
+        line-height: 1.3;
+        p { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    }
+    .settings-panel-user { font-size: .875rem; font-weight: 600; color: var(--c-ink); }
+    .settings-panel-email { font-size: .8125rem; color: var(--c-muted); }
+}
+
+// ─── Settings blocks (group page) ───────────────────────────────────────────
+// One column that never grows past the screen (long select text must not widen the page).
+.settings-blocks {
+    min-width: 0;
+
+    .form-section {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: .875rem;
+        padding: 2rem 0;
+        border-top: 0;
+        border-bottom: 1px solid var(--c-border);
+        &:first-child { padding-top: .5rem; }
+        &:last-child { padding-bottom: .5rem; border-bottom: 0; }
+
+        @include media-breakpoint-up(lg) {
+            grid-template-columns: var(--c-settings-block-aside) minmax(0, 1fr);
+            gap: 2.5rem;
+        }
+    }
+    .form-section-head,
+    .form-section-full > :first-child { min-width: 0; margin-bottom: 0 !important; }
+    .form-section-title { font-size: 1.0625rem; font-weight: 650; }
+    .form-section-desc { margin-top: .25rem; font-size: .875rem; line-height: 1.5; color: var(--c-muted); }
+
+    // The fields: a white card
+    .form-section-body {
+        min-width: 0;
+        padding: 1.25rem 1rem;
+        background: var(--c-surface);
+        border: 1px solid var(--c-hairline);
+        border-radius: $radius-lg;
+        box-shadow: var(--c-shadow-card);
+        @include media-breakpoint-up(sm) { padding: 1.25rem 1.5rem; }
+    }
+    // SMS messages: each message is its own card already
+    .form-section-full > :last-child { min-width: 0; }
+}
+
+// Test messages after the form
+.settings-blocks-after {
+    border-top: 1px solid var(--c-border);
+    .form-section:first-child { padding-top: 2rem; }
+}
+
+// ─── Save bar ───────────────────────────────────────────────────────────────
+// At the end of the form while nothing changed (Save only); once something
+// changes (.is-dirty, set by the page script) it sticks to the bottom of the
+// screen, raised, with Discard and Save, like ServiceCo's SaveBar.
+.settings-savebar {
+    position: relative;
+    z-index: 1010;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: 1.5rem;
+    padding: .625rem .75rem .625rem 1.25rem;
+    border: 1px solid var(--c-border);
+    border-radius: $radius-lg;
+    background: var(--c-surface);
+    transition: box-shadow $dur-base ease-out, border-color $dur-base ease-out;
+
+    .settings-savebar-msg {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        font-size: .9375rem;
+        color: var(--c-muted);
+    }
+    &:not(.is-dirty) .settings-savebar-discard { display: none; }
+
+    &.is-dirty {
+        position: sticky;
+        bottom: 1rem;
+        border-color: rgba(0, 0, 0, .08);
+        background: var(--c-material-thick);
+        backdrop-filter: var(--c-blur);
+        -webkit-backdrop-filter: var(--c-blur);
+        box-shadow: 0 16px 40px -20px rgba(0, 0, 0, .35), var(--c-shadow-xs);
+        animation: settings-savebar-in $dur-slow $ease-out;
+        .settings-savebar-msg {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            color: var(--c-ink);
+            font-weight: 600;
+            // Brand dot: something is waiting to be saved
+            &::before { content: ""; width: .5rem; height: .5rem; flex-shrink: 0; border-radius: 50%; background: var(--brand-600); }
+        }
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { background: var(--c-surface); }
+        @media (prefers-reduced-transparency: reduce) { background: var(--c-surface); backdrop-filter: none; }
+    }
+
+    // Phones and tablets: above the bottom tab bar; the message across the
+    // full width, then Discard and Save as two equal buttons.
+    @include media-breakpoint-down(lg) {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: .75rem;
+        .settings-savebar-msg { grid-column: 1 / -1; }
+        &:not(.is-dirty) .settings-savebar-save { grid-column: 1 / -1; }
+        &.is-dirty { bottom: calc(var(--c-tabbar-h, 3.5rem) + env(safe-area-inset-bottom, 0px) + .5rem); }
+        .btn { width: 100%; justify-content: center; }
+    }
+}
+@keyframes settings-savebar-in {
+    from { opacity: .4; transform: translateY(.5rem); }
+    to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .settings-savebar.is-dirty { animation: none; }
+}
+
+// ─── Settings home: grouped list ────────────────────────────────────────────
+.settings-home-sections {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    @include media-breakpoint-up(xl) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+}
+.settings-home-label {
+    margin: 0 0 .5rem;
+    padding: 0 1rem;
+    font-family: $font-ui;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+}
+.settings-home-card {
+    overflow: hidden;
+    background: var(--c-surface);
+    border: 1px solid var(--c-hairline);
+    border-radius: $radius-lg;
+    box-shadow: var(--c-shadow-card);
+}
+.settings-home-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .875rem;
+    min-height: 3.5rem;
+    padding: .75rem 1rem;
+    color: inherit;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color $dur-fast ease-out;
+
+    // Hairline between rows, starting after the icon (iOS inset separator)
+    & + &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: calc(1rem + 2rem + .875rem);
+        border-top: 1px solid var(--c-hairline);
+    }
+    &:hover { background: rgba(0, 0, 0, .03); color: inherit; }
+    &:active { background: rgba(0, 0, 0, .06); }
+    &:focus-visible { outline: 0; box-shadow: inset 0 0 0 3px rgba(var(--brand-rgb), .35); }
+
+    .settings-home-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .125rem; }
+    .settings-home-name { font-family: $font-ui; font-size: .9375rem; font-weight: 600; letter-spacing: -.01em; color: var(--c-ink); line-height: 1.3; }
+    .settings-home-desc { font-size: .8125rem; color: var(--c-muted); line-height: 1.4; }
+    .settings-home-chevron { flex-shrink: 0; font-size: .875rem; color: var(--c-faint); }
+
+    // Phones: quieter description, one line under the name
+    @include media-breakpoint-down(md) {
+        .settings-home-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    }
+}
+
+// Print: content only
+@media print {
+    .settings-panel, .settings-savebar { display: none !important; }
+}

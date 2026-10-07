@@ -1,8 +1,11 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+{{-- Settings pages: the sidebar folds to its rail beside the settings panel (lg and up), without
+     touching the remembered sidebar choice (resources/scss/pages/_settings.scss, ui/shell.js). --}}
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['settings-mode sidebar-collapsed' => request()->routeIs('admin.settings.*')])>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @auth
         {{-- resources/js/ui/session.js: CSRF refresh + session keep-alive every 20 minutes --}}
@@ -26,6 +29,9 @@
     <a href="#main" class="skip-link">Skip to main content</a>
 
     @include('layouts.partials.sidebar')
+    @if (request()->routeIs('admin.settings.*'))
+        @include('layouts.partials.settings-nav')
+    @endif
 
     <div class="app-column">
         @include('layouts.partials.topbar')
@@ -65,6 +71,8 @@
             </div>
         </footer>
     </div>
+
+    @include('layouts.partials.tab-bar')
 
     <x-ui.confirm-dialog />
     <x-ui.flash-toasts />

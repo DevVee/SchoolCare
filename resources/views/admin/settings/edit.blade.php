@@ -2,8 +2,11 @@
 
 @section('title', 'Settings: '.$meta['label'])
 
-{{-- One settings group, full width (guidance_v2 layout): header with the group's icon and an
-     "All settings" button back to the settings home, then status, form card and actions. --}}
+{{-- One settings group (Shopify style, like ServiceCo's SettingsBlock): header with the group's icon,
+     status, then one block per section (title and description on the left, the fields in a white card
+     on the right; stacked below lg), a sticky save bar, then actions outside the form (test messages).
+     On desktop the settings panel beside the rail is the menu; below lg an "All settings" button goes
+     back to the settings home. Styles: resources/scss/pages/_settings.scss. --}}
 @php
     // Plain-language sections for the generic groups: title => [description, [keys]].
     // Keys not listed here fall into a final "Other settings" section.
@@ -63,12 +66,12 @@
 @endphp
 
 @section('content')
-<div class="vstack gap-3">
+<div class="vstack gap-3 settings-page">
 
     <x-ui.page-header :title="$meta['label']" :icon="$meta['icon'] ?? 'gear'" :description="$meta['description'] ?? null"
         :breadcrumbs="['Dashboard' => route('dashboard'), 'Settings' => route('admin.settings.index'), $meta['label'] => null]">
         <x-slot:actions>
-            <x-ui.button variant="secondary" icon="arrow-left" :href="route('admin.settings.index')">All settings</x-ui.button>
+            <x-ui.button variant="secondary" icon="arrow-left" :href="route('admin.settings.index')" class="d-lg-none">All settings</x-ui.button>
         </x-slot:actions>
     </x-ui.page-header>
 
@@ -79,12 +82,12 @@
     {{-- Status card above the form (SMS, Email, AI): plain words, technical details collapsed. --}}
     @includeIf('admin.settings.partials.'.$group.'-status')
 
-    <form method="POST" action="{{ route('admin.settings.update', $group) }}" enctype="multipart/form-data" id="settingsForm">
+    <form method="POST" action="{{ route('admin.settings.update', $group) }}" enctype="multipart/form-data" id="settingsForm" class="settings-form">
         @csrf
         @method('PUT')
 
-        <x-ui.card :title="$meta['label']" :icon="$meta['icon'] ?? 'gear'">
-
+        {{-- Every x-ui.section inside becomes a settings block (pages/_settings.scss). --}}
+        <div class="settings-blocks">
             @if (! empty($meta['partial']))
                 @include($meta['partial'])
             @else
@@ -98,17 +101,25 @@
                     </x-ui.section>
                 @endforeach
             @endif
+        </div>
 
-            <x-slot:footer>
-                <span class="me-auto text-muted fs-sm" role="status" aria-live="polite" data-settings-dirty>No unsaved changes</span>
-                <x-ui.button variant="secondary" :href="route('admin.settings.edit', $group)">Discard changes</x-ui.button>
-                <x-ui.button type="submit" icon="check-lg">Save changes</x-ui.button>
-            </x-slot:footer>
-        </x-ui.card>
+        {{-- Save bar: sticks to the bottom of the screen; stands out once something changed (script below). --}}
+        @php $notSaved = $errors->any() && ! $errors->has('test_number'); @endphp
+        <div @class(['settings-savebar', 'is-dirty' => $notSaved]) data-settings-savebar @if ($notSaved) data-start-dirty @endif>
+            <p class="settings-savebar-msg" role="status" aria-live="polite" data-settings-dirty>
+                {{ $notSaved ? 'Nothing was saved. Fix the highlighted fields and save again.' : 'No unsaved changes' }}
+            </p>
+            <x-ui.button variant="secondary" :href="route('admin.settings.edit', $group)" class="settings-savebar-discard">Discard</x-ui.button>
+            <x-ui.button type="submit" icon="check-lg" class="settings-savebar-save">Save</x-ui.button>
+        </div>
     </form>
 
-    {{-- Actions outside the settings form (test messages). --}}
-    @includeIf('admin.settings.partials.'.$group.'-actions')
+    {{-- Actions outside the settings form (test messages), as settings blocks too. --}}
+    @if (view()->exists('admin.settings.partials.'.$group.'-actions'))
+        <div class="settings-blocks settings-blocks-after">
+            @include('admin.settings.partials.'.$group.'-actions')
+        </div>
+    @endif
 </div>
 @endsection
 
@@ -141,9 +152,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Footer: how many fields differ from what was loaded.
+    // Save bar: how many fields differ from what was loaded; the bar stands out while any do.
     var form = document.getElementById('settingsForm');
     var status = form && form.querySelector('[data-settings-dirty]');
+    var bar = form && form.querySelector('[data-settings-savebar]');
     if (form && status) {
         // Every setting (name without [..]) -> its values as one string.
         var snapshot = function () {
@@ -163,7 +175,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (now[name] !== initial[name]) names[name] = true;
             });
             var n = Object.keys(names).length;
-            status.textContent = n === 0 ? 'No unsaved changes' : (n === 1 ? '1 unsaved change' : n + ' unsaved changes');
+            // After a failed save the page reloads with what was typed: it is still not saved.
+            var keep = n === 0 && bar && bar.hasAttribute('data-start-dirty');
+            if (!keep) {
+                status.textContent = n === 0 ? 'No unsaved changes' : (n === 1 ? 'You have 1 unsaved change.' : 'You have ' + n + ' unsaved changes.');
+            }
+            if (bar) bar.classList.toggle('is-dirty', n > 0 || keep);
         };
         form.addEventListener('input', update);
         form.addEventListener('change', update);
