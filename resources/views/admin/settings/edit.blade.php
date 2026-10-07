@@ -178,14 +178,26 @@ document.addEventListener('DOMContentLoaded', function () {
             // After a failed save the page reloads with what was typed: it is still not saved.
             var keep = n === 0 && bar && bar.hasAttribute('data-start-dirty');
             if (!keep) {
-                status.textContent = n === 0 ? 'No unsaved changes' : (n === 1 ? 'You have 1 unsaved change.' : 'You have ' + n + ' unsaved changes.');
+                var text = n === 0 ? 'No unsaved changes' : (n === 1 ? 'You have 1 unsaved change.' : 'You have ' + n + ' unsaved changes.');
+                // Write only on a change: a write is itself a mutation inside the form (see the observer below).
+                if (status.textContent !== text) status.textContent = text;
             }
             if (bar) bar.classList.toggle('is-dirty', n > 0 || keep);
         };
         form.addEventListener('input', update);
         form.addEventListener('change', update);
-        // List editors add or remove rows without an input event.
-        new MutationObserver(update).observe(form, { childList: true, subtree: true });
+        // List editors add or remove rows without an input event. Changes to the save bar's own
+        // text and to the live previews (Printing) are not edits: reacting to them looped forever
+        // (update wrote the status, the write fired the observer, and so on) and froze the page.
+        var ignore = function (node) {
+            return status.contains(node) || !!(node.closest && node.closest('[data-paper], [data-sig-preview], [data-preview-caption], [data-image-status], [data-signer-state]'));
+        };
+        new MutationObserver(function (records) {
+            for (var i = 0; i < records.length; i++) {
+                var t = records[i].target;
+                if (!ignore(t.nodeType === 1 ? t : t.parentElement || t)) { update(); return; }
+            }
+        }).observe(form, { childList: true, subtree: true });
     }
 });
 </script>
