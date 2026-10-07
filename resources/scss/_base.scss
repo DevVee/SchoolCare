@@ -143,3 +143,11 @@ a:focus-visible { border-radius: 4px; }
 @media (prefers-reduced-transparency: reduce) {
     :root { --c-material: #fff; --c-material-thick: #fff; --c-blur: none; }
 }
+
+// No sub text under titles: page, card and section headers and the dashboard hero
+// show the title only. Settings blocks keep their left-hand descriptions (the
+// Shopify layout explains each block there).
+.card-description,
+.form-section-desc,
+.c-hero-subtitle { display: none !important; }
+:is(.settings-blocks, .settings-blocks-after) .form-section-desc { display: block !important; }

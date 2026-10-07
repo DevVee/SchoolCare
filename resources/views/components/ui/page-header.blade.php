@@ -12,11 +12,11 @@
     <x-ui.page-header title="Email" icon="bi-envelope" />        (icon chip before the title, as on settings pages)
 
     breadcrumbs: ['Label' => url|null, ...] or [['label' => 'X', 'url' => '...'], ...]; the last item is the current page.
-    Default slot: extra meta under the description (badges, timestamps).
+    Default slot: extra meta under the title (badges, timestamps).
 --}}
 @props([
     'title',
-    'description' => null,
+    'description' => null,    // accepted but not shown: pages carry the title only, no sub text
     'subtitle' => null,       // alias of description
     'breadcrumbs' => [],
     'back' => null,           // URL for a "back" link above the title
@@ -24,7 +24,6 @@
     'icon' => null,           // optional icon chip before the title
 ])
 @php
-    $desc = $description ?? $subtitle;
     $crumbs = [];
     foreach ((array) $breadcrumbs as $key => $value) {
         if (is_array($value)) {
@@ -60,9 +59,6 @@
             <h1 class="page-title d-flex align-items-center gap-2"><x-ui.icon-chip :icon="$icon" /><span class="min-w-0">{{ $title }}</span></h1>
         @else
             <h1 class="page-title">{{ $title }}</h1>
-        @endif
-        @if ($desc)
-            <p class="page-subtitle">{{ $desc }}</p>
         @endif
         @if (trim($slot) !== '')
             <div class="page-header-meta">{{ $slot }}</div>
