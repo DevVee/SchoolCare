@@ -21,3 +21,7 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Local debug renders, never deployed
+/public/_mp/
+/public/_debug-*.html
