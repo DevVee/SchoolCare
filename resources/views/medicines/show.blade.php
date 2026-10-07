@@ -158,9 +158,9 @@
                 @endcan
                 <x-ui.table responsive="stack" dense caption="Recent stock movements">
                     <x-slot:head>
-                        <x-ui.th>Date</x-ui.th>
-                        <x-ui.th>Movement</x-ui.th>
-                        <x-ui.th align="end">Change</x-ui.th>
+                        <x-ui.th data-phone-sub>Date</x-ui.th>
+                        <x-ui.th data-phone-title>Movement</x-ui.th>
+                        <x-ui.th align="end" data-phone-right>Change</x-ui.th>
                         <x-ui.th align="end" priority="md">Stock</x-ui.th>
                         <x-ui.th priority="lg">Notes</x-ui.th>
                     </x-slot:head>

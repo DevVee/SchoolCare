@@ -35,9 +35,9 @@
     <x-ui.table responsive="stack" :paginator="$records" noun="records" caption="Dispensing records">
         <x-slot:head>
             <x-ui.th>Patient</x-ui.th>
-            <x-ui.th>Medicine</x-ui.th>
+            <x-ui.th data-phone-sub>Medicine</x-ui.th>
             <x-ui.th align="end">Quantity</x-ui.th>
-            <x-ui.th priority="md">Given on</x-ui.th>
+            <x-ui.th priority="md" data-phone-sub>Given on</x-ui.th>
             <x-ui.th priority="lg">Given by</x-ui.th>
             <x-ui.th priority="xl">Remarks</x-ui.th>
             <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>

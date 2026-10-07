@@ -43,6 +43,8 @@
 @endphp
 
 @section('content')
+{{-- .dash: on phones the hero opens up so the brief can follow the stat cards (_dashboard.scss) --}}
+<div class="dash">
 
 <x-ui.hero :subtitle="$showAi ? 'Ask '.$aiName.' anything, or start from what is happening today.' : 'Clinic visits, appointments and inventory at a glance.'" class="mb-4">
     @canany(['create-patient-logs', 'view-appointments'])
@@ -233,4 +235,5 @@
 </div>
 @endif
 
+</div>
 @endsection

@@ -134,10 +134,15 @@ function plan(table, cols, rows) {
     return { roles, title, right, subs };
 }
 
-/** The row's own page: data-phone-link, tr[data-href], or the title cell's first real link. */
-function rowLink(tr, titleCell) {
+/**
+ * The row's own page: data-phone-link, tr[data-href], the row menu's "View" item (the record
+ * itself; a title link may point elsewhere, e.g. an appointment's patient), or the title's link.
+ */
+function rowLink(tr, titleCell, actions) {
     const own = tr.dataset.phoneLink || tr.dataset.href || tr.querySelector('td[data-phone-link]')?.dataset.phoneLink;
     if (own) return own;
+    const view = actions.find((a) => a.href && !a.el.target && (a.icon === 'eye' || /^(view|open)\b/i.test(a.label)));
+    if (view) return view.href;
     const a = titleCell?.querySelector('a[href]:not([href^="#"]):not([href^="javascript"]):not([target="_blank"])');
     return a ? a.getAttribute('href') : null;
 }
@@ -280,7 +285,11 @@ function buildRow(tr, cols, p, inline) {
     if (useOwnSub) {
         sub = textOf(ownSub);
     } else {
-        sub = p.subs.map((i) => textOf(cells[i])).filter((t) => t && t !== '-').join(' · ');
+        // A name + second line contributes just the name; a bare number gets its column name ("Visits 114")
+        sub = p.subs.map((i) => {
+            const t = textOf(cells[i]?.querySelector('.identity-title, .cell-title') || cells[i]);
+            return t && /^[\d.,%\s+-]+$/.test(t) && cols[i].label ? `${cols[i].label} ${t}` : t;
+        }).filter((t) => t && t !== '-').join(' · ');
     }
 
     let right = null;
@@ -300,7 +309,7 @@ function buildRow(tr, cols, p, inline) {
     });
     const actionCells = cells.filter((td, i) => p.roles[i] === 'actions' && td);
     const actions = actionsOf([...new Set(actionCells)]);
-    const link = rowLink(tr, titleCell);
+    const link = rowLink(tr, titleCell, actions);
 
     const li = document.createElement('li');
     // Everything already on the row (nothing more to see, nothing to do): no sheet.
@@ -351,6 +360,10 @@ function build(table) {
     const emptyRow = allRows.find((tr) => tr.classList.contains('table-empty-row') || tr.querySelector('.table-empty-cell'));
     const rows = allRows.filter((tr) => tr !== emptyRow && !tr.hidden && !tr.classList.contains('d-none') && tr.style.display !== 'none');
     const wrapper = table.closest('.table-responsive, .table-shell') || table;
+
+    // Grids of checkboxes (permission matrices) keep their columns and scroll inside their card.
+    const checkCols = new Set(rows.flatMap((tr) => cellsOf(tr).map((td, i) => (td.querySelector('input[type="checkbox"]') && i > 0 ? i : -1)).filter((i) => i >= 0)));
+    if (checkCols.size > 1) return;
 
     // Editable tables: keep them as tables, stacked into label / value cards.
     if (rows.some((tr) => has(tr, FIELD) && !isActionsCell(tr.querySelector(FIELD)?.closest('td')))) {

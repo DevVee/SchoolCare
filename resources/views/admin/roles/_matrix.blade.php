@@ -23,7 +23,7 @@
         </x-slot:actions>
     @endunless
 
-    <x-ui.table sticky min-width="760px" caption="Permissions by area" class="permission-matrix" :hover="false">
+    <x-ui.table sticky min-width="760px" caption="Permissions by area" class="permission-matrix" :hover="false" data-no-cards>
         <x-slot:head>
             <x-ui.th>Area</x-ui.th>
             @foreach ($columns as $colKey => $colLabel)

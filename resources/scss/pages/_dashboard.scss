@@ -318,74 +318,87 @@
 }
 
 // -----------------------------------------------------------------------------
-// Phones and tablets (< lg): an app home screen, not a shrunk desktop. The hero
-// loses its card and reads as the page's large title; the order is clock, hello,
-// ask box, starters (one swipeable row), then the two actions as big tiles.
-// Stat cards sit two per row (an odd last one spans the row); Coco's brief and
-// the panels below keep their cards with tighter padding.
+// Phones and tablets (< lg): an app home screen, not a shrunk desktop.
+// .dash becomes one column and the hero opens up (display: contents) so its
+// parts can be ordered with the rest of the page:
+//   clock, hello, ask box, starters (one swipeable row), two action buttons,
+//   stat cards two per row, Coco's brief as swipeable cards, then the panels.
 // -----------------------------------------------------------------------------
 @include media-breakpoint-down(lg) {
-    .c-hero.c-hero-split,
-    .c-hero {
-        padding: .25rem 0 0;
-        margin-bottom: 1.25rem;
-        gap: 1.25rem;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
-        overflow: visible;
-        .c-grid-backdrop { display: none; }
-    }
-    .c-hero {
-        .c-hero-text { display: flex; flex-direction: column; }
-        .c-hero-top { display: contents; }
-        .c-hero-clock { order: 1; margin: 0 0 .375rem; font-size: .8125rem; }
-        .c-hero-title { order: 2; font-size: 1.875rem; letter-spacing: -.034em; }
-        .c-hero-subtitle { display: none; }
+    .dash {
+        display: flex;
+        flex-direction: column;
+        > * { order: 10; margin-bottom: 1rem !important; }
+
+        // The hero has no card of its own here: its text and its brief join the page
+        .c-hero, .c-hero.c-hero-split { display: contents; }
+        .c-hero .c-grid-backdrop { display: none; }
+        .c-hero-text { order: 1; display: flex; flex-direction: column; margin-bottom: 1.25rem; }
+        .stat-cards { order: 2; }
+        .c-hero-aside { order: 3; margin-bottom: 1rem; min-width: 0; }
+
+        .c-hero .c-hero-top, .c-hero.c-hero-split .c-hero-top { display: contents; }
+        .c-hero-clock { order: 1; margin: 0 0 .25rem; font-size: .8125rem; }
+        .c-hero-title { order: 2; font-size: 1.75rem; letter-spacing: -.034em; }
         .c-hero-body { order: 3; margin-top: 1rem; }
-        // Actions as two equal tiles, icon above the label, after the ask box
+
+        // Two actions side by side under the ask box: icon and label in one line
         .c-hero-actions {
             order: 4;
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: .625rem;
             width: 100%;
-            margin-top: 1rem;
-            > .btn {
-                flex-direction: column;
-                gap: .375rem;
-                min-height: 4.5rem;
-                padding: .75rem .5rem;
-                border-radius: $radius-lg;
-                font-size: .9375rem;
-                .c-icon, > .bi { font-size: 1.375rem; }
-            }
+            margin-top: .875rem;
+            > .btn { min-height: 3rem; border-radius: $radius-lg; font-size: .9375rem; white-space: nowrap; }
             > .btn:only-child { grid-column: 1 / -1; }
         }
+
+        // Starters: one row that scrolls sideways, edge to edge, no "Try:" label
+        .c-ask-try {
+            --g: 1rem;   // the page gutter (.app-content padding)
+            @include media-breakpoint-up(sm) { --g: 1.5rem; }
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            margin: .75rem calc(var(--g) * -1) 0;
+            padding: .125rem var(--g) .25rem;
+            scroll-snap-type: x proximity;
+            scroll-padding-inline: var(--g);
+            scrollbar-width: none;
+            &::-webkit-scrollbar { display: none; }
+            > span { display: none; }
+            .c-chip { flex: 0 0 auto; scroll-snap-align: start; white-space: nowrap; }
+        }
+
+        // Coco's brief: a header, then its lines as cards you swipe through
+        .c-brief {
+            --g: 1rem;
+            @include media-breakpoint-up(sm) { --g: 1.5rem; }
+            padding: 0;
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+            .c-brief-head { padding: 0 .125rem; }
+            .c-brief-lines {
+                flex-direction: row;
+                gap: .625rem;
+                overflow-x: auto;
+                margin: .75rem calc(var(--g) * -1) 0;
+                padding: .125rem var(--g) .5rem;
+                scroll-snap-type: x mandatory;
+                scroll-padding-inline: var(--g);
+                scrollbar-width: none;
+                &::-webkit-scrollbar { display: none; }
+            }
+            // ul > li > .c-brief-line (the loading skeleton is the li itself)
+            .c-brief-lines > li { flex: 0 0 min(78%, 18rem); scroll-snap-align: start; display: flex; }
+            .c-brief-line { flex: 1 1 auto; min-height: 5.5rem; }
+            .c-brief-more { margin-top: .25rem; padding-inline: .125rem; }
+        }
+
+        // Two stat cards per row; a fifth (odd last) card takes the full row
+        .stat-cards > .stat-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+        > .row { --bs-gutter-y: 1rem; }
     }
-
-    // Starters: one row that scrolls sideways, edge to edge, no "Try:" label
-    .c-ask-try {
-        --g: 1rem;   // the page gutter (.app-content padding)
-        @include media-breakpoint-up(sm) { --g: 1.5rem; }
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        margin-inline: calc(var(--g) * -1);
-        padding: .125rem var(--g) .25rem;
-        scroll-snap-type: x proximity;
-        scroll-padding-inline: var(--g);
-        scrollbar-width: none;
-        &::-webkit-scrollbar { display: none; }
-        > span { display: none; }
-        .c-chip { flex: 0 0 auto; scroll-snap-align: start; white-space: nowrap; }
-    }
-
-    .c-brief { padding: 1rem; }
-
-    // Two stat cards per row; a fifth (odd last) card takes the full row
-    .stat-cards > .stat-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
-
-    // Panels: tighter, and their header actions never push the title onto two lines
-    .app-content > .row { --bs-gutter-y: 1rem; margin-bottom: 1rem !important; }
 }

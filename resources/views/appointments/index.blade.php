@@ -61,10 +61,10 @@
         <x-ui.table :paginator="$appointments" noun="appointments" caption="Appointments" responsive="stack">
             <x-slot:head>
                 <x-ui.th>Patient</x-ui.th>
-                <x-ui.th>Date and time</x-ui.th>
-                <x-ui.th priority="md">Purpose</x-ui.th>
+                <x-ui.th data-phone-sub>Date and time</x-ui.th>
+                <x-ui.th priority="md" data-phone-sub>Purpose</x-ui.th>
                 <x-ui.th priority="xl">With</x-ui.th>
-                <x-ui.th>Status</x-ui.th>
+                <x-ui.th data-phone-right>Status</x-ui.th>
                 <x-ui.th priority="lg">Source</x-ui.th>
                 <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
             </x-slot:head>

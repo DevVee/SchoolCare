@@ -44,11 +44,11 @@
     <x-ui.card flush>
         <x-ui.table :paginator="$logs" noun="entries" caption="Activity log" responsive="stack">
             <x-slot:head>
-                <x-ui.th>When</x-ui.th>
-                <x-ui.th>User</x-ui.th>
+                <x-ui.th data-phone-sub>When</x-ui.th>
+                <x-ui.th data-phone-sub>User</x-ui.th>
                 <x-ui.th>Action</x-ui.th>
                 <x-ui.th priority="lg">Area</x-ui.th>
-                <x-ui.th priority="md">Details</x-ui.th>
+                <x-ui.th priority="md" data-phone-title>Details</x-ui.th>
                 <x-ui.th priority="xl">Signed in from</x-ui.th>
                 <x-ui.th align="end"><span class="visually-hidden">Changes</span></x-ui.th>
             </x-slot:head>

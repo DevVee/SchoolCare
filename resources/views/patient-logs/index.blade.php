@@ -106,10 +106,10 @@
         </x-slot:toolbar>
 
         <x-slot:head>
-            <x-ui.th>{{ $singleDay ? 'Time in' : 'Date and time' }}</x-ui.th>
+            <x-ui.th data-phone-sub>{{ $singleDay ? 'Time in' : 'Date and time' }}</x-ui.th>
             <x-ui.th>Patient</x-ui.th>
-            <x-ui.th priority="md">Reasons</x-ui.th>
-            <x-ui.th>Severity</x-ui.th>
+            <x-ui.th priority="md" data-phone-sub>Reasons</x-ui.th>
+            <x-ui.th data-phone-right>Severity</x-ui.th>
             <x-ui.th priority="xl">Medicines</x-ui.th>
             <x-ui.th priority="lg">Outcome</x-ui.th>
             <x-ui.th priority="lg">Time out</x-ui.th>

@@ -20,10 +20,10 @@
         <x-ui.table responsive="stack" :paginator="$medicines" noun="medicines" caption="Low stock medicines">
             <x-slot:head>
                 <x-ui.th>Medicine</x-ui.th>
-                <x-ui.th priority="md">Category</x-ui.th>
-                <x-ui.th align="end">On hand</x-ui.th>
+                <x-ui.th priority="md" data-phone-sub>Category</x-ui.th>
+                <x-ui.th align="end" data-phone-sub>On hand</x-ui.th>
                 <x-ui.th align="end" priority="md">Alert at</x-ui.th>
-                <x-ui.th>Stock</x-ui.th>
+                <x-ui.th data-phone-right>Stock</x-ui.th>
                 <x-ui.th priority="lg">Expiry</x-ui.th>
                 <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
             </x-slot:head>

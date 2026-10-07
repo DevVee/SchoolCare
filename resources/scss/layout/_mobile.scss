@@ -356,6 +356,13 @@ $ios-sep:    #e5e5ea;   // list separators
 }
 
 // ─── 7. Page headers, tabs, buttons, forms ─────────────────────────────────
+// Tab rows that do not fit (or have more than three choices on a phone) are one full-width
+// dropdown (ui/mobile.js toggles .tabs-collapsed on the row and un-hides the select).
+.c-tabs-select { width: 100%; font-weight: 600; color: var(--c-ink); }
+.tabs-collapsed { display: none !important; }
+.has-tabs-select { flex: 1 1 100%; width: 100%; min-width: 0; }
+.filter-pills:has(> .has-tabs-select) { flex: 1 1 100%; min-width: 0; }   // status tabs in a filter card
+
 @include media-breakpoint-down(sm) {
     .page-title { font-size: 1.375rem; letter-spacing: -.025em; }   // 22px
     .page-subtitle { font-size: .9375rem; margin-top: .375rem; }
@@ -366,11 +373,19 @@ $ios-sep:    #e5e5ea;   // list separators
         > .dropdown > .btn, > form > .btn { width: 100%; }
     }
 
-    // More than three tabs: one dropdown (ui/mobile.js), never a row running off the edge
-    .has-tabs-select { display: none !important; }
-    .c-tabs-select { display: block; width: 100%; font-weight: 600; }
+    // Stat tiles: two compact columns, so the numbers do not take the whole first screen
+    .stat-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .625rem; margin-bottom: 1rem; }
+    .stat-tile {
+        padding: .875rem .875rem .75rem;
+        .stat-label { font-size: .8125rem; }
+        .stat-icon { height: 1.25rem; font-size: 1rem; }
+        .stat-value { font-size: 1.625rem; margin-top: .375rem; }
+        .stat-meta { padding-top: .5rem; font-size: .75rem; gap: .125rem .5rem; }
+    }
+    // Pages that lay tiles out with .row-cols-1 get the same two columns
+    .row-cols-1:has(> .col > .stat-tile) > .col { flex: 0 0 auto; width: 50%; }
+
 }
-.c-tabs-select { display: none; }
 
 @include media-breakpoint-down(lg) {
     // Tab rows that stay rows scroll sideways without a scrollbar
@@ -413,6 +428,6 @@ $ios-sep:    #e5e5ea;   // list separators
 
 @media print {
     .app-tabbar, .phone-list-wrap, .c-tabs-select { display: none !important; }
-    .has-phone-list, .has-tabs-select { display: revert !important; }
+    .has-phone-list, .tabs-collapsed { display: revert !important; }
     .app-column { padding-bottom: 0 !important; }
 }

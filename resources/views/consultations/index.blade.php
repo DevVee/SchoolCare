@@ -34,8 +34,8 @@
     <x-ui.table responsive="stack" :paginator="$consultations" noun="consultations" caption="Consultations">
         <x-slot:head>
             <x-ui.th>Patient</x-ui.th>
-            <x-ui.th>Visit date</x-ui.th>
-            <x-ui.th priority="md">Chief complaint</x-ui.th>
+            <x-ui.th data-phone-sub>Visit date</x-ui.th>
+            <x-ui.th priority="md" data-phone-sub>Chief complaint</x-ui.th>
             <x-ui.th priority="lg">Diagnosis</x-ui.th>
             <x-ui.th priority="xl">Recorded by</x-ui.th>
             <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>

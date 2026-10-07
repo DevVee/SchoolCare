@@ -104,11 +104,11 @@
                     </x-ui.th>
                 @endif
                 <x-ui.th>Patient</x-ui.th>
-                <x-ui.th priority="md">Category</x-ui.th>
-                <x-ui.th priority="md">Grade and section</x-ui.th>
+                <x-ui.th priority="md" data-phone-sub>Category</x-ui.th>
+                <x-ui.th priority="md" data-phone-sub>Grade and section</x-ui.th>
                 <x-ui.th priority="xl">Sex</x-ui.th>
                 <x-ui.th priority="lg">Age</x-ui.th>
-                <x-ui.th>Status</x-ui.th>
+                <x-ui.th data-phone-right>Status</x-ui.th>
                 <x-ui.th align="end"><span class="visually-hidden">Actions</span></x-ui.th>
             </x-slot:head>
 
